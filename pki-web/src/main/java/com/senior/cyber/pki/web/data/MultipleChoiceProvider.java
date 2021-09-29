@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.web.data;
 
-import com.senior.cyber.webui.frmk.common.WicketFactory;
-import com.senior.cyber.webui.frmk.wicket.extensions.markup.html.repeater.data.table.filter.convertor.Convertor;
-import com.senior.cyber.webui.frmk.wicket.markup.html.form.select2.Option;
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.Convertor;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -11,7 +11,7 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 
-public class MultipleChoiceProvider<Id, Label> extends com.senior.cyber.webui.frmk.wicket.markup.html.form.select2.MultipleChoiceProvider<Id, Label> {
+public class MultipleChoiceProvider<Id, Label> extends com.senior.cyber.frmk.common.wicket.markup.html.form.select2.MultipleChoiceProvider<Id, Label> {
 
     public MultipleChoiceProvider(
             Class<Id> idType, Convertor<Id> idConvertor,

@@ -2,8 +2,8 @@ package com.senior.cyber.pki.web;
 
 import com.senior.cyber.pki.web.configuration.CryptoConfiguration;
 import com.senior.cyber.pki.web.utility.Crypto;
-import com.senior.cyber.webui.frmk.common.WicketFactory;
-import com.senior.cyber.webui.frmk.function.BootExtension;
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.function.BootExtension;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -1,9 +1,9 @@
 package com.senior.cyber.pki.web.pages;
 
 import com.senior.cyber.pki.web.factory.WebSession;
-import com.senior.cyber.webui.frmk.common.AdminLTEResourceReference;
-import com.senior.cyber.webui.frmk.common.Bookmark;
-import com.senior.cyber.webui.frmk.wicket.markup.html.panel.ComponentFeedbackPanel;
+import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
+import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ComponentFeedbackPanel;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;

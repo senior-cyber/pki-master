@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.web.utility;
 
-import com.senior.cyber.webui.frmk.crypto.AESGCMBlockCipher;
-import com.senior.cyber.webui.frmk.crypto.IESCipherGCM;
-import com.senior.cyber.webui.frmk.crypto.IESEngineGCM;
+import com.senior.cyber.frmk.common.crypto.AESGCMBlockCipher;
+import com.senior.cyber.frmk.common.crypto.IESCipherGCM;
+import com.senior.cyber.frmk.common.crypto.IESEngineGCM;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.generators.KDF2BytesGenerator;

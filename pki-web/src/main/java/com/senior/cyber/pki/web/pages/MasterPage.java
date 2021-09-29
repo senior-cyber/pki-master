@@ -8,7 +8,7 @@ import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
-public abstract class MasterPage extends com.senior.cyber.webui.frmk.wicket.layout.MasterPage {
+public abstract class MasterPage extends com.senior.cyber.frmk.common.wicket.layout.MasterPage {
 
     public MasterPage() {
     }

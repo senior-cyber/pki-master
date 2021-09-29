@@ -2,7 +2,7 @@ package com.senior.cyber.pki.web.pages.user;
 
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.factory.WebSession;
-import com.senior.cyber.webui.frmk.common.Bookmark;
+import com.senior.cyber.frmk.common.base.Bookmark;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.markup.html.WebPage;
 

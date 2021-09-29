@@ -7,7 +7,7 @@ import org.apache.wicket.Page;
 import org.apache.wicket.authroles.authentication.AbstractAuthenticatedWebSession;
 import org.apache.wicket.markup.html.WebPage;
 
-public class WicketFactory extends com.senior.cyber.webui.frmk.common.AuthenticatedWicketFactory {
+public class WicketFactory extends com.senior.cyber.frmk.common.base.AuthenticatedWicketFactory {
 
     @Override
     protected void init() {

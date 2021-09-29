@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.dao;
 
-import com.senior.cyber.metamodel.XmlUtility;
+import com.senior.cyber.frmk.metamodel.XmlUtility;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;

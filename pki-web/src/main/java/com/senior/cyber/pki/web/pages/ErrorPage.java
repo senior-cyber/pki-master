@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.web.pages;
 
-import com.senior.cyber.webui.frmk.common.AdminLTEResourceReference;
-import com.senior.cyber.webui.frmk.common.Bookmark;
+import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
+import com.senior.cyber.frmk.common.base.Bookmark;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;

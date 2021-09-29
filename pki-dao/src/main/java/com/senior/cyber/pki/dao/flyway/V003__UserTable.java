@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.dao.flyway;
 
-import com.senior.cyber.jdbc.query.InsertQuery;
+import com.senior.cyber.frmk.jdbc.query.InsertQuery;
 import com.senior.cyber.pki.dao.LiquibaseMigration;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

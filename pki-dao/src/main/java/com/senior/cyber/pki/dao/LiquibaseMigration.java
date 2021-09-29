@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.dao;
 
-import com.senior.cyber.metamodel.LiquibaseJavaMigration;
+import com.senior.cyber.frmk.metamodel.LiquibaseJavaMigration;
 
 public abstract class LiquibaseMigration extends LiquibaseJavaMigration {
 

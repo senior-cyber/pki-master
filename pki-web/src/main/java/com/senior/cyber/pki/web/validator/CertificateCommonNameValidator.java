@@ -5,7 +5,7 @@ import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.webui.frmk.common.WicketFactory;
+import com.senior.cyber.frmk.common.base.WicketFactory;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.validation.IValidatable;
 import org.apache.wicket.validation.IValidator;

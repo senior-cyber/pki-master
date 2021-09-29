@@ -4,7 +4,7 @@ import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.web.configuration.SslConfiguration;
 import com.senior.cyber.pki.web.repository.KeyRepository;
 import com.senior.cyber.pki.web.utility.Crypto;
-import com.senior.cyber.webui.frmk.pki.PublicKeyUtils;
+import com.senior.cyber.frmk.common.pki.PublicKeyUtils;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.CleartextKeysetHandle;
 import com.google.crypto.tink.JsonKeysetReader;

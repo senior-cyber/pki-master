@@ -2,9 +2,9 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.pages.MasterPage;
-import com.senior.cyber.webui.frmk.common.Bookmark;
-import com.senior.cyber.webui.frmk.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.webui.frmk.wicket.extensions.markup.html.tabs.TabbedPanel;
+import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 

@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.web.pages;
 
-import com.senior.cyber.webui.frmk.common.Bookmark;
+import com.senior.cyber.frmk.common.base.Bookmark;
 import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
 import org.apache.wicket.markup.html.WebPage;
 

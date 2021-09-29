@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.web.provider;
 
-import com.senior.cyber.webui.frmk.model.Footer;
-import com.senior.cyber.webui.frmk.provider.IFooterProvider;
+import com.senior.cyber.frmk.common.model.Footer;
+import com.senior.cyber.frmk.common.provider.IFooterProvider;
 import org.apache.wicket.Application;
 import org.apache.wicket.markup.html.WebPage;
 
