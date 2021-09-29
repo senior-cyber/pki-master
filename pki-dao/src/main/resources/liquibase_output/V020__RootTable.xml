@@ -1,0 +1,62 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="V020__RootTable-1">
+
+        <createTable tableName="tbl_root">
+            <column autoIncrement="true" name="root_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_37" nullable="false" primaryKey="true" primaryKeyName="primary_key_9"/>
+            </column>
+
+            <column name="serial" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_38" nullable="false" unique="true" uniqueConstraintName="unique_index_12"/>
+            </column>
+
+            <column name="common_name" type="VARCHAR(200)"/>
+            <column name="organization" type="VARCHAR(200)"/>
+            <column name="organizational_unit" type="VARCHAR(200)"/>
+
+            <column name="country_code" type="VARCHAR(2)"/>
+            <column name="locality_name" type="VARCHAR(200)"/>
+            <column name="state_or_province_name" type="VARCHAR(200)"/>
+
+            <column name="email_address" type="VARCHAR(200)"/>
+
+            <column name="private_key" type="TEXT">
+                <constraints notNullConstraintName="notnull_key_39" nullable="false"/>
+            </column>
+            <column name="certificate" type="TEXT">
+                <constraints notNullConstraintName="notnull_key_40" nullable="false"/>
+            </column>
+
+            <column name="valid_from" type="DATE">
+                <constraints notNullConstraintName="notnull_key_41" nullable="false"/>
+            </column>
+            <column name="valid_until" type="DATE">
+                <constraints notNullConstraintName="notnull_key_42" nullable="false"/>
+            </column>
+            <column name="revoked_date" type="DATE"/>
+
+            <column name="status" type="VARCHAR(10)">
+                <constraints notNullConstraintName="notnull_key_43" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_44" nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <createIndex indexName="index_6" tableName="tbl_root">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="index_7" tableName="tbl_root">
+            <column name="valid_from"/>
+        </createIndex>
+        <createIndex indexName="index_8" tableName="tbl_root">
+            <column name="valid_until"/>
+        </createIndex>
+        <createIndex indexName="index_9" tableName="tbl_root">
+            <column name="status"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

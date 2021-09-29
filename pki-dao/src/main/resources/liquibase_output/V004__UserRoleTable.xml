@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="V004__UserRoleTable-1">
+
+        <createTable tableName="tbl_user_role">
+            <column name="user_role_id" type="VARCHAR(100)">
+                <constraints notNullConstraintName="notnull_key_14" nullable="false" primaryKey="true" primaryKeyName="primary_key_4"/>
+            </column>
+            <column name="r_role_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_15" nullable="false"/>
+            </column>
+            <column name="r_user_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_16" nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint columnNames="r_role_id,r_user_id" constraintName="unique_index_5" tableName="tbl_user_role"/>
+
+    </changeSet>
+</databaseChangeLog>

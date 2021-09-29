@@ -1,0 +1,10 @@
+rootProject.name = 'pki-master'
+
+include(
+        ":pki-dao",
+        ":pki-web",
+        ":pki-api"
+)
+project(":pki-dao").projectDir = file("./pki-dao")
+project(":pki-web").projectDir = file("./pki-web")
+project(":pki-api").projectDir = file("./pki-api")

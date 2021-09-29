@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="V002__GroupTable-1">
+
+        <createTable tableName="tbl_group">
+            <column autoIncrement="true" name="group_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_4" nullable="false" primaryKey="true" primaryKeyName="primary_key_2"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints notNullConstraintName="notnull_key_5" nullable="false" unique="true" uniqueConstraintName="unique_index_2"/>
+            </column>
+            <column defaultValueBoolean="true" name="enabled" type="boolean">
+                <constraints notNullConstraintName="notnull_key_6" nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>

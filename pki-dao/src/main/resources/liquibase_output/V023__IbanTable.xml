@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="V023__IbanTable-1">
+
+        <createTable tableName="tbl_iban">
+            <column autoIncrement="true" name="iban_id" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_63" nullable="false" primaryKey="true" primaryKeyName="primary_key_12"/>
+            </column>
+
+            <column name="country" type="VARCHAR(200)">
+                <constraints notNullConstraintName="notnull_key_64" nullable="false" unique="true" uniqueConstraintName="unique_index_15"/>
+            </column>
+            <column name="alpha2_code" type="VARCHAR(2)">
+                <constraints notNullConstraintName="notnull_key_65" nullable="false" unique="true" uniqueConstraintName="unique_index_16"/>
+            </column>
+            <column name="alpha3_code" type="VARCHAR(3)">
+                <constraints notNullConstraintName="notnull_key_66" nullable="false" unique="true" uniqueConstraintName="unique_index_17"/>
+            </column>
+            <column name="alpha_numeric" type="VARCHAR(3)">
+                <constraints notNullConstraintName="notnull_key_67" nullable="false" unique="true" uniqueConstraintName="unique_index_18"/>
+            </column>
+
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>

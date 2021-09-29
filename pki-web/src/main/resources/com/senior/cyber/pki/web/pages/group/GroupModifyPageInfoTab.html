@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+</head>
+<body>
+<wicket:panel>
+    <form wicket:id="form">
+        <div class="card-body">
+            <div wicket:id="row1">
+                <div wicket:id="name_column">
+                    <wicket:container wicket:id="name_container">
+                        <div class="form-group">
+                            <label wicket:for="name_field">Name</label>
+                            <input type="text" wicket:id="name_field" class="form-control"/>
+                            <span wicket:id="name_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="last_column"/>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button wicket:id="saveButton" type="submit" class="btn btn-info">Save</button>
+            <a wicket:id="cancelButton" class="btn btn-default float-right">Cancel</a>
+        </div>
+    </form>
+</wicket:panel>
+</body>
+
+</html>

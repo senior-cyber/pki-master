@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="">
+
+        <createTable tableName="tbl_user_group">
+            <column name="user_group_id" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="r_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="r_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint columnNames="r_group_id,r_user_id" tableName="tbl_user_group"/>
+
+    </changeSet>
+</databaseChangeLog>
