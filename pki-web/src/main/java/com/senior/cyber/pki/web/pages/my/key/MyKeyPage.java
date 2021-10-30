@@ -96,7 +96,6 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             String client_secret = object.get("client_secret", String.class);
             return new TextCell(textEncryptor.decrypt(client_secret));
         } catch (EncryptionOperationNotPossibleException e) {
-            getSession().invalidateNow();
             return new TextCell("");
         }
     }
