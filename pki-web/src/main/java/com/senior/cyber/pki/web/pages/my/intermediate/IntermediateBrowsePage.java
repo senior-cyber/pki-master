@@ -112,7 +112,9 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
                 buffer.append("Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("keytool -keystore " + name + ".jks -alias " + name + " -import -file " + name + ".crt").append("\n");
+                buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
+                buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -keystore " + name + ".jks -alias " + name + " -import -file " + name + ".crt").append("\n");
                 buffer.append("\n");
                 buffer.append("Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
@@ -123,7 +125,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                 buffer.append("server.ssl.trust-store-password=changeit").append("\n");
 
                 String crt = buffer.toString();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry("readme.txt");
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
