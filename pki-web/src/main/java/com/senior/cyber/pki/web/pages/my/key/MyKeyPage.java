@@ -39,6 +39,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.springframework.context.ApplicationContext;
 
@@ -89,10 +90,15 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        AES256TextEncryptor textEncryptor = new AES256TextEncryptor();
-        textEncryptor.setPassword(getSession().getPwd());
-        String client_secret = object.get("client_secret", String.class);
-        return new TextCell(textEncryptor.decrypt(client_secret));
+        try {
+            AES256TextEncryptor textEncryptor = new AES256TextEncryptor();
+            textEncryptor.setPassword(getSession().getPwd());
+            String client_secret = object.get("client_secret", String.class);
+            return new TextCell(textEncryptor.decrypt(client_secret));
+        } catch (EncryptionOperationNotPossibleException e) {
+            getSession().invalidateNow();
+            return new TextCell("");
+        }
     }
 
     @Override
