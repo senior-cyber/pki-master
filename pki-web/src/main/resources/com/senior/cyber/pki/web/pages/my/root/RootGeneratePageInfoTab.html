@@ -70,6 +70,24 @@
                 <div wicket:id="last_column"/>
             </div>
             <div wicket:id="row3">
+                <div wicket:id="valid_from_column">
+                    <wicket:container wicket:id="valid_from_container">
+                        <div class="form-group">
+                            <label wicket:for="valid_from_field">Valid From</label>
+                            <input type="text" wicket:id="valid_from_field" class="form-control"/>
+                            <span wicket:id="valid_from_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="valid_until_column">
+                    <wicket:container wicket:id="valid_until_container">
+                        <div class="form-group">
+                            <label wicket:for="valid_until_field">Valid Until</label>
+                            <input type="text" wicket:id="valid_until_field" class="form-control"/>
+                            <span wicket:id="valid_until_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
                 <div wicket:id="email_address_column">
                     <wicket:container wicket:id="email_address_container">
                         <div class="form-group">
