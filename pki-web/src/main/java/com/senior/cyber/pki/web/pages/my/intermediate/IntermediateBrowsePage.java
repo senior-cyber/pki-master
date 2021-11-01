@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.web.pages.my.intermediate;
 
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
@@ -70,6 +71,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         this.intermediate_browse_column = new ArrayList<>();
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "intermediate_id", this.intermediate_browse_provider, new LongConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.intermediate_browse_provider, new StringConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
         this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));

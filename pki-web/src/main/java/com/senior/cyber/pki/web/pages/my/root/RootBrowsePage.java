@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -48,6 +49,7 @@ public class RootBrowsePage extends MasterPage {
         this.root_browse_column = new ArrayList<>();
         this.root_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "root_id", this.root_browse_provider, new LongConvertor()));
         this.root_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.root_browse_provider, new StringConvertor()));
+        this.root_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.root_browse_provider, new DateConvertor()));
         this.root_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.root_browse_provider, new StringConvertor()));
         this.root_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::root_browse_action_link, this::root_browse_action_click));
     }
