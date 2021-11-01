@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.my.intermediate;
 
 
+import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.pki.dao.entity.Iban;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
@@ -35,6 +36,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
+import com.senior.cyber.pki.web.validator.ValidityValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -53,6 +55,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -105,6 +108,16 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
 
     protected UIRow row4;
 
+    protected UIColumn valid_from_column;
+    protected UIContainer valid_from_container;
+    protected DateTextField valid_from_field;
+    protected Date valid_from_value;
+
+    protected UIColumn valid_until_column;
+    protected UIContainer valid_until_container;
+    protected DateTextField valid_until_field;
+    protected Date valid_until_value;
+
     protected UIColumn email_address_column;
     protected UIContainer email_address_container;
     protected TextField<String> email_address_field;
@@ -152,6 +165,11 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
                 this.root_value = new Option(String.valueOf(intermediate.getRoot().getId()), intermediate.getRoot().getCommonName());
             }
         }
+
+        LocalDate now = LocalDate.now();
+
+        this.valid_from_value = now.toDate();
+        this.valid_until_value = now.plusYears(3).toDate();
     }
 
     @Override
@@ -189,7 +207,6 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
         this.organization_field = new TextField<>("organization_field", new PropertyModel<>(this, "organization_value"));
         this.organization_field.setLabel(Model.of("Organization"));
         this.organization_field.add(new ContainerFeedbackBehavior());
-//        this.organization_field.add(new IntermediateOrganizationValidator());
         this.organization_field.setRequired(true);
         this.organization_container.add(this.organization_field);
         this.organization_container.newFeedback("organization_feedback", this.organization_field);
@@ -235,7 +252,25 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
 
         this.row4 = UIRow.newUIRow("row4", this.form);
 
-        this.email_address_column = this.row4.newUIColumn("email_address_column", Size.Twelve_12);
+        this.valid_from_column = this.row4.newUIColumn("valid_from_column", Size.Four_4);
+        this.valid_from_container = this.valid_from_column.newUIContainer("valid_from_container");
+        this.valid_from_field = new DateTextField("valid_from_field", new PropertyModel<>(this, "valid_from_value"));
+        this.valid_from_field.setRequired(true);
+        this.valid_from_field.setLabel(Model.of("Valid From"));
+        this.valid_from_field.add(new ContainerFeedbackBehavior());
+        this.valid_from_container.add(this.valid_from_field);
+        this.valid_from_container.newFeedback("valid_from_feedback", this.valid_from_field);
+
+        this.valid_until_column = this.row4.newUIColumn("valid_until_column", Size.Four_4);
+        this.valid_until_container = this.valid_until_column.newUIContainer("valid_until_container");
+        this.valid_until_field = new DateTextField("valid_until_field", new PropertyModel<>(this, "valid_until_value"));
+        this.valid_until_field.setRequired(true);
+        this.valid_until_field.setLabel(Model.of("Valid Until"));
+        this.valid_until_field.add(new ContainerFeedbackBehavior());
+        this.valid_until_container.add(this.valid_until_field);
+        this.valid_until_container.newFeedback("valid_until_feedback", this.valid_until_field);
+
+        this.email_address_column = this.row4.newUIColumn("email_address_column", Size.Four_4);
         this.email_address_container = this.email_address_column.newUIContainer("email_address_container");
         this.email_address_field = new TextField<>("email_address_field", new PropertyModel<>(this, "email_address_value"));
         this.email_address_field.setLabel(Model.of("Email Address"));
@@ -256,6 +291,8 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", IntermediateBrowsePage.class);
         this.form.add(this.cancelButton);
+
+        this.form.add(new ValidityValidator(this.valid_from_field, this.valid_until_field));
     }
 
     protected void saveButtonClick() {
@@ -284,8 +321,8 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
 
             PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
 
-            LocalDate validFrom = LocalDate.now();
-            LocalDate validUntil = validFrom.plusYears(3);
+            LocalDate validFrom = LocalDate.fromDateFields(this.valid_from_value);
+            LocalDate validUntil = LocalDate.fromDateFields(this.valid_until_value);
 
             CertificateRequestDto requestDto = new CertificateRequestDto();
             requestDto.setBasicConstraints(true);
