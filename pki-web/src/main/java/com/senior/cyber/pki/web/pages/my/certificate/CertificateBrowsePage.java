@@ -147,18 +147,10 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
             {
                 StringBuffer buffer = new StringBuffer();
-                buffer.append("# We export a p12 file with default password '" + changeit + "' for your convenience").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append(name + ".p12").append("\n");
-                buffer.append("\n");
-                buffer.append("# We export a pfx file with default password '" + changeit + "' for your convenience").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append(name + ".pfx").append("\n");
-                buffer.append("\n");
                 buffer.append("# Reference OpenSSL command line to create p12/pfx file").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".p12").append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".pfx").append("\n");
+                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
                 buffer.append("Installation Instructions for Apache").append("\n");
                 buffer.append("====================================================================================").append("\n");
@@ -172,8 +164,6 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("server.ssl.key-store=/your/path/to/" + name + ".p12").append("\n");
                 buffer.append("server.ssl.key-store-type=PKCS12").append("\n");
                 buffer.append("server.ssl.key-store-password=changeit").append("\n");
-                buffer.append("server.ssl.key-alias=" + name).append("\n");
-                buffer.append("server.ssl.key-password=changeit").append("\n");
                 buffer.append("\n");
                 buffer.append("Import/Delete JDK-11 cacert entry").append("\n");
                 buffer.append("====================================================================================").append("\n");
