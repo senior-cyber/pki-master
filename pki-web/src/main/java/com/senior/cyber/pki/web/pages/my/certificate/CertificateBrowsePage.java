@@ -102,8 +102,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             Root root = intermediate.getRoot();
 
             String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
-            String caChain = "ca-chain.crt";
-            String certificateChain = "certificate-chain.crt";
+            String caChain = name + "_ca-chain.crt";
+            String certificateChain = name + "_certificate-chain.crt";
             String changeit = "changeit";
 
             String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
