@@ -110,21 +110,23 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
 
             {
+
+                String changeit = "changeit";
+
                 StringBuffer buffer = new StringBuffer();
 
                 buffer.append("Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
-                buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -keystore " + name + ".jks -alias " + name + " -import -file " + name + ".crt").append("\n");
+                buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+
                 buffer.append("\n");
                 buffer.append("Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server.ssl.enabled=true").append("\n");
                 buffer.append("server.ssl.client-auth=need").append("\n");
-                buffer.append("server.ssl.trust-store=/your/path/to/" + name + ".jks").append("\n");
-                buffer.append("server.ssl.trust-store-type=JKS").append("\n");
-                buffer.append("server.ssl.trust-store-password=changeit").append("\n");
+                buffer.append("server.ssl.trust-store=/your/path/to/" + name + ".p12").append("\n");
+                buffer.append("server.ssl.trust-store-type=PKCS12").append("\n");
+                buffer.append("server.ssl.trust-store-password=" + changeit).append("\n");
 
                 String crt = buffer.toString();
                 ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
