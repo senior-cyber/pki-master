@@ -3,6 +3,7 @@ package com.senior.cyber.pki.web.controller;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.RootRepository;
@@ -42,9 +43,9 @@ public class RevokeController {
     @RequestMapping(path = "/root/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> root(@PathVariable("id") long id,
                                      HttpServletRequest request) {
-        UserUtility.authenticate(request);
+        User user = UserUtility.authenticate(request);
 
-        Optional<Root> optionalRoot = rootRepository.findById(id);
+        Optional<Root> optionalRoot = rootRepository.findByIdAndUser(id, user);
         Root root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, id + " is not found"));
 
         Date now = LocalDate.now().toDate();
@@ -73,9 +74,9 @@ public class RevokeController {
     @RequestMapping(path = "/intermediate/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> intermediate(@PathVariable("id") long id,
                                              HttpServletRequest request) {
-        UserUtility.authenticate(request);
+        User user = UserUtility.authenticate(request);
 
-        Optional<Intermediate> optionalIntermediate = intermediateRepository.findById(id);
+        Optional<Intermediate> optionalIntermediate = intermediateRepository.findByIdAndUser(id, user);
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, id + " is not found"));
 
         Date now = LocalDate.now().toDate();
@@ -99,9 +100,9 @@ public class RevokeController {
     @RequestMapping(path = "/certificate/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> certificate(@PathVariable("id") long id,
                                             HttpServletRequest request) {
-        UserUtility.authenticate(request);
+        User user = UserUtility.authenticate(request);
 
-        Optional<Certificate> optionalCertificate = certificateRepository.findById(id);
+        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(id, user);
         Certificate certificate = optionalCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, id + " is not found"));
 
         Date now = LocalDate.now().toDate();
