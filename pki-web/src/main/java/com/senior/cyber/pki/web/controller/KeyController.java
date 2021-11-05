@@ -1,14 +1,14 @@
 package com.senior.cyber.pki.web.controller;
 
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.web.configuration.SslConfiguration;
-import com.senior.cyber.pki.web.repository.KeyRepository;
-import com.senior.cyber.pki.web.utility.Crypto;
-import com.senior.cyber.frmk.common.pki.PublicKeyUtils;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.CleartextKeysetHandle;
 import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
+import com.senior.cyber.frmk.common.pki.PublicKeyUtils;
+import com.senior.cyber.pki.dao.entity.Key;
+import com.senior.cyber.pki.web.configuration.SslConfiguration;
+import com.senior.cyber.pki.web.repository.KeyRepository;
+import com.senior.cyber.pki.web.utility.Crypto;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -22,6 +22,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.Base64;
+import java.util.Enumeration;
 import java.util.Optional;
 
 @RestController
@@ -50,10 +52,20 @@ public class KeyController {
     public ResponseEntity<String> info(HttpServletRequest request) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableEntryException {
         if (request.isSecure()) {
             KeyStore keyStore = KeyStore.getInstance(sslConfiguration.getKeyStoreType());
-            try (InputStream stream = FileUtils.openInputStream(sslConfiguration.getKeyStore())) {
+            try (InputStream stream = new ByteArrayInputStream(IOUtils.toByteArray(FileUtils.openInputStream(sslConfiguration.getKeyStore())))) {
                 keyStore.load(stream, sslConfiguration.getKeyStorePassword().toCharArray());
             }
-            Certificate certificate = keyStore.getCertificate(sslConfiguration.getKeyAlias());
+            String keyAlias = null;
+            if (sslConfiguration.getKeyAlias() == null || "".equals(sslConfiguration.getKeyAlias())) {
+                Enumeration<String> aliases = keyStore.aliases();
+                while (aliases.hasMoreElements()) {
+                    keyAlias = aliases.nextElement();
+                    break;
+                }
+            } else {
+                keyAlias = sslConfiguration.getKeyAlias();
+            }
+            Certificate certificate = keyStore.getCertificate(keyAlias);
             PublicKey publicKey = PublicKeyUtils.read(PublicKeyUtils.write(certificate.getPublicKey()));
             return ResponseEntity.ok(PublicKeyUtils.write(publicKey));
         } else {
