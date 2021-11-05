@@ -103,7 +103,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
             String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
             String caChain = name + "_ca-chain.crt";
-            String certificateChain = name + "_certificate-chain.crt";
+            String fullChain = name + "_full-chain.crt";
             String changeit = "changeit";
 
             String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
@@ -138,7 +138,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
             {
                 String crt = certificate.getCertificate() + intermediate.getCertificate() + root.getCertificate();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(certificateChain);
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(fullChain);
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -149,8 +149,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("# Reference OpenSSL command line to create p12/pfx file").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + certificateChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
+                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
                 buffer.append("Installation Instructions for Apache").append("\n");
                 buffer.append("====================================================================================").append("\n");
