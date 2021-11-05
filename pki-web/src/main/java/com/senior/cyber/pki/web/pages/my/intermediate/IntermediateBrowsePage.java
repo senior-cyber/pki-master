@@ -115,12 +115,12 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
                 StringBuffer buffer = new StringBuffer();
 
-                buffer.append("Installation Instructions for SpringBoot").append("\n");
+                buffer.append("# Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
 
                 buffer.append("\n");
-                buffer.append("Installation Instructions for SpringBoot").append("\n");
+                buffer.append("# Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server.ssl.enabled=true").append("\n");
                 buffer.append("server.ssl.client-auth=need").append("\n");
