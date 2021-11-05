@@ -1,6 +1,15 @@
 package com.senior.cyber.pki.web.pages.my.certificate;
 
+import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
@@ -10,17 +19,6 @@ import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.utility.MemoryResourceStream;
-import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -40,15 +38,12 @@ import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.util.resource.IResourceStream;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.context.ApplicationContext;
 
 import javax.persistence.Tuple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -205,40 +200,6 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 zipArchiveOutputStream.closeArchiveEntry();
             }
 
-            byte[] p12Data = null;
-            {
-                KeyStore store = KeyStore.getInstance("PKCS12", BouncyCastleProvider.PROVIDER_NAME);
-                store.load(null, changeit.toCharArray());
-                java.security.cert.Certificate[] chain = new java.security.cert.Certificate[3];
-                chain[0] = CertificateUtils.read(certificate.getCertificate());
-                chain[1] = CertificateUtils.read(intermediate.getCertificate());
-                chain[2] = CertificateUtils.read(root.getCertificate());
-
-                PrivateKey privateKey = PrivateKeyUtils.read(certificate.getPrivateKey());
-
-                store.setKeyEntry(name, privateKey, changeit.toCharArray(), chain);
-                ByteArrayOutputStream p12 = new ByteArrayOutputStream();
-                store.store(p12, changeit.toCharArray());
-                p12.close();
-                p12Data = p12.toByteArray();
-            }
-
-            {
-                ZipArchiveEntry p12Entry = new ZipArchiveEntry(name + ".p12");
-                p12Entry.setSize(p12Data.length);
-                zipArchiveOutputStream.putArchiveEntry(p12Entry);
-                zipArchiveOutputStream.write(p12Data);
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                ZipArchiveEntry p12Entry = new ZipArchiveEntry(name + ".pfx");
-                p12Entry.setSize(p12Data.length);
-                zipArchiveOutputStream.putArchiveEntry(p12Entry);
-                zipArchiveOutputStream.write(p12Data);
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
             zipArchiveOutputStream.close();
 
             IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
@@ -252,7 +213,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
 
-        } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | NoSuchProviderException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
