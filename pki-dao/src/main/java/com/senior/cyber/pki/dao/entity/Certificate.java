@@ -46,15 +46,6 @@ public class Certificate implements Serializable {
     @Column(name = "serial")
     private Long serial;
 
-//    @Column(name = "crl_url")
-//    private String crlUrl;
-//
-//    @Column(name = "ocsp_url")
-//    private String ocspUrl;
-//
-//    @Column(name = "ca_url")
-//    private String caUrl;
-
     @Temporal(TemporalType.DATE)
     @Column(name = "valid_from")
     private Date validFrom;
@@ -220,30 +211,6 @@ public class Certificate implements Serializable {
     public void setValidUntil(Date validUntil) {
         this.validUntil = validUntil;
     }
-
-//    public String getCrlUrl() {
-//        return crlUrl;
-//    }
-//
-//    public void setCrlUrl(String crlUrl) {
-//        this.crlUrl = crlUrl;
-//    }
-//
-//    public String getOcspUrl() {
-//        return ocspUrl;
-//    }
-//
-//    public void setOcspUrl(String ocspUrl) {
-//        this.ocspUrl = ocspUrl;
-//    }
-//
-//    public String getCaUrl() {
-//        return caUrl;
-//    }
-//
-//    public void setCaUrl(String caUrl) {
-//        this.caUrl = caUrl;
-//    }
 
     public Intermediate getIntermediate() {
         return intermediate;

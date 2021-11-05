@@ -6,6 +6,7 @@ import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.repository.HSessionRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.RoleUtility;
+import com.senior.cyber.pki.web.utility.UserUtility;
 import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.request.Request;
@@ -66,45 +67,31 @@ public class WebSession extends AuthenticatedWebSession {
     @Override
     protected boolean authenticate(String username, String password) {
         ApplicationContext context = WicketFactory.getApplicationContext();
-        NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        HSessionRepository HSessionRepository = context.getBean(HSessionRepository.class);
 
-        Optional<User> optionalUser = userRepository.findByLogin(username);
-
-        User user = optionalUser.orElse(null);
+        User user = UserUtility.authenticate(username, password);
 
         if (user == null) {
             return false;
         }
 
-        if (!user.isEnabled()) {
-            return false;
-        }
-
-        PasswordEncryptor passwordEncryptor = context.getBean(PasswordEncryptor.class);
+        NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
+        HSessionRepository hSessionRepository = context.getBean(HSessionRepository.class);
         TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
-        try {
-            if (!passwordEncryptor.checkPassword(password, user.getPassword())) {
-                return false;
-            }
-            this.queue = new LinkedList<>();
-            List<String> roles = RoleUtility.lookupRole(named, user.getId());
-            this.roles = new Roles();
-            this.roles.addAll(roles);
-            this.userId = user.getId();
-            this.pwd = textEncryptor.encrypt(password);
 
-            Optional<Session> optionalSession = HSessionRepository.findBySessionId(this.sessionId);
-            Session session = optionalSession.orElse(null);
-            if (session != null) {
-                session.setLogin(user.getLogin());
-                HSessionRepository.save(session);
-            }
-            return true;
-        } catch (EncryptionOperationNotPossibleException e) {
-            return false;
+        this.queue = new LinkedList<>();
+        List<String> roles = RoleUtility.lookupRole(named, user.getId());
+        this.roles = new Roles();
+        this.roles.addAll(roles);
+        this.userId = user.getId();
+        this.pwd = textEncryptor.encrypt(password);
+
+        Optional<Session> optionalSession = hSessionRepository.findBySessionId(this.sessionId);
+        Session session = optionalSession.orElse(null);
+        if (session != null) {
+            session.setLogin(user.getLogin());
+            hSessionRepository.save(session);
         }
+        return true;
     }
 
     public Long getUserId() {
