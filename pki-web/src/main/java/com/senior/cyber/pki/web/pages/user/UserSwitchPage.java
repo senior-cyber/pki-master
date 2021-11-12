@@ -41,10 +41,6 @@ public class UserSwitchPage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-//        DataContext dataContext = context.getBean(DataContext.class);
-//        User userTable = User.staticInitialize(dataContext);
-
         this.user_provider = new SingleChoiceProvider<>(
                 Long.class, new LongConvertor(),
                 String.class, new StringConvertor(),
