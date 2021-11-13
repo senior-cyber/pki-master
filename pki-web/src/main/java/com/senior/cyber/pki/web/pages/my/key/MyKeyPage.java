@@ -97,7 +97,10 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
         if (textEncryptor == null) {
             textEncryptor = new AES256TextEncryptor();
-            textEncryptor.setPassword(getSession().getPwd());
+            try {
+                textEncryptor.setPassword(getSession().getPwd());
+            } catch (EncryptionOperationNotPossibleException e) {
+            }
         }
         long uuid = object.get("uuid", long.class);
         if (shown.contains(uuid)) {
