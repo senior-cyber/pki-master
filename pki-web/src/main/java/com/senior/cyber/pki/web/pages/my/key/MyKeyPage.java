@@ -32,6 +32,7 @@ import org.apache.wicket.authroles.authorization.strategies.role.annotations.Aut
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
@@ -113,8 +114,16 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     @Override
     protected void onInitHtml(MarkupContainer body) {
+        WebMarkupContainer createBlock = new WebMarkupContainer("createBlock");
+        body.add(createBlock);
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+            createBlock.setVisible(true);
+        } else {
+            createBlock.setVisible(false);
+        }
+
         this.form = new Form<>("form");
-        body.add(this.form);
+        createBlock.add(this.form);
 
         this.row1 = UIRow.newUIRow("row1", this.form);
 
@@ -137,11 +146,6 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             }
         };
         this.form.add(this.createButton);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-            this.createButton.setVisible(true);
-        } else {
-            this.createButton.setVisible(false);
-        }
 
         this.key_browse_form = new FilterForm<>("key_browse_form", this.key_browse_provider);
         body.add(this.key_browse_form);
