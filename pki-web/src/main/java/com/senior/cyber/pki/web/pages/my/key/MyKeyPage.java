@@ -149,11 +149,13 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         body.add(createBlock);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-                createBlock.setVisible(true);
-            } else {
-                createBlock.setVisible(false);
+        if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+                    createBlock.setVisible(true);
+                } else {
+                    createBlock.setVisible(false);
+                }
             }
         }
 
@@ -193,7 +195,11 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+            if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             } else {
                 throw new WicketRuntimeException("No Permission");
             }
@@ -206,7 +212,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
             Crypto crypto = context.getBean(Crypto.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(getSession().getLoginUserId());
+            Optional<User> optionalUser = userRepository.findById(getSession().getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
             KeyRepository keyRepository = context.getBean(KeyRepository.class);
             String clientSecret = Base64.getEncoder().encodeToString(secretKey.getEncoded());

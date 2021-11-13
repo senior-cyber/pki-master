@@ -150,7 +150,11 @@ public class WebSession extends AuthenticatedWebSession {
     public String getPwd() {
         ApplicationContext context = WicketFactory.getApplicationContext();
         TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
-        return textEncryptor.decrypt(this.pwd);
+        try {
+            return textEncryptor.decrypt(this.pwd);
+        } catch (EncryptionOperationNotPossibleException e) {
+            return null;
+        }
     }
 
 }
