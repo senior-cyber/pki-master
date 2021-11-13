@@ -75,8 +75,12 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.certificate_browse_provider, new DateConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.certificate_browse_provider, new StringConvertor()));
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
-        this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
+            this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
+        }
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+            this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
+        }
     }
 
     @Override
@@ -223,20 +227,28 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_form = new FilterForm<>("certificate_browse_form", this.certificate_browse_provider);
         body.add(this.certificate_browse_form);
 
-        this.certificate_browse_table = new DataTable<>("certificate_browse_table", this.certificate_browse_column,
-                this.certificate_browse_provider, 20);
+        this.certificate_browse_table = new DataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
         this.certificate_browse_form.add(this.certificate_browse_table);
 
         this.createButton = new BookmarkablePageLink<>("createButton", CertificateGeneratePage.class);
         body.add(this.createButton);
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action)) {
+            this.createButton.setVisible(true);
+        } else {
+            this.createButton.setVisible(false);
+        }
     }
 
     protected List<ActionItem> certificate_browse_action_link(String link, Tuple model) {
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
-        actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
+            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+        }
         if ("Good".equals(status)) {
-            actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            }
         }
         return actions;
     }

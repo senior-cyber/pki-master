@@ -22,7 +22,13 @@ public class V001__RoleTable extends LiquibaseMigration {
 
         Map<String, String> roles = new LinkedHashMap<>();
         roles.put(Role.NAME_ROOT, Role.DESCRIPTION_ROOT);
+
         roles.put(Role.NAME_Page_MyCertificateBrowse, Role.DESCRIPTION_Page_MyCertificateBrowse);
+        roles.put(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action, Role.DESCRIPTION_Page_MyCertificateBrowse_IssueNewCertificate_Action);
+        roles.put(Role.NAME_Page_MyCertificateBrowse_Copy_Action, Role.DESCRIPTION_Page_MyCertificateBrowse_Copy_Action);
+        roles.put(Role.NAME_Page_MyCertificateBrowse_Revoke_Action, Role.DESCRIPTION_Page_MyCertificateBrowse_Revoke_Action);
+        roles.put(Role.NAME_Page_MyCertificateBrowse_Download_Action, Role.DESCRIPTION_Page_MyCertificateBrowse_Download_Action);
+
         roles.put(Role.NAME_Page_MyCertificateGenerate, Role.DESCRIPTION_Page_MyCertificateGenerate);
         roles.put(Role.NAME_Page_MyCertificateRevoke, Role.DESCRIPTION_Page_MyCertificateRevoke);
         roles.put(Role.NAME_Page_MyIntermediateBrowse, Role.DESCRIPTION_Page_MyIntermediateBrowse);
@@ -32,10 +38,12 @@ public class V001__RoleTable extends LiquibaseMigration {
         roles.put(Role.NAME_Page_MyRootGenerate, Role.DESCRIPTION_Page_MyRootGenerate);
         roles.put(Role.NAME_Page_MyRootRevoke, Role.DESCRIPTION_Page_MyRootRevoke);
         roles.put(Role.NAME_Page_MyProfile, Role.DESCRIPTION_Page_MyProfile);
+
         roles.put(Role.NAME_Page_MyKey, Role.DESCRIPTION_Page_MyKey);
         roles.put(Role.NAME_Page_MyKey_Create_Action, Role.DESCRIPTION_Page_MyKey_Create_Action);
         roles.put(Role.NAME_Page_MyKey_Delete_Action, Role.DESCRIPTION_Page_MyKey_Delete_Action);
         roles.put(Role.NAME_Page_MyKey_ShowSecret_Action, Role.DESCRIPTION_Page_MyKey_ShowSecret_Action);
+
         roles.put(Role.NAME_Page_RoleBrowse, Role.DESCRIPTION_Page_RoleBrowse);
         roles.put(Role.NAME_Page_SessionBrowse, Role.DESCRIPTION_Page_SessionBrowse);
         roles.put(Role.NAME_Page_GroupBrowse, Role.DESCRIPTION_Page_GroupBrowse);

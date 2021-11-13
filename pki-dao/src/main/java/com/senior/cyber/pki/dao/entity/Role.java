@@ -11,17 +11,25 @@ public class Role implements Serializable {
     public static final String NAME_ROOT = "root";
     public static final String NAME_Page_MyProfile = "MyProfilePage";
     public static final String NAME_Page_RoleBrowse = "RoleBrowsePage";
+
     public static final String NAME_Page_MyCertificateBrowse = "MyCertificateBrowsePage";
+    public static final String NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action = "MyCertificateBrowsePageIssueNewCertificateAction";
+    public static final String NAME_Page_MyCertificateBrowse_Copy_Action = "MyCertificateBrowsePageCopyAction";
+    public static final String NAME_Page_MyCertificateBrowse_Revoke_Action = "MyCertificateBrowsePageRevokeAction";
+    public static final String NAME_Page_MyCertificateBrowse_Download_Action = "MyCertificateBrowsePageDownloadAction";
+
     public static final String NAME_Page_MyCertificateGenerate = "MyCertificateGeneratePage";
     public static final String NAME_Page_MyCertificateRevoke = "MyCertificateRevokePage";
     public static final String NAME_Page_MyRootBrowse = "MyRootBrowsePage";
     public static final String NAME_Page_MyRootGenerate = "MyRootGeneratePage";
     public static final String NAME_Page_MyRootRevoke = "MyRootRevokePage";
     public static final String NAME_Page_MyIntermediateBrowse = "MyIntermediateBrowsePage";
+
     public static final String NAME_Page_MyKey = "MyKeyPage";
     public static final String NAME_Page_MyKey_Create_Action = "MyKeyPageCreateAction";
     public static final String NAME_Page_MyKey_Delete_Action = "MyKeyPageDeleteAction";
     public static final String NAME_Page_MyKey_ShowSecret_Action = "MyKeyPageShowSecretAction";
+
     public static final String NAME_Page_MyIntermediateGenerate = "MyIntermediateGeneratePage";
     public static final String NAME_Page_MyIntermediateRevoke = "MyIntermediateRevokePage";
     public static final String NAME_Page_GroupBrowse = "GroupBrowsePage";
@@ -33,12 +41,20 @@ public class Role implements Serializable {
     public static final String NAME_Page_UserExit = "UserExitPage";
 
     public static final String DESCRIPTION_ROOT = "could access everything";
+
     public static final String DESCRIPTION_Page_MyCertificateBrowse = "could access my certificate browse page";
+    public static final String DESCRIPTION_Page_MyCertificateBrowse_IssueNewCertificate_Action = "could access issue new certificate button";
+    public static final String DESCRIPTION_Page_MyCertificateBrowse_Copy_Action = "could access copy button";
+    public static final String DESCRIPTION_Page_MyCertificateBrowse_Revoke_Action = "could access revoke button";
+    public static final String DESCRIPTION_Page_MyCertificateBrowse_Download_Action = "could access download button";
+
     public static final String DESCRIPTION_Page_MyCertificateGenerate = "could access my certificate generate page";
+
     public static final String DESCRIPTION_Page_MyKey = "could access my key page";
-    public static final String DESCRIPTION_Page_MyKey_Create_Action = "could create key";
-    public static final String DESCRIPTION_Page_MyKey_Delete_Action = "could delete key";
-    public static final String DESCRIPTION_Page_MyKey_ShowSecret_Action = "could view secret key";
+    public static final String DESCRIPTION_Page_MyKey_Create_Action = "could access create button";
+    public static final String DESCRIPTION_Page_MyKey_Delete_Action = "could access delete button";
+    public static final String DESCRIPTION_Page_MyKey_ShowSecret_Action = "could access show secret button";
+
     public static final String DESCRIPTION_Page_MyCertificateRevoke = "could access my certificate revoke page";
     public static final String DESCRIPTION_Page_MyIntermediateBrowse = "could access my intermediate browse page";
     public static final String DESCRIPTION_Page_MyIntermediateGenerate = "could access my intermediate generate page";
