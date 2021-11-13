@@ -60,6 +60,8 @@ import java.util.*;
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyKey})
 public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
+    protected WebMarkupContainer createBlock;
+
     protected Form<Void> form;
 
     protected UIRow row1;
@@ -145,9 +147,8 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     }
 
     @Override
-    protected void onInitHtml(MarkupContainer body) {
-        WebMarkupContainer createBlock = new WebMarkupContainer("createBlock");
-        body.add(createBlock);
+    protected void onBeforeRender() {
+        super.onBeforeRender();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
@@ -161,6 +162,12 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         } else {
             createBlock.setVisible(false);
         }
+    }
+
+    @Override
+    protected void onInitHtml(MarkupContainer body) {
+        createBlock = new WebMarkupContainer("createBlock");
+        body.add(createBlock);
 
         this.form = new Form<>("form");
         createBlock.add(this.form);

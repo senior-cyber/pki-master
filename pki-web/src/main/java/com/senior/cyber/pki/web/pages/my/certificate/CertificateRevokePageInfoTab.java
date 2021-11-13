@@ -277,6 +277,13 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         };
         this.form.add(this.revokeButton);
 
+        this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
+        this.form.add(this.cancelButton);
+    }
+
+    @Override
+    protected void onBeforeRender() {
+        super.onBeforeRender();
         WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
@@ -287,9 +294,6 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
                 this.revokeButton.setVisible(false);
             }
         }
-
-        this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
-        this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {

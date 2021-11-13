@@ -98,6 +98,11 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
         this.createButton = new BookmarkablePageLink<>("createButton", IntermediateGeneratePage.class);
         body.add(this.createButton);
+    }
+
+    @Override
+    protected void onBeforeRender() {
+        super.onBeforeRender();
         if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action)) {
             this.createButton.setVisible(true);
         } else {

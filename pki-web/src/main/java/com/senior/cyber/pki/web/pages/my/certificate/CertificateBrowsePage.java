@@ -249,6 +249,11 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
         this.createButton = new BookmarkablePageLink<>("createButton", CertificateGeneratePage.class);
         body.add(this.createButton);
+    }
+
+    @Override
+    protected void onBeforeRender() {
+        super.onBeforeRender();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
