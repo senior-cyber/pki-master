@@ -2,10 +2,7 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Iban;
-import com.senior.cyber.pki.dao.entity.Intermediate;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.dto.CertificateRequestDto;
@@ -173,7 +170,7 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
             this.email_address_value = certificate.getEmailAddress();
             this.san_value = certificate.getSan();
-            if ("Good".equals(certificate.getIntermediate().getStatus())){
+            if ("Good".equals(certificate.getIntermediate().getStatus())) {
                 this.intermediate_value = new Option(String.valueOf(certificate.getIntermediate().getId()), certificate.getIntermediate().getCommonName());
             }
         }
@@ -315,6 +312,12 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
+        WebSession session = (WebSession) getSession();
+        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
+            this.saveButton.setVisible(true);
+        } else {
+            this.saveButton.setVisible(false);
+        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
         this.form.add(this.cancelButton);

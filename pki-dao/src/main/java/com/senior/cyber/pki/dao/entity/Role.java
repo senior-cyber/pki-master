@@ -19,6 +19,9 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyCertificateBrowse_Download_Action = "MyCertificateBrowsePageDownloadAction";
 
     public static final String NAME_Page_MyCertificateGenerate = "MyCertificateGeneratePage";
+    public static final String NAME_Page_MyCertificateGenerate_Issue_Action = "MyCertificateGeneratePageIssueAction";
+
+
     public static final String NAME_Page_MyCertificateRevoke = "MyCertificateRevokePage";
     public static final String NAME_Page_MyRootBrowse = "MyRootBrowsePage";
     public static final String NAME_Page_MyRootGenerate = "MyRootGeneratePage";
@@ -49,6 +52,7 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyCertificateBrowse_Download_Action = "could access download button";
 
     public static final String DESCRIPTION_Page_MyCertificateGenerate = "could access my certificate generate page";
+    public static final String DESCRIPTION_Page_MyCertificateGenerate_Issue_Action = "could access issue button";
 
     public static final String DESCRIPTION_Page_MyKey = "could access my key page";
     public static final String DESCRIPTION_Page_MyKey_Create_Action = "could access create button";
