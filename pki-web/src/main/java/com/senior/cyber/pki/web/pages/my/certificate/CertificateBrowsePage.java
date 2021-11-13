@@ -90,6 +90,10 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
+        } else {
+            throw new WicketRuntimeException("No Permission");
+        }
         try {
             long uuid = tuple.get("uuid", long.class);
 
@@ -255,11 +259,19 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
     protected void certificate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         if ("Revoke".equals(link)) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);

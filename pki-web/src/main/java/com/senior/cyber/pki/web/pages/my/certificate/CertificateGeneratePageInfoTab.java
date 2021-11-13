@@ -326,6 +326,11 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
+        WebSession session = (WebSession) getSession();
+        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
+        } else {
+            throw new WicketRuntimeException("No Permission");
+        }
         try {
             long serial = System.currentTimeMillis();
 
@@ -336,8 +341,6 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             UserRepository userRepository = context.getBean(UserRepository.class);
 
             String httpAddress = pkiApiConfiguration.getAddress();
-
-            WebSession session = (WebSession) getSession();
 
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
