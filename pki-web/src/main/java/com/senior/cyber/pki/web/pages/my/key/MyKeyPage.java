@@ -91,6 +91,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             this.key_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
         }
         this.key_browse_provider.setCountField("key_id");
+        this.key_browse_provider.selectNormalColumn("user_id", "user_id", new LongConvertor());
 
         this.key_browse_column = new ArrayList<>();
         this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "key_id", this.key_browse_provider, new LongConvertor()));
@@ -109,6 +110,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
+        long userId = object.get("user_id", long.class);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
@@ -133,7 +135,11 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                 return new TextCell("");
             }
         } else {
-            return new TextCell("*********");
+            if (userId == getSession().getQueue().get(0)) {
+                return new TextCell("*********");
+            } else {
+                return new TextCell("");
+            }
         }
     }
 
@@ -230,6 +236,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     protected List<ActionItem> key_browse_action_link(String link, Tuple model) {
         long uuid = model.get("uuid", long.class);
+        long userId = model.get("user_id", long.class);
         List<ActionItem> actions = new ArrayList<>(0);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
@@ -243,7 +250,9 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         } else {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-                    actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+                    if (getSession().getQueue().get(0) == userId) {
+                        actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+                    }
                 }
             }
         }
