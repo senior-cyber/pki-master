@@ -157,6 +157,8 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                     createBlock.setVisible(false);
                 }
             }
+        } else {
+            createBlock.setVisible(false);
         }
 
         this.form = new Form<>("form");
