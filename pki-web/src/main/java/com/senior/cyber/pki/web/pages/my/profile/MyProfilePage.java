@@ -27,7 +27,9 @@ public class MyProfilePage extends MasterPage {
     protected void onInitData() {
         super.onInitData();
         this.info_tab = new Tab("info", "My Info", MyProfilePageInfoTab.class);
-        this.pwd_tab = new Tab("pwd", "Password", MyProfilePagePwdTab.class);
+        if (getSession().getQueue().isEmpty()) {
+            this.pwd_tab = new Tab("pwd", "Password", MyProfilePagePwdTab.class);
+        }
     }
 
     @Override

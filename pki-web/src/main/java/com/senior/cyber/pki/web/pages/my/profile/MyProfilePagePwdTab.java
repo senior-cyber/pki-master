@@ -17,6 +17,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
@@ -63,6 +64,15 @@ public class MyProfilePagePwdTab extends ContentPanel {
 
     public MyProfilePagePwdTab(String id, String name, TabbedPanel<Tab> containerPanel, Map<String, Object> data) {
         super(id, name, containerPanel, data);
+    }
+
+    @Override
+    protected void onBeforeRender() {
+        super.onBeforeRender();
+        WebSession session = (WebSession) getSession();
+        if (!session.getQueue().isEmpty()) {
+            throw new WicketRuntimeException("No Permission");
+        }
     }
 
     @Override
