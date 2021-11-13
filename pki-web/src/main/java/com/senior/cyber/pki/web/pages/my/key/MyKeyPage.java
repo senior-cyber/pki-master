@@ -157,7 +157,6 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-                    createBlock.setVisible(true);
                 } else {
                     createBlock.setVisible(false);
                 }

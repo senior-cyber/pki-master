@@ -281,7 +281,6 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateRevoke_Revoke_Action)) {
-                this.revokeButton.setVisible(true);
             } else {
                 this.revokeButton.setVisible(false);
             }

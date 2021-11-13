@@ -325,7 +325,6 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-                this.saveButton.setVisible(true);
             } else {
                 this.saveButton.setVisible(false);
             }

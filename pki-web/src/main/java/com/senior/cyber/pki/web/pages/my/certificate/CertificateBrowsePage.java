@@ -258,12 +258,9 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action)) {
-                this.createButton.setVisible(true);
             } else {
                 this.createButton.setVisible(false);
             }
-        } else {
-            this.createButton.setVisible(true);
         }
     }
 
