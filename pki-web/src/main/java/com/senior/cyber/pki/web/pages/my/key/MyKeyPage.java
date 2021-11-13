@@ -110,6 +110,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         this.name_column = this.row1.newUIColumn("name_column", Size.Six_6);
         this.name_container = this.name_column.newUIContainer("name_container");
         this.name_field = new TextField<>("name_field", new PropertyModel<>(this, "name_value"));
+        this.name_field.setRequired(true);
         this.name_field.setLabel(Model.of("Name"));
         this.name_field.add(new KeyNameValidator());
         this.name_field.add(new ContainerFeedbackBehavior());
