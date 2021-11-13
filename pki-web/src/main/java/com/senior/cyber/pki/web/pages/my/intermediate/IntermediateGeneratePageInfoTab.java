@@ -16,10 +16,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Iban;
-import com.senior.cyber.pki.dao.entity.Intermediate;
-import com.senior.cyber.pki.dao.entity.Root;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
@@ -296,6 +293,15 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
+        WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateGenerate_Issue_Action)) {
+            } else {
+                this.saveButton.setVisible(false);
+            }
+        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", IntermediateBrowsePage.class);
         this.form.add(this.cancelButton);
@@ -304,18 +310,24 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
+        WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateGenerate_Issue_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
+        }
         try {
             long serial = System.currentTimeMillis();
 
-            ApplicationContext context = WicketFactory.getApplicationContext();
             PkiApiConfiguration pkiApiConfiguration = context.getBean(PkiApiConfiguration.class);
             RootRepository rootRepository = context.getBean(RootRepository.class);
             IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
 
             String httpAddress = pkiApiConfiguration.getAddress();
-
-            WebSession session = (WebSession) getSession();
 
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));

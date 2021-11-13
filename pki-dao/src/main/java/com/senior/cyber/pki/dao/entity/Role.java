@@ -34,13 +34,17 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyIntermediateBrowse_Revoke_Action = "MyIntermediateBrowsePageRevokeAction";
     public static final String NAME_Page_MyIntermediateBrowse_Download_Action = "MyIntermediateBrowsePageDownloadAction";
 
+    public static final String NAME_Page_MyIntermediateGenerate = "MyIntermediateGeneratePage";
+    public static final String NAME_Page_MyIntermediateGenerate_Issue_Action = "MyIntermediateGeneratePageIssueAction";
+
+    public static final String NAME_Page_MyIntermediateRevoke = "MyIntermediateRevokePage";
+    public static final String NAME_Page_MyIntermediateRevoke_Revoke_Action = "MyIntermediateRevokePageRevokeAction";
+
     public static final String NAME_Page_MyKey = "MyKeyPage";
     public static final String NAME_Page_MyKey_Create_Action = "MyKeyPageCreateAction";
     public static final String NAME_Page_MyKey_Delete_Action = "MyKeyPageDeleteAction";
     public static final String NAME_Page_MyKey_ShowSecret_Action = "MyKeyPageShowSecretAction";
 
-    public static final String NAME_Page_MyIntermediateGenerate = "MyIntermediateGeneratePage";
-    public static final String NAME_Page_MyIntermediateRevoke = "MyIntermediateRevokePage";
     public static final String NAME_Page_GroupBrowse = "GroupBrowsePage";
     public static final String NAME_Page_SessionBrowse = "SessionBrowsePage";
     public static final String NAME_Page_GroupModify = "GroupModifyPage";
@@ -75,7 +79,11 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyIntermediateBrowse_Download_Action = "could access download button";
 
     public static final String DESCRIPTION_Page_MyIntermediateGenerate = "could access my intermediate generate page";
+    public static final String DESCRIPTION_Page_MyIntermediateGenerate_Issue_Action = "could access issue button";
+
     public static final String DESCRIPTION_Page_MyIntermediateRevoke = "could access my intermediate revoke page";
+    public static final String DESCRIPTION_Page_MyIntermediateRevoke_Revoke_Action = "could access revoke button";
+
     public static final String DESCRIPTION_Page_MyRootBrowse = "could access my root browse page";
     public static final String DESCRIPTION_Page_MyRootGenerate = "could access my root generate page";
     public static final String DESCRIPTION_Page_MyRootRevoke = "could access my root revoke page";

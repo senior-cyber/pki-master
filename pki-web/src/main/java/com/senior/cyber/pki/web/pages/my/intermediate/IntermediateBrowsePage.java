@@ -105,9 +105,13 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
         this.createButton = new BookmarkablePageLink<>("createButton", IntermediateGeneratePage.class);
         body.add(this.createButton);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action)) {
-        } else {
-            this.createButton.setVisible(false);
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action)) {
+            } else {
+                this.createButton.setVisible(false);
+            }
         }
     }
 
@@ -198,11 +202,21 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     protected List<ActionItem> intermediate_browse_action_link(String link, Tuple model) {
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+                actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+            }
+        } else {
             actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
         if ("Good".equals(status)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+                }
+            } else {
                 actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
             }
         }
@@ -210,19 +224,25 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     }
 
     protected void intermediate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(IntermediateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();

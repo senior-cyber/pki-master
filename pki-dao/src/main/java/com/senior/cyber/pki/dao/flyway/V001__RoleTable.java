@@ -42,7 +42,11 @@ public class V001__RoleTable extends LiquibaseMigration {
         roles.put(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action, Role.DESCRIPTION_Page_MyIntermediateBrowse_Revoke_Action);
 
         roles.put(Role.NAME_Page_MyIntermediateGenerate, Role.DESCRIPTION_Page_MyIntermediateGenerate);
+        roles.put(Role.NAME_Page_MyIntermediateGenerate_Issue_Action, Role.DESCRIPTION_Page_MyIntermediateGenerate_Issue_Action);
+
         roles.put(Role.NAME_Page_MyIntermediateRevoke, Role.DESCRIPTION_Page_MyIntermediateRevoke);
+        roles.put(Role.NAME_Page_MyIntermediateRevoke_Revoke_Action, Role.DESCRIPTION_Page_MyIntermediateRevoke_Revoke_Action);
+
         roles.put(Role.NAME_Page_MyRootBrowse, Role.DESCRIPTION_Page_MyRootBrowse);
         roles.put(Role.NAME_Page_MyRootGenerate, Role.DESCRIPTION_Page_MyRootGenerate);
         roles.put(Role.NAME_Page_MyRootRevoke, Role.DESCRIPTION_Page_MyRootRevoke);
