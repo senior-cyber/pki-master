@@ -149,7 +149,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         body.add(createBlock);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
+        if (getSession().getQueue().isEmpty() && !"".equals(getSession().getPwd())) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
                     createBlock.setVisible(true);
@@ -197,7 +197,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
+            if (getSession().getQueue().isEmpty() && !"".equals(getSession().getPwd())) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
                 } else {
                     throw new WicketRuntimeException("No Permission");

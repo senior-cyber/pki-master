@@ -153,7 +153,7 @@ public class WebSession extends AuthenticatedWebSession {
         try {
             return textEncryptor.decrypt(this.pwd);
         } catch (EncryptionOperationNotPossibleException e) {
-            return null;
+            return "";
         }
     }
 
