@@ -117,6 +117,14 @@ public class WebSession extends AuthenticatedWebSession {
         this.roles = r;
     }
 
+    public long getLoginUserId() {
+        if (this.queue == null || this.queue.isEmpty()) {
+            return this.userId;
+        } else {
+            return this.queue.get(0);
+        }
+    }
+
     public void exitCurrent() {
         this.userId = this.queue.remove(this.queue.size() - 1);
 

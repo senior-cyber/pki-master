@@ -135,7 +135,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                 return new TextCell("");
             }
         } else {
-            if (userId == getSession().getQueue().get(0)) {
+            if (userId == getSession().getLoginUserId()) {
                 return new TextCell("*********");
             } else {
                 return new TextCell("");
@@ -250,7 +250,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         } else {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-                    if (getSession().getQueue().get(0) == userId) {
+                    if (getSession().getLoginUserId() == userId) {
                         actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
                     }
                 }
