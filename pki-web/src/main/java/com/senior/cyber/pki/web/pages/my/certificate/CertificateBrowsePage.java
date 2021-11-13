@@ -14,6 +14,8 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.Root;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
@@ -64,10 +66,14 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     @Override
     protected void onInitData() {
         super.onInitData();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.certificate_browse_provider = new MySqlDataProvider("tbl_certificate");
         this.certificate_browse_provider.setSort("certificate_id", SortOrder.DESCENDING);
-        this.certificate_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.certificate_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
         this.certificate_browse_provider.setCountField("certificate_id");
 
         this.certificate_browse_column = new ArrayList<>();
@@ -75,11 +81,15 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.certificate_browse_provider, new DateConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.certificate_browse_provider, new StringConvertor()));
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
-            this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
+                this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
+            }
         }
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
-            this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+                this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
+            }
         }
     }
 
@@ -90,14 +100,17 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
-        } else {
-            throw new WicketRuntimeException("No Permission");
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
         }
         try {
             long uuid = tuple.get("uuid", long.class);
 
-            ApplicationContext context = WicketFactory.getApplicationContext();
             CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
             Optional<Certificate> optionalCertificate = certificateRepository.findById(uuid);
             Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
@@ -236,41 +249,57 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
         this.createButton = new BookmarkablePageLink<>("createButton", CertificateGeneratePage.class);
         body.add(this.createButton);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action)) {
-            this.createButton.setVisible(true);
-        } else {
-            this.createButton.setVisible(false);
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action)) {
+                this.createButton.setVisible(true);
+            } else {
+                this.createButton.setVisible(false);
+            }
         }
     }
 
     protected List<ActionItem> certificate_browse_action_link(String link, Tuple model) {
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
         if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
-            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+            }
         }
         if ("Good".equals(status)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
-                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+                }
             }
         }
         return actions;
     }
 
     protected void certificate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();

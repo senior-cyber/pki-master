@@ -18,6 +18,8 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
@@ -81,22 +83,36 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     protected void onInitData() {
         super.onInitData();
         WebSession session = getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         this.key_browse_provider = new MySqlDataProvider("tbl_key");
         this.key_browse_provider.setSort("key_id", SortOrder.DESCENDING);
-        this.key_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.key_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
         this.key_browse_provider.setCountField("key_id");
 
         this.key_browse_column = new ArrayList<>();
         this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "key_id", this.key_browse_provider, new LongConvertor()));
         this.key_browse_column.add(Column.normalColumn(Model.of("Client ID"), "client_id", "client_id", this.key_browse_provider, new StringConvertor()));
         this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-            this.key_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::key_browse_action_link, this::key_browse_action_click));
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+                this.key_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::key_browse_action_link, this::key_browse_action_click));
+            }
         }
     }
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
+        }
         if (textEncryptor == null) {
             textEncryptor = new AES256TextEncryptor();
             try {
@@ -121,10 +137,14 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     protected void onInitHtml(MarkupContainer body) {
         WebMarkupContainer createBlock = new WebMarkupContainer("createBlock");
         body.add(createBlock);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-            createBlock.setVisible(true);
-        } else {
-            createBlock.setVisible(false);
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+                createBlock.setVisible(true);
+            } else {
+                createBlock.setVisible(false);
+            }
         }
 
         this.form = new Form<>("form");
@@ -160,9 +180,13 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     }
 
     protected void createButtonClick() {
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-        } else {
-            throw new WicketRuntimeException("No Permission");
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
         }
         try {
             KeyGenerator generator = KeyGenerator.getInstance("AES", BouncyCastleProvider.PROVIDER_NAME);
@@ -170,7 +194,6 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
             SecretKey secretKey = generator.generateKey();
 
-            ApplicationContext context = WicketFactory.getApplicationContext();
             Crypto crypto = context.getBean(Crypto.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
             Optional<User> optionalUser = userRepository.findById(getSession().getUserId());
@@ -204,14 +227,20 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     protected List<ActionItem> key_browse_action_link(String link, Tuple model) {
         long uuid = model.get("uuid", long.class);
         List<ActionItem> actions = new ArrayList<>(0);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
-            actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
+                actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
+            }
         }
         if (shown.contains(uuid)) {
             actions.add(new ActionItem("Hide Secret", Model.of("Hide Secret"), ItemCss.SUCCESS));
         } else {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-                actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+                    actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+                }
             }
         }
         return actions;
@@ -219,19 +248,24 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     protected void key_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         KeyRepository keyRepository = context.getBean(KeyRepository.class);
         long uuid = model.get("uuid", long.class);
         if ("Delete".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             keyRepository.deleteById(uuid);
             target.add(this.key_browse_table);
         } else if ("Show Secret".equals(link)) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
             }
             shown.add(uuid);
             target.add(this.key_browse_table);

@@ -1,8 +1,24 @@
 package com.senior.cyber.pki.web.pages.my.certificate;
 
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.pki.CertificateUtils;
+import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.layout.Size;
+import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
+import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
+import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.dto.CertificateRequestDto;
@@ -19,22 +35,7 @@ import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
 import com.senior.cyber.pki.web.utility.KeyPairUtility;
 import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.CertificateCommonNameValidator;
-import com.senior.cyber.pki.web.validator.CertificateOrganizationValidator;
 import com.senior.cyber.pki.web.validator.CertificateSanValidator;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.frmk.common.wicket.layout.Size;
-import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
-import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
-import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
-import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -313,10 +314,14 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
         };
         this.form.add(this.saveButton);
         WebSession session = (WebSession) getSession();
-        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-            this.saveButton.setVisible(true);
-        } else {
-            this.saveButton.setVisible(false);
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
+                this.saveButton.setVisible(true);
+            } else {
+                this.saveButton.setVisible(false);
+            }
         }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
@@ -327,14 +332,17 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
 
     protected void saveButtonClick() {
         WebSession session = (WebSession) getSession();
-        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-        } else {
-            throw new WicketRuntimeException("No Permission");
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
         }
         try {
             long serial = System.currentTimeMillis();
 
-            ApplicationContext context = WicketFactory.getApplicationContext();
             PkiApiConfiguration pkiApiConfiguration = context.getBean(PkiApiConfiguration.class);
             IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
             CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
