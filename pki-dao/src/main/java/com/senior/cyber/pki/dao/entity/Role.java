@@ -27,7 +27,12 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyRootBrowse = "MyRootBrowsePage";
     public static final String NAME_Page_MyRootGenerate = "MyRootGeneratePage";
     public static final String NAME_Page_MyRootRevoke = "MyRootRevokePage";
+
     public static final String NAME_Page_MyIntermediateBrowse = "MyIntermediateBrowsePage";
+    public static final String NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action = "MyIntermediateBrowsePageIssueNewIntermediateAction";
+    public static final String NAME_Page_MyIntermediateBrowse_Copy_Action = "MyIntermediateBrowsePageCopyAction";
+    public static final String NAME_Page_MyIntermediateBrowse_Revoke_Action = "MyIntermediateBrowsePageRevokeAction";
+    public static final String NAME_Page_MyIntermediateBrowse_Download_Action = "MyIntermediateBrowsePageDownloadAction";
 
     public static final String NAME_Page_MyKey = "MyKeyPage";
     public static final String NAME_Page_MyKey_Create_Action = "MyKeyPageCreateAction";
@@ -64,6 +69,11 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyCertificateRevoke_Revoke_Action = "could access revoke button";
 
     public static final String DESCRIPTION_Page_MyIntermediateBrowse = "could access my intermediate browse page";
+    public static final String DESCRIPTION_Page_MyIntermediateBrowse_IssueNewIntermediate_Action = "could access issue new intermediate button";
+    public static final String DESCRIPTION_Page_MyIntermediateBrowse_Copy_Action = "could access copy button";
+    public static final String DESCRIPTION_Page_MyIntermediateBrowse_Revoke_Action = "could access revoke button";
+    public static final String DESCRIPTION_Page_MyIntermediateBrowse_Download_Action = "could access download button";
+
     public static final String DESCRIPTION_Page_MyIntermediateGenerate = "could access my intermediate generate page";
     public static final String DESCRIPTION_Page_MyIntermediateRevoke = "could access my intermediate revoke page";
     public static final String DESCRIPTION_Page_MyRootBrowse = "could access my root browse page";

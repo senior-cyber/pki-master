@@ -73,8 +73,12 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.intermediate_browse_provider, new StringConvertor()));
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
-        this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
+            this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
+        }
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+            this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
+        }
     }
 
     @Override
@@ -88,6 +92,11 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
         this.createButton = new BookmarkablePageLink<>("createButton", IntermediateGeneratePage.class);
         body.add(this.createButton);
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action)) {
+            this.createButton.setVisible(true);
+        } else {
+            this.createButton.setVisible(false);
+        }
     }
 
     @Override
@@ -97,6 +106,10 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
+        } else {
+            throw new WicketRuntimeException("No Permission");
+        }
         try {
             long uuid = tuple.get("uuid", long.class);
             ApplicationContext context = WicketFactory.getApplicationContext();
@@ -173,20 +186,32 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     protected List<ActionItem> intermediate_browse_action_link(String link, Tuple model) {
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
-        actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
+        }
         if ("Good".equals(status)) {
-            actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            }
         }
         return actions;
     }
 
     protected void intermediate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         if ("Revoke".equals(link)) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(IntermediateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
