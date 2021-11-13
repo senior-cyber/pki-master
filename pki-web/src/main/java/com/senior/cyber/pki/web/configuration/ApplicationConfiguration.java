@@ -9,6 +9,16 @@ public class ApplicationConfiguration {
 
     private String secret;
 
+    private Mode mode;
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+    }
+
     public String getSecret() {
         return secret;
     }
