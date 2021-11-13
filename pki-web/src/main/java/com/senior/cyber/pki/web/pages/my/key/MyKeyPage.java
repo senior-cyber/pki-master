@@ -206,7 +206,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
             Crypto crypto = context.getBean(Crypto.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(getSession().getUserId());
+            Optional<User> optionalUser = userRepository.findById(getSession().getLoginUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
             KeyRepository keyRepository = context.getBean(KeyRepository.class);
             String clientSecret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
