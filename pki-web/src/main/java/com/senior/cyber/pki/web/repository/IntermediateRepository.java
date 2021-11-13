@@ -22,7 +22,11 @@ public interface IntermediateRepository extends JpaRepository<Intermediate, Long
 
     List<Intermediate> findByRootAndStatus(Root root, String status);
 
+    Optional<Intermediate> findByCommonNameAndStatus(String commonName, String status);
+
     Optional<Intermediate> findByCommonNameAndUserAndStatus(String commonName, User user, String status);
+
+    Optional<Intermediate> findByOrganizationAndStatus(String organization, String status);
 
     Optional<Intermediate> findByOrganizationAndUserAndStatus(String organization, User user, String status);
 
