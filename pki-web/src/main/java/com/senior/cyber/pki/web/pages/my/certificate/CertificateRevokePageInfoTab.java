@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 
 import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
@@ -267,11 +268,23 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         };
         this.form.add(this.revokeButton);
 
+        WebSession session = (WebSession) getSession();
+        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateRevoke_Revoke_Action)) {
+            this.revokeButton.setVisible(true);
+        } else {
+            this.revokeButton.setVisible(false);
+        }
+
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
         this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {
+        WebSession session = (WebSession) getSession();
+        if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateRevoke_Revoke_Action)) {
+        } else {
+            throw new WicketRuntimeException("No Permission");
+        }
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 
