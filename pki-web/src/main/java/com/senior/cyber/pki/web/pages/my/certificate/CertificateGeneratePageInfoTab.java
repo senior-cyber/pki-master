@@ -320,16 +320,6 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
-
-        this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
-        this.form.add(this.cancelButton);
-
-        this.form.add(new ValidityValidator(this.valid_from_field, this.valid_until_field));
-    }
-
-    @Override
-    protected void onBeforeRender() {
-        super.onBeforeRender();
         WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
@@ -340,6 +330,11 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
                 this.saveButton.setVisible(false);
             }
         }
+
+        this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
+        this.form.add(this.cancelButton);
+
+        this.form.add(new ValidityValidator(this.valid_from_field, this.valid_until_field));
     }
 
     protected void saveButtonClick() {
