@@ -95,7 +95,11 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         this.key_browse_column = new ArrayList<>();
         this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "key_id", this.key_browse_provider, new LongConvertor()));
         this.key_browse_column.add(Column.normalColumn(Model.of("Client ID"), "client_id", "client_id", this.key_browse_provider, new StringConvertor()));
-        this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+                this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
+            }
+        }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
                 this.key_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::key_browse_action_link, this::key_browse_action_click));
@@ -110,7 +114,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
             } else {
-                throw new WicketRuntimeException("No Permission");
+                return new TextCell("");
             }
         }
         if (textEncryptor == null) {
