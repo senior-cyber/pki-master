@@ -251,7 +251,9 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
-                actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
+                if (getSession().getLoginUserId() == userId) {
+                    actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
+                }
             }
         }
         if (shown.contains(uuid)) {
