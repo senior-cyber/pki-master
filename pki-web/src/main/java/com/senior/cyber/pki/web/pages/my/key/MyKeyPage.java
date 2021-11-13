@@ -42,6 +42,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jasypt.exceptions.EncryptionInitializationException;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.springframework.context.ApplicationContext;
@@ -131,7 +132,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             try {
                 String client_secret = object.get("client_secret", String.class);
                 return new TextCell(textEncryptor.decrypt(client_secret));
-            } catch (EncryptionOperationNotPossibleException e) {
+            } catch (EncryptionInitializationException | EncryptionOperationNotPossibleException e) {
                 return new TextCell("");
             }
         } else {
@@ -259,7 +260,9 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
                     if (getSession().getLoginUserId() == userId) {
-                        actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+                        if (getSession().getPwd() != null) {
+                            actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+                        }
                     }
                 }
             }
