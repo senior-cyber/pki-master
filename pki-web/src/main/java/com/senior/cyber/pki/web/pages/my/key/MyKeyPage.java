@@ -1,15 +1,6 @@
 package com.senior.cyber.pki.web.pages.my.key;
 
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.web.factory.WebSession;
-import com.senior.cyber.pki.web.pages.MasterPage;
-import com.senior.cyber.pki.web.repository.KeyRepository;
-import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.pki.web.utility.Crypto;
-import com.senior.cyber.pki.web.validator.KeyNameValidator;
+import com.google.crypto.tink.*;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -24,7 +15,16 @@ import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.google.crypto.tink.*;
+import com.senior.cyber.pki.dao.entity.Key;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.data.MySqlDataProvider;
+import com.senior.cyber.pki.web.factory.WebSession;
+import com.senior.cyber.pki.web.pages.MasterPage;
+import com.senior.cyber.pki.web.repository.KeyRepository;
+import com.senior.cyber.pki.web.repository.UserRepository;
+import com.senior.cyber.pki.web.utility.Crypto;
+import com.senior.cyber.pki.web.validator.KeyNameValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -72,6 +72,10 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     protected List<IColumn<Tuple, String>> key_browse_column;
     protected AbstractDataTable<Tuple, String> key_browse_table;
 
+    protected List<Long> shown = new ArrayList<>();
+
+    protected transient AES256TextEncryptor textEncryptor;
+
     @Override
     protected void onInitData() {
         super.onInitData();
@@ -90,13 +94,20 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        try {
-            AES256TextEncryptor textEncryptor = new AES256TextEncryptor();
+        if (textEncryptor == null) {
+            textEncryptor = new AES256TextEncryptor();
             textEncryptor.setPassword(getSession().getPwd());
-            String client_secret = object.get("client_secret", String.class);
-            return new TextCell(textEncryptor.decrypt(client_secret));
-        } catch (EncryptionOperationNotPossibleException e) {
-            return new TextCell("");
+        }
+        long uuid = object.get("uuid", long.class);
+        if (shown.contains(uuid)) {
+            try {
+                String client_secret = object.get("client_secret", String.class);
+                return new TextCell(textEncryptor.decrypt(client_secret));
+            } catch (EncryptionOperationNotPossibleException e) {
+                return new TextCell("");
+            }
+        } else {
+            return new TextCell("*********");
         }
     }
 
@@ -126,18 +137,21 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             }
         };
         this.form.add(this.createButton);
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
+            this.createButton.setVisible(true);
+        } else {
+            this.createButton.setVisible(false);
+        }
 
         this.key_browse_form = new FilterForm<>("key_browse_form", this.key_browse_provider);
         body.add(this.key_browse_form);
 
-        this.key_browse_table = new DataTable<>("key_browse_table", this.key_browse_column,
-                this.key_browse_provider, 20);
+        this.key_browse_table = new DataTable<>("key_browse_table", this.key_browse_column, this.key_browse_provider, 20);
         this.key_browse_form.add(this.key_browse_table);
     }
 
     protected void createButtonClick() {
         try {
-
             KeyGenerator generator = KeyGenerator.getInstance("AES", BouncyCastleProvider.PROVIDER_NAME);
             generator.init(256);
 
@@ -175,17 +189,33 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     }
 
     protected List<ActionItem> key_browse_action_link(String link, Tuple model) {
+        long uuid = model.get("uuid", long.class);
         List<ActionItem> actions = new ArrayList<>(0);
-        actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.SUCCESS));
+        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
+            actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
+        }
+        if (shown.contains(uuid)) {
+            actions.add(new ActionItem("Hide Secret", Model.of("Hide Secret"), ItemCss.SUCCESS));
+        } else {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
+                actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
+            }
+        }
         return actions;
     }
 
     protected void key_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         ApplicationContext context = WicketFactory.getApplicationContext();
         KeyRepository keyRepository = context.getBean(KeyRepository.class);
+        long uuid = model.get("uuid", long.class);
         if ("Delete".equals(link)) {
-            long uuid = model.get("uuid", long.class);
             keyRepository.deleteById(uuid);
+            target.add(this.key_browse_table);
+        } else if ("Show Secret".equals(link)) {
+            shown.add(uuid);
+            target.add(this.key_browse_table);
+        } else if ("Hide Secret".equals(link)) {
+            shown.remove(uuid);
             target.add(this.key_browse_table);
         }
     }

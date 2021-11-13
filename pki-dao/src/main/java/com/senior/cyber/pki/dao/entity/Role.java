@@ -19,6 +19,9 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyRootRevoke = "MyRootRevokePage";
     public static final String NAME_Page_MyIntermediateBrowse = "MyIntermediateBrowsePage";
     public static final String NAME_Page_MyKey = "MyKeyPage";
+    public static final String NAME_Page_MyKey_Create_Action = "MyKeyPageCreateAction";
+    public static final String NAME_Page_MyKey_Delete_Action = "MyKeyPageDeleteAction";
+    public static final String NAME_Page_MyKey_ShowSecret_Action = "MyKeyPageShowSecretAction";
     public static final String NAME_Page_MyIntermediateGenerate = "MyIntermediateGeneratePage";
     public static final String NAME_Page_MyIntermediateRevoke = "MyIntermediateRevokePage";
     public static final String NAME_Page_GroupBrowse = "GroupBrowsePage";
@@ -33,6 +36,9 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyCertificateBrowse = "could access my certificate browse page";
     public static final String DESCRIPTION_Page_MyCertificateGenerate = "could access my certificate generate page";
     public static final String DESCRIPTION_Page_MyKey = "could access my key page";
+    public static final String DESCRIPTION_Page_MyKey_Create_Action = "could create key";
+    public static final String DESCRIPTION_Page_MyKey_Delete_Action = "could delete key";
+    public static final String DESCRIPTION_Page_MyKey_ShowSecret_Action = "could view secret key";
     public static final String DESCRIPTION_Page_MyCertificateRevoke = "could access my certificate revoke page";
     public static final String DESCRIPTION_Page_MyIntermediateBrowse = "could access my intermediate browse page";
     public static final String DESCRIPTION_Page_MyIntermediateGenerate = "could access my intermediate generate page";
