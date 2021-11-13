@@ -79,10 +79,18 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.intermediate_browse_provider, new StringConvertor()));
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
+                this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
+            }
+        } else {
             this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
         }
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
+                this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
+            }
+        } else {
             this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
         }
     }
@@ -92,8 +100,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         this.intermediate_browse_form = new FilterForm<>("intermediate_browse_form", this.intermediate_browse_provider);
         body.add(this.intermediate_browse_form);
 
-        this.intermediate_browse_table = new DataTable<>("intermediate_browse_table", this.intermediate_browse_column,
-                this.intermediate_browse_provider, 20);
+        this.intermediate_browse_table = new DataTable<>("intermediate_browse_table", this.intermediate_browse_column, this.intermediate_browse_provider, 20);
         this.intermediate_browse_form.add(this.intermediate_browse_table);
 
         this.createButton = new BookmarkablePageLink<>("createButton", IntermediateGeneratePage.class);

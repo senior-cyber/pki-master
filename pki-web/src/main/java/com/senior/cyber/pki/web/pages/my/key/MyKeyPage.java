@@ -101,11 +101,15 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
                 this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
             }
+        } else {
+            this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
         }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
                 this.key_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::key_browse_action_link, this::key_browse_action_click));
             }
+        } else {
+            this.key_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::key_browse_action_link, this::key_browse_action_click));
         }
     }
 

@@ -85,11 +85,15 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
                 this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
             }
+        } else {
+            this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.certificate_browse_provider, new StringConvertor(), this));
         }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
                 this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
             }
+        } else {
+            this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
         }
     }
 
@@ -258,6 +262,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             } else {
                 this.createButton.setVisible(false);
             }
+        } else {
+            this.createButton.setVisible(true);
         }
     }
 
@@ -266,16 +272,20 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
-        if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
                 actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
             }
+        } else {
+            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
         if ("Good".equals(status)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
                     actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
                 }
+            } else {
+                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
             }
         }
         return actions;
