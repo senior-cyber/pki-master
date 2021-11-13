@@ -276,10 +276,15 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         KeyRepository keyRepository = context.getBean(KeyRepository.class);
+        long userId = model.get("user_id", long.class);
         long uuid = model.get("uuid", long.class);
         if ("Delete".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
+                if (getSession().getLoginUserId() == userId) {
+                    if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
+                    } else {
+                        throw new WicketRuntimeException("No Permission");
+                    }
                 } else {
                     throw new WicketRuntimeException("No Permission");
                 }
