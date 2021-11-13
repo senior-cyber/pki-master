@@ -14,7 +14,11 @@ public interface RootRepository extends JpaRepository<Root, Long> {
 
     Optional<Root> findByIdAndUser(long id, User user);
 
+    Optional<Root> findByCommonNameAndStatus(String commonName, String status);
+
     Optional<Root> findByCommonNameAndUserAndStatus(String commonName, User user, String status);
+
+    Optional<Root> findByOrganizationAndStatus(String organization, String status);
 
     Optional<Root> findByOrganizationAndUserAndStatus(String organization, User user, String status);
 

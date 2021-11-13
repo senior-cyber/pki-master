@@ -24,6 +24,10 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
 
     Optional<Certificate> findByCommonNameAndUserAndStatus(String commonName, User user, String status);
 
+    Optional<Certificate> findByCommonNameAndStatus(String commonName, String status);
+
+    Optional<Certificate> findByOrganizationAndStatus(String organization, String status);
+
     Optional<Certificate> findByOrganizationAndUserAndStatus(String organization, User user, String status);
 
 }
