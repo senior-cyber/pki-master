@@ -5,6 +5,8 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
@@ -111,10 +113,17 @@ public class RootRevokePageInfoTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("uuid").toLong(-1L);
         ApplicationContext context = WicketFactory.getApplicationContext();
         RootRepository rootRepository = context.getBean(RootRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-        Optional<Root> optionalRoot = rootRepository.findByIdAndUser(this.uuid, user);
+
+        Optional<Root> optionalRoot = null;
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalRoot = rootRepository.findByIdAndUser(this.uuid, user);
+        } else {
+            optionalRoot = rootRepository.findById(this.uuid);
+        }
         Root root = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
         this.common_name_value = root.getCommonName();
         this.organization_value = root.getOrganization();

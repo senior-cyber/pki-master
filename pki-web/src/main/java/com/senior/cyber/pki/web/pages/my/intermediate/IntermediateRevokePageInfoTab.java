@@ -4,6 +4,8 @@ package com.senior.cyber.pki.web.pages.my.intermediate;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
@@ -114,10 +116,17 @@ public class IntermediateRevokePageInfoTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("uuid").toLong(-1L);
         ApplicationContext context = WicketFactory.getApplicationContext();
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-        Optional<Intermediate> optionalIntermediate = intermediateRepository.findByIdAndUser(this.uuid, user);
+
+        Optional<Intermediate> optionalIntermediate = null;
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalIntermediate = intermediateRepository.findByIdAndUser(this.uuid, user);
+        } else {
+            optionalIntermediate = intermediateRepository.findById(this.uuid);
+        }
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new WicketRuntimeException(""));
         this.common_name_value = intermediate.getCommonName();
         this.organization_value = intermediate.getOrganization();

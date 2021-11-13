@@ -1,7 +1,10 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
@@ -20,6 +23,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.filter.Filte
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.springframework.context.ApplicationContext;
 
 import javax.persistence.Tuple;
 import java.util.ArrayList;
@@ -40,10 +44,14 @@ public class RootBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.root_browse_provider = new MySqlDataProvider("tbl_root");
         this.root_browse_provider.setSort("root_id", SortOrder.DESCENDING);
-        this.root_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.root_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
         this.root_browse_provider.setCountField("root_id");
 
         this.root_browse_column = new ArrayList<>();

@@ -119,10 +119,17 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("uuid").toLong(-1L);
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
+
+        Optional<Certificate> optionalCertificate = null;
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
+        } else {
+            optionalCertificate = certificateRepository.findById(this.uuid);
+        }
         Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
         this.common_name_value = certificate.getCommonName();
         this.organization_value = certificate.getOrganization();

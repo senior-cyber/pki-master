@@ -1,10 +1,25 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.pki.CertificateUtils;
+import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.layout.Size;
+import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
+import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
+import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Iban;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.dto.CertificateRequestDto;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -17,20 +32,6 @@ import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
 import com.senior.cyber.pki.web.utility.KeyPairUtility;
 import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.RootCommonNameValidator;
-import com.senior.cyber.pki.web.validator.RootOrganizationValidator;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.frmk.common.wicket.layout.Size;
-import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
-import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
-import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
-import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -126,13 +127,18 @@ public class RootGeneratePageInfoTab extends ContentPanel {
         long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
         ApplicationContext context = WicketFactory.getApplicationContext();
         RootRepository certificateRepository = context.getBean(RootRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
 
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-
-        Optional<Root> optionalRoot = certificateRepository.findByIdAndUser(uuid, user);
+        Optional<Root> optionalRoot = null;
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalRoot = certificateRepository.findByIdAndUser(uuid, user);
+        } else {
+            optionalRoot = certificateRepository.findById(uuid);
+        }
         Root root = optionalRoot.orElse(null);
 
         if (root != null) {

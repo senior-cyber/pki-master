@@ -145,18 +145,25 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
         this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_intermediate", "intermediate_id", "common_name");
         this.intermediate_provider.applyWhere("status", "status = 'Good'");
-        this.intermediate_provider.applyWhere("user", "user_id = " + session.getUserId());
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.intermediate_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
 
         long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
-        ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-
-        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
+        Optional<Certificate> optionalCertificate = null;
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
+        } else {
+            optionalCertificate = certificateRepository.findById(uuid);
+        }
         Certificate certificate = optionalCertificate.orElse(null);
 
         if (certificate != null) {

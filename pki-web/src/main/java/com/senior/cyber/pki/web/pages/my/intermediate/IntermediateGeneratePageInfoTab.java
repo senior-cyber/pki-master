@@ -1,11 +1,27 @@
 package com.senior.cyber.pki.web.pages.my.intermediate;
 
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.pki.CertificateUtils;
+import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.layout.Size;
+import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
+import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
+import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Iban;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.dto.CertificateRequestDto;
@@ -21,21 +37,6 @@ import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
 import com.senior.cyber.pki.web.utility.KeyPairUtility;
 import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.IntermediateCommonNameValidator;
-import com.senior.cyber.pki.web.validator.IntermediateOrganizationValidator;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.frmk.common.wicket.layout.Size;
-import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
-import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
-import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
-import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -135,19 +136,26 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
         WebSession session = (WebSession) getSession();
         this.root_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_root", "root_id", "common_name");
         this.root_provider.applyWhere("status", "status = 'Good'");
-        this.root_provider.applyWhere("user", "user_id = " + session.getUserId());
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.root_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
 
         long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
-        ApplicationContext context = WicketFactory.getApplicationContext();
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-
-        Optional<Intermediate> optionalIntermediate = intermediateRepository.findByIdAndUser(uuid, user);
+        Optional<Intermediate> optionalIntermediate = null;
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            UserRepository userRepository = context.getBean(UserRepository.class);
+            Optional<User> optionalUser = userRepository.findById(session.getUserId());
+            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+            optionalIntermediate = intermediateRepository.findByIdAndUser(uuid, user);
+        } else {
+            optionalIntermediate = intermediateRepository.findById(uuid);
+        }
         Intermediate intermediate = optionalIntermediate.orElse(null);
 
         if (intermediate != null) {

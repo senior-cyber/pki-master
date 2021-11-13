@@ -3,6 +3,8 @@ package com.senior.cyber.pki.web.pages.my.intermediate;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
@@ -62,10 +64,14 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     @Override
     protected void onInitData() {
         super.onInitData();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.intermediate_browse_provider = new MySqlDataProvider("tbl_intermediate");
         this.intermediate_browse_provider.setSort("intermediate_id", SortOrder.DESCENDING);
-        this.intermediate_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        if (applicationConfiguration.getMode() == Mode.Individual) {
+            this.intermediate_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+        }
         this.intermediate_browse_provider.setCountField("intermediate_id");
 
         this.intermediate_browse_column = new ArrayList<>();
