@@ -34,6 +34,7 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyRootGenerate_Issue_Action = "MyRootGeneratePageIssueAction";
 
     public static final String NAME_Page_MyRootRevoke = "MyRootRevokePage";
+    public static final String NAME_Page_MyRootRevoke_Revoke_Action = "MyRootRevokePageRevokeAction";
 
     public static final String NAME_Page_MyIntermediateBrowse = "MyIntermediateBrowsePage";
     public static final String NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action = "MyIntermediateBrowsePageIssueNewIntermediateAction";
@@ -98,7 +99,11 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyRootBrowse_Download_Action = "could access download button";
 
     public static final String DESCRIPTION_Page_MyRootGenerate = "could access my root generate page";
+    public static final String DESCRIPTION_Page_MyRootGenerate_Issue_Action = "could access issue button";
+
     public static final String DESCRIPTION_Page_MyRootRevoke = "could access my root revoke page";
+    public static final String DESCRIPTION_Page_MyRootRevoke_Revoke_Action = "could access revoke button";
+
     public static final String DESCRIPTION_Page_MyProfile = "could access my profile page";
     public static final String DESCRIPTION_Page_RoleBrowse = "could access role browse page";
     public static final String DESCRIPTION_Page_GroupBrowse = "could access group browse page";

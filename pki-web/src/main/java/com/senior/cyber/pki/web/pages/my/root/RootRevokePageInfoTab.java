@@ -9,10 +9,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Intermediate;
-import com.senior.cyber.pki.dao.entity.Root;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -245,13 +242,31 @@ public class RootRevokePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.revokeButton);
+        WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootRevoke_Revoke_Action)) {
+            } else {
+                this.revokeButton.setVisible(false);
+            }
+        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", RootBrowsePage.class);
         this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {
+        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootRevoke_Revoke_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
+        }
+
         RootRepository rootRepository = context.getBean(RootRepository.class);
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
