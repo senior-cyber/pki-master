@@ -132,7 +132,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
         this.root_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_root", "root_id", "common_name");
-        this.root_provider.applyWhere("status", "status = 'Good'");
+        this.root_provider.applyWhere("status", "status = '" + Root.STATUS_GOOD + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
@@ -166,7 +166,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             this.state_or_province_name_value = intermediate.getStateOrProvinceName();
             this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
             this.email_address_value = intermediate.getEmailAddress();
-            if ("Good".equals(intermediate.getRoot().getStatus())) {
+            if (Intermediate.STATUS_GOOD.equals(intermediate.getRoot().getStatus())) {
                 this.root_value = new Option(String.valueOf(intermediate.getRoot().getId()), intermediate.getRoot().getCommonName());
             }
         }
@@ -389,7 +389,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             intermediate.setValidFrom(validFrom.toDate());
             intermediate.setValidUntil(validUntil.toDate());
 
-            intermediate.setStatus("Good");
+            intermediate.setStatus(Intermediate.STATUS_GOOD);
 
             intermediate.setRoot(root);
 

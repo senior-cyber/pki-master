@@ -211,7 +211,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         } else {
             actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
-        if ("Good".equals(status)) {
+        if (Intermediate.STATUS_GOOD.equals(status)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
                     actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));

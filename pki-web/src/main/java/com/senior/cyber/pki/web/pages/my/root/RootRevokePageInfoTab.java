@@ -1,6 +1,14 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
-
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.layout.Size;
+import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
+import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
+import com.senior.cyber.frmk.common.wicket.layout.UIRow;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
@@ -12,15 +20,6 @@ import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.RootRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.frmk.common.wicket.layout.Size;
-import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
-import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
-import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
-import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -261,20 +260,20 @@ public class RootRevokePageInfoTab extends ContentPanel {
         Root root = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
 
         root.setRevokedDate(this.date_value);
-        root.setStatus("Revoked");
+        root.setStatus(Root.STATUS_REVOKED);
         rootRepository.save(root);
 
-        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, "Good");
+        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, Intermediate.STATUS_GOOD);
         for (Intermediate intermediate : intermediates) {
             intermediate.setRevokedDate(this.date_value);
             intermediate.setRevokedReason(this.reason_value);
-            intermediate.setStatus("Revoked");
+            intermediate.setStatus(Intermediate.STATUS_REVOKED);
             intermediateRepository.save(intermediate);
-            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, "Good");
+            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, Certificate.STATUS_GOOD);
             for (Certificate certificate : certificates) {
                 certificate.setRevokedDate(this.date_value);
                 certificate.setRevokedReason(this.reason_value);
-                certificate.setStatus("Revoked");
+                certificate.setStatus(Certificate.STATUS_REVOKED);
                 certificateRepository.save(certificate);
             }
         }

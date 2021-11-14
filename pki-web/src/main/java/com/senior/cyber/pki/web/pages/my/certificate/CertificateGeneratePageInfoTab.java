@@ -144,7 +144,7 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
         WebSession session = (WebSession) getSession();
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
         this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_intermediate", "intermediate_id", "common_name");
-        this.intermediate_provider.applyWhere("status", "status = 'Good'");
+        this.intermediate_provider.applyWhere("status", "status = '" + Intermediate.STATUS_GOOD + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
@@ -178,7 +178,7 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
             this.email_address_value = certificate.getEmailAddress();
             this.san_value = certificate.getSan();
-            if ("Good".equals(certificate.getIntermediate().getStatus())) {
+            if (Intermediate.STATUS_GOOD.equals(certificate.getIntermediate().getStatus())) {
                 this.intermediate_value = new Option(String.valueOf(certificate.getIntermediate().getId()), certificate.getIntermediate().getCommonName());
             }
         }
@@ -448,7 +448,7 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());
 
-            certificate.setStatus("Good");
+            certificate.setStatus(Certificate.STATUS_GOOD);
 
             certificate.setIntermediate(intermediate);
 

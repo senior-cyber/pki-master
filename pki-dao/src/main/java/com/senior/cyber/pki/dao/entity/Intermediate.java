@@ -8,6 +8,9 @@ import java.util.Date;
 @Table(name = "tbl_intermediate")
 public class Intermediate implements Serializable {
 
+    public static final String STATUS_GOOD = "Good";
+    public static final String STATUS_REVOKED = "Revoked";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "intermediate_id")

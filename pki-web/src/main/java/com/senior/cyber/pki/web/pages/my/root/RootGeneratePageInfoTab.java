@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
-
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.pki.CertificateUtils;
 import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
@@ -16,6 +15,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Iban;
+import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
@@ -263,6 +263,15 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
+        WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootGenerate_Issue_Action)) {
+            } else {
+                this.saveButton.setVisible(false);
+            }
+        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", UserBrowsePage.class);
         this.form.add(this.cancelButton);
@@ -271,6 +280,15 @@ public class RootGeneratePageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
+        WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootGenerate_Issue_Action)) {
+            } else {
+                throw new WicketRuntimeException("No Permission");
+            }
+        }
         try {
             KeyPair key = KeyPairUtility.generate();
 
@@ -305,11 +323,8 @@ public class RootGeneratePageInfoTab extends ContentPanel {
 
             X509Certificate certificate = CertificateUtility.generate(requestDto);
 
-            ApplicationContext context = WicketFactory.getApplicationContext();
             RootRepository rootRepository = context.getBean(RootRepository.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
-
-            WebSession session = (WebSession) getSession();
 
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
@@ -332,7 +347,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             root.setValidFrom(validFrom.toDate());
             root.setValidUntil(validUntil.toDate());
 
-            root.setStatus("Good");
+            root.setStatus(Root.STATUS_GOOD);
 
             root.setUser(user);
 

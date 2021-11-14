@@ -293,14 +293,14 @@ public class IntermediateRevokePageInfoTab extends ContentPanel {
 
         intermediate.setRevokedDate(this.date_value);
         intermediate.setRevokedReason(this.reason_value);
-        intermediate.setStatus("Revoked");
+        intermediate.setStatus(Intermediate.STATUS_REVOKED);
         intermediateRepository.save(intermediate);
 
-        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, "Good");
+        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, Certificate.STATUS_GOOD);
         for (Certificate certificate : certificates) {
             certificate.setRevokedDate(this.date_value);
             certificate.setRevokedReason(this.reason_value);
-            certificate.setStatus("Revoked");
+            certificate.setStatus(Certificate.STATUS_REVOKED);
             certificateRepository.save(certificate);
         }
 

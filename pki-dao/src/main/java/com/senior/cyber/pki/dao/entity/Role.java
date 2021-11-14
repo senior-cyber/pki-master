@@ -25,7 +25,14 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyCertificateRevoke_Revoke_Action = "MyCertificateRevokePageRevokeAction";
 
     public static final String NAME_Page_MyRootBrowse = "MyRootBrowsePage";
+    public static final String NAME_Page_MyRootBrowse_IssueNewRoot_Action = "MyRootBrowsePageIssueNewRootAction";
+    public static final String NAME_Page_MyRootBrowse_Copy_Action = "MyRootBrowsePageCopyAction";
+    public static final String NAME_Page_MyRootBrowse_Revoke_Action = "MyRootBrowsePageRevokeAction";
+    public static final String NAME_Page_MyRootBrowse_Download_Action = "MyRootBrowsePageDownloadAction";
+
     public static final String NAME_Page_MyRootGenerate = "MyRootGeneratePage";
+    public static final String NAME_Page_MyRootGenerate_Issue_Action = "MyRootGeneratePageIssueAction";
+
     public static final String NAME_Page_MyRootRevoke = "MyRootRevokePage";
 
     public static final String NAME_Page_MyIntermediateBrowse = "MyIntermediateBrowsePage";
@@ -85,6 +92,11 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyIntermediateRevoke_Revoke_Action = "could access revoke button";
 
     public static final String DESCRIPTION_Page_MyRootBrowse = "could access my root browse page";
+    public static final String DESCRIPTION_Page_MyRootBrowse_IssueNewRoot_Action = "could access issue new root button";
+    public static final String DESCRIPTION_Page_MyRootBrowse_Copy_Action = "could access copy button";
+    public static final String DESCRIPTION_Page_MyRootBrowse_Revoke_Action = "could access revoke button";
+    public static final String DESCRIPTION_Page_MyRootBrowse_Download_Action = "could access download button";
+
     public static final String DESCRIPTION_Page_MyRootGenerate = "could access my root generate page";
     public static final String DESCRIPTION_Page_MyRootRevoke = "could access my root revoke page";
     public static final String DESCRIPTION_Page_MyProfile = "could access my profile page";

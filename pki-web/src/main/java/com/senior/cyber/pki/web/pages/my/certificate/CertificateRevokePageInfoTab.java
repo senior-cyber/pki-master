@@ -309,7 +309,7 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         certificate.setRevokedDate(this.date_value);
         certificate.setRevokedReason(this.reason_value);
 
-        certificate.setStatus("Revoked");
+        certificate.setStatus(Certificate.STATUS_REVOKED);
 
         certificateRepository.save(certificate);
 
