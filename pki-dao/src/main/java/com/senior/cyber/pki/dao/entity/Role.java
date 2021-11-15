@@ -53,8 +53,11 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyKey_Delete_Action = "MyKeyPageDeleteAction";
     public static final String NAME_Page_MyKey_ShowSecret_Action = "MyKeyPageShowSecretAction";
 
-    public static final String NAME_Page_GroupBrowse = "GroupBrowsePage";
     public static final String NAME_Page_SessionBrowse = "SessionBrowsePage";
+    public static final String NAME_Page_SessionBrowse_Revoke_Action = "SessionBrowsePageRevokeAction";
+
+
+    public static final String NAME_Page_GroupBrowse = "GroupBrowsePage";
     public static final String NAME_Page_GroupModify = "GroupModifyPage";
     public static final String NAME_Page_UserBrowse = "UserBrowsePage";
     public static final String NAME_Page_UserModify = "UserModifyPage";
@@ -104,10 +107,12 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_MyRootRevoke = "could access my root revoke page";
     public static final String DESCRIPTION_Page_MyRootRevoke_Revoke_Action = "could access revoke button";
 
+    public static final String DESCRIPTION_Page_SessionBrowse = "could access session browse page";
+    public static final String DESCRIPTION_Page_SessionBrowse_Revoke_Action = "could access revoke button";
+
     public static final String DESCRIPTION_Page_MyProfile = "could access my profile page";
     public static final String DESCRIPTION_Page_RoleBrowse = "could access role browse page";
     public static final String DESCRIPTION_Page_GroupBrowse = "could access group browse page";
-    public static final String DESCRIPTION_Page_SessionBrowse = "could access session browse page";
     public static final String DESCRIPTION_Page_GroupModify = "could access group update page";
     public static final String DESCRIPTION_Page_UserBrowse = "could access user browse page";
     public static final String DESCRIPTION_Page_UserModify = "could access user update page";

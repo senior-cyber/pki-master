@@ -11,6 +11,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.BooleanConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.pki.web.repository.RoleRepository;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -24,6 +25,7 @@ import javax.persistence.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Bookmark("/role")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_RoleBrowse})
@@ -72,13 +74,17 @@ public class RoleBrowsePage extends MasterPage {
 
     protected void role_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         ApplicationContext context = WicketFactory.getApplicationContext();
+        RoleRepository roleRepository = context.getBean(RoleRepository.class);
+        long uuid = model.get("id", long.class);
+        Optional<Role> optionalRole = roleRepository.findById(uuid);
+        Role role = optionalRole.orElseThrow();
         if ("Disable".equals(link)) {
-//            long uuid = ((Number) model.get("uuid")).longValue();
-//            service.disableRole(uuid);
+            role.setEnabled(false);
+            roleRepository.save(role);
             target.add(this.role_browse_table);
         } else if ("Enable".equals(link)) {
-//            long uuid = ((Number) model.get("uuid")).longValue();
-//            service.enableRole(uuid);
+            role.setEnabled(true);
+            roleRepository.save(role);
             target.add(this.role_browse_table);
         }
     }

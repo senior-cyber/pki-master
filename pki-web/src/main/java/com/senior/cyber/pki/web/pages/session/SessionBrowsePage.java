@@ -2,6 +2,8 @@ package com.senior.cyber.pki.web.pages.session;
 
 import com.senior.cyber.frmk.jdbc.query.DeleteQuery;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
+import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.frmk.common.base.Bookmark;
@@ -11,6 +13,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
@@ -47,7 +50,15 @@ public class SessionBrowsePage extends MasterPage {
         this.session_browse_column = new ArrayList<>();
         this.session_browse_column.add(Column.normalColumn(Model.of("Session ID"), "sessionId", "sp.SESSION_ID", this.session_browse_provider, new StringConvertor()));
         this.session_browse_column.add(Column.normalColumn(Model.of("Login"), "login", "sp.login", this.session_browse_provider, new StringConvertor()));
-        this.session_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::session_browse_action_link, this::session_browse_action_click));
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_SessionBrowse_Revoke_Action)) {
+                this.session_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::session_browse_action_link, this::session_browse_action_click));
+            }
+        } else {
+            this.session_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::session_browse_action_link, this::session_browse_action_click));
+        }
     }
 
     @Override
@@ -61,13 +72,28 @@ public class SessionBrowsePage extends MasterPage {
 
     protected List<ActionItem> session_browse_action_link(String link, Tuple model) {
         List<ActionItem> actions = new ArrayList<>(0);
-        actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.INFO));
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        if (applicationConfiguration.getMode() == Mode.Enterprise) {
+            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_SessionBrowse_Revoke_Action)) {
+                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.INFO));
+            }
+        } else {
+            actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.INFO));
+        }
         return actions;
     }
 
     protected void session_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         ApplicationContext context = WicketFactory.getApplicationContext();
+        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_SessionBrowse_Revoke_Action)) {
+                } else {
+                    throw new WicketRuntimeException("No Permission");
+                }
+            }
             String uuid = model.get("uuid", String.class);
             NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
             DeleteQuery deleteQuery = null;
