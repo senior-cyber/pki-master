@@ -3,7 +3,6 @@ package com.senior.cyber.pki.web;
 import com.senior.cyber.pki.web.configuration.CryptoConfiguration;
 import com.senior.cyber.pki.web.utility.Crypto;
 import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.function.BootExtension;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,6 +12,7 @@ import org.jasypt.util.password.PasswordEncryptor;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.jasypt.util.text.TextEncryptor;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
@@ -35,7 +35,7 @@ public class BootApplication {
 
     public static void main(String[] args) throws Exception {
         AeadConfig.register();
-        BootExtension.run(BootApplication.class, args);
+        SpringApplication.run(BootApplication.class, args);
     }
 
     public static ApplicationContext getApplicationContext() {
