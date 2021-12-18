@@ -57,9 +57,7 @@ public class OcspUtility {
                     JcaX509CertificateHolder holder = new JcaX509CertificateHolder(issuerCert);
                     for (SingleResp singleResp : singleResps) {
                         for (X509Certificate cer : certificates) {
-                            boolean valid = singleResp.getCertID().matchesIssuer(holder, digestCalculatorProvider)
-                                    && singleResp.getCertID().getSerialNumber().compareTo((cer).getSerialNumber()) == 0
-                                    && singleResp.getCertStatus() == null;
+                            boolean valid = singleResp.getCertID().matchesIssuer(holder, digestCalculatorProvider) && singleResp.getCertID().getSerialNumber().compareTo((cer).getSerialNumber()) == 0 && singleResp.getCertStatus() == null;
                             System.out.println(valid);
                         }
                     }
@@ -96,8 +94,11 @@ public class OcspUtility {
             if (name.getTagNo() != GeneralName.uniformResourceIdentifier) {
                 continue;
             }
-            DERIA5String derStr = DERIA5String.getInstance((ASN1TaggedObject) name.toASN1Primitive(), false);
-            urls.add(derStr.getString());
+            ASN1TaggedObject taggedObject = (ASN1TaggedObject) name.toASN1Primitive();
+            if (taggedObject != null) {
+                ASN1IA5String string = ASN1IA5String.getInstance(taggedObject, false);
+                urls.add(string.getString());
+            }
         }
         return urls;
     }
