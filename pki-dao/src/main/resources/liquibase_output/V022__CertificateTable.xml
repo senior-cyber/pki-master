@@ -20,33 +20,31 @@
 
             <column name="email_address" type="VARCHAR(200)"/>
 
-            <column name="private_key" type="TEXT">
-                <constraints notNullConstraintName="notnull_key_56" nullable="false"/>
-            </column>
+            <column name="private_key" type="TEXT"/>
             <column name="certificate" type="TEXT">
-                <constraints notNullConstraintName="notnull_key_57" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_56" nullable="false"/>
             </column>
             <column name="san" type="TEXT"/>
             <column name="revoked_date" type="DATE"/>
             <column name="revoked_reason" type="VARCHAR(30)"/>
 
             <column name="valid_from" type="DATE">
-                <constraints notNullConstraintName="notnull_key_58" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_57" nullable="false"/>
             </column>
             <column name="valid_until" type="DATE">
-                <constraints notNullConstraintName="notnull_key_59" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_58" nullable="false"/>
             </column>
 
             <column name="status" type="VARCHAR(10)">
-                <constraints notNullConstraintName="notnull_key_60" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_59" nullable="false"/>
             </column>
 
             <column name="user_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_61" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_60" nullable="false"/>
             </column>
 
             <column name="intermediate_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_62" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_61" nullable="false"/>
             </column>
 
         </createTable>

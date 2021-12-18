@@ -3,20 +3,20 @@
 
         <createTable tableName="tbl_key">
             <column autoIncrement="true" name="key_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_68" nullable="false" primaryKey="true" primaryKeyName="primary_key_13"/>
+                <constraints notNullConstraintName="notnull_key_67" nullable="false" primaryKey="true" primaryKeyName="primary_key_13"/>
             </column>
 
             <column name="client_id" type="VARCHAR(200)">
-                <constraints notNullConstraintName="notnull_key_69" nullable="false" unique="true" uniqueConstraintName="unique_index_19"/>
+                <constraints notNullConstraintName="notnull_key_68" nullable="false" unique="true" uniqueConstraintName="unique_index_19"/>
             </column>
             <column name="client_secret" type="TEXT">
-                <constraints notNullConstraintName="notnull_key_70" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_69" nullable="false"/>
             </column>
             <column name="kek" type="TEXT">
-                <constraints notNullConstraintName="notnull_key_71" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_70" nullable="false"/>
             </column>
             <column name="user_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_72" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_71" nullable="false"/>
             </column>
 
         </createTable>

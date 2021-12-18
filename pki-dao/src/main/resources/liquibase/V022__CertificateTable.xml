@@ -23,9 +23,7 @@
 
             <column name="email_address" type="VARCHAR(200)"/>
 
-            <column name="private_key" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
+            <column name="private_key" type="TEXT"/>
             <column name="certificate" type="TEXT">
                 <constraints nullable="false"/>
             </column>

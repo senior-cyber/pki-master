@@ -21,6 +21,9 @@ public class Role implements Serializable {
     public static final String NAME_Page_MyCertificateGenerate = "MyCertificateGeneratePage";
     public static final String NAME_Page_MyCertificateGenerate_Issue_Action = "MyCertificateGeneratePageIssueAction";
 
+    public static final String NAME_Page_CsrGenerate = "CsrGeneratePage";
+    public static final String NAME_Page_CsrSubmit = "CsrSubmitPage";
+
     public static final String NAME_Page_MyCertificateRevoke = "MyCertificateRevokePage";
     public static final String NAME_Page_MyCertificateRevoke_Revoke_Action = "MyCertificateRevokePageRevokeAction";
 
@@ -91,6 +94,10 @@ public class Role implements Serializable {
 
     public static final String DESCRIPTION_Page_MyIntermediateGenerate = "could access my intermediate generate page";
     public static final String DESCRIPTION_Page_MyIntermediateGenerate_Issue_Action = "could access issue button";
+
+    public static final String DESCRIPTION_Page_CsrGenerate = "could access csr generate page";
+
+    public static final String DESCRIPTION_Page_CsrSubmit = "could access csr submit page";
 
     public static final String DESCRIPTION_Page_MyIntermediateRevoke = "could access my intermediate revoke page";
     public static final String DESCRIPTION_Page_MyIntermediateRevoke_Revoke_Action = "could access revoke button";
