@@ -24,14 +24,11 @@ public class Crypto {
 
     private final int tagLength;
 
-    private final String iv;
-
     private final SecureRandom secureRandom;
 
-    public Crypto(String iv) {
+    public Crypto() {
         this.secureRandom = new SecureRandom();
-        this.iv = iv;
-        this.tagLength = Base64.getDecoder().decode(iv).length;
+        this.tagLength = 12;
         this.keySize = 256;
     }
 
@@ -43,17 +40,21 @@ public class Crypto {
     }
 
     public String decrypt(SecretKey secretKey, String text) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
+        int dotIndex = text.indexOf('.');
+        String iv = text.substring(0, dotIndex);
+        String cipherText = text.substring(dotIndex + 1);
         GCMParameterSpec gcm = new GCMParameterSpec(this.tagLength * 8, Base64.getDecoder().decode(iv));
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME);
         cipher.init(Cipher.DECRYPT_MODE, secretKey, gcm);
-        return new String(cipher.doFinal(Base64.getDecoder().decode(text)), StandardCharsets.UTF_8);
+        return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), StandardCharsets.UTF_8);
     }
 
     public String encrypt(SecretKey secretKey, String text) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
-        GCMParameterSpec gcm = new GCMParameterSpec(this.tagLength * 8, Base64.getDecoder().decode(iv));
+        byte[] iv = this.secureRandom.generateSeed(this.tagLength);
+        GCMParameterSpec gcm = new GCMParameterSpec(this.tagLength * 8, iv);
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", BouncyCastleProvider.PROVIDER_NAME);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcm);
-        return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes(StandardCharsets.UTF_8)));
+        return Base64.getEncoder().encodeToString(iv) + "." + Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     public String encrypt(PublicKey publicKey, String text) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {

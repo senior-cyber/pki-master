@@ -1,10 +1,20 @@
 package com.senior.cyber.pki.web.provider;
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.model.Brand;
+import com.senior.cyber.frmk.common.model.MainSidebar;
+import com.senior.cyber.frmk.common.model.UserPanel;
+import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenu;
+import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenuDropdown;
+import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenuItem;
+import com.senior.cyber.frmk.common.provider.IMainSidebarProvider;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.BootApplication;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.LogoutPage;
+import com.senior.cyber.pki.web.pages.csr.CsrGeneratePage;
+import com.senior.cyber.pki.web.pages.csr.CsrSubmitPage;
 import com.senior.cyber.pki.web.pages.group.GroupBrowsePage;
 import com.senior.cyber.pki.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.web.pages.my.intermediate.IntermediateBrowsePage;
@@ -17,14 +27,6 @@ import com.senior.cyber.pki.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.web.pages.user.UserExitPage;
 import com.senior.cyber.pki.web.pages.user.UserSwitchPage;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.model.Brand;
-import com.senior.cyber.frmk.common.model.MainSidebar;
-import com.senior.cyber.frmk.common.model.UserPanel;
-import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenu;
-import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenuDropdown;
-import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenuItem;
-import com.senior.cyber.frmk.common.provider.IMainSidebarProvider;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
@@ -82,6 +84,13 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
             }
         }
 
+        if (this.session.isSignedIn()) {
+            List<SidebarMenu> csrMenu = csrMenu(roles);
+            if (!csrMenu.isEmpty()) {
+                children.add(new SidebarMenuDropdown("fas fa-key", "CSR", null, csrMenu));
+            }
+        }
+
         if (roles.hasRole(Role.NAME_Page_UserExit)) {
             children.add(new SidebarMenuItem("fas fa-door-open", "Exit", null, UserExitPage.class));
         }
@@ -133,6 +142,17 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         }
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyKey)) {
             children.add(new SidebarMenuItem("fas fa-key", "Key", null, MyKeyPage.class));
+        }
+        return children;
+    }
+
+    protected List<SidebarMenu> csrMenu(Roles roles) {
+        List<SidebarMenu> children = new ArrayList<>();
+        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_CsrGenerate)) {
+            children.add(new SidebarMenuItem("fas fa-stamp", "Generate", null, CsrGeneratePage.class));
+        }
+        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_CsrSubmit)) {
+            children.add(new SidebarMenuItem("fas fa-lock", "Submit", null, CsrSubmitPage.class));
         }
         return children;
     }

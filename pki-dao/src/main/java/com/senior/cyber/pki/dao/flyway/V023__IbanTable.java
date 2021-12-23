@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
@@ -29,7 +30,7 @@ public class V023__IbanTable extends LiquibaseMigration {
         updateLiquibase("V023__IbanTable.xml");
         NumberFormat format = new DecimalFormat("000");
         try (InputStream stream = V023__IbanTable.class.getResourceAsStream("/csv/iban.csv")) {
-            Iterable<CSVRecord> records = CSVFormat.RFC4180.parse(new InputStreamReader(stream));
+            Iterable<CSVRecord> records = CSVFormat.RFC4180.parse(new InputStreamReader(stream, StandardCharsets.UTF_8));
             for (CSVRecord record : records) {
                 String country = record.get(0);
                 String alpha2Code = record.get(1);

@@ -275,6 +275,7 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
                 revokeButtonClick();
             }
         };
+
         this.form.add(this.revokeButton);
         WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();

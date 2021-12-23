@@ -217,7 +217,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 zipArchiveOutputStream.closeArchiveEntry();
             }
 
-            {
+            if (certificate.getPrivateKey() != null && !"".equals(certificate.getPrivateKey())) {
                 ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(name + ".pem");
                 privateKeyEntry.setSize(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
@@ -237,7 +237,6 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                     }.setFileName(uuid + ".zip")
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
-
         } catch (IOException e) {
             e.printStackTrace();
         }

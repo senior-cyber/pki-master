@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.web;
 
-import com.senior.cyber.pki.web.configuration.CryptoConfiguration;
 import com.senior.cyber.pki.web.utility.Crypto;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.google.crypto.tink.aead.AeadConfig;
@@ -56,8 +55,8 @@ public class BootApplication {
     }
 
     @Bean
-    public Crypto createCrypto(CryptoConfiguration configuration) {
-        return new Crypto(configuration.getIv());
+    public Crypto createCrypto() {
+        return new Crypto();
     }
 
     @Bean
