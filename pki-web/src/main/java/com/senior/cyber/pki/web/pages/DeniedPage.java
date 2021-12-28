@@ -2,20 +2,25 @@ package com.senior.cyber.pki.web.pages;
 
 import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
 import com.senior.cyber.frmk.common.base.Bookmark;
-import org.apache.wicket.Page;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 
-@Bookmark("/error")
-public class ErrorPage extends WebPage {
+@Bookmark("/denied")
+public class DeniedPage extends WebPage {
 
     @Override
     protected void onInitialize() {
         super.onInitialize();
-        add(new BookmarkablePageLink<>("homePage", getApplication().getHomePage()));
+        String page = getPageParameters().get("page").toString();
+        Label pageNameLabel = new Label("pageName", page);
+        add(pageNameLabel);
+        pageNameLabel.setVisible(page != null && !"".equals(page));
+        add(new Label("role", getPageParameters().get("role").toString()));
+        add(new BookmarkablePageLink<>("loginPage", LoginPage.class));
     }
 
     @Override
