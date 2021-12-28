@@ -15,7 +15,7 @@ buildscript {
         metamodel = '5.3.3' // https://mvnrepository.com/artifact/org.apache.metamodel/MetaModel-core
         liquibase = '4.6.2' // https://mvnrepository.com/artifact/org.liquibase/liquibase-core
         commons_dbcp2 = '2.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2
-        flyway = '8.2.3' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
+        flyway = '8.3.0' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
         gson = '2.8.9' // https://mvnrepository.com/artifact/com.google.code.gson/gson
         bouncycastle = '1.70' // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
         spring_cloud = '2021.0.0' // https://github.com/spring-cloud/spring-cloud-release/tags

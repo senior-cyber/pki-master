@@ -29,6 +29,17 @@ public class SubjectUtility {
         if (emailAddress != null && !"".equals(emailAddress)) {
             builder.addRDN(BCStyle.EmailAddress, emailAddress);
         }
+
+        // builder.addRDN(BCStyle.T, "Position");
+        // builder.addRDN(BCStyle.STREET, "Address");
+        // builder.addRDN(BCStyle.SERIALNUMBER, "Serial Number");
+        // builder.addRDN(BCStyle.SURNAME, "Sur Name");
+        // builder.addRDN(BCStyle.GIVENNAME, "Given Name");
+        // builder.addRDN(BCStyle.INITIALS, "Mr./Mrs./Miss.");
+        // builder.addRDN(BCStyle.DESCRIPTION, "Description");
+        // builder.addRDN(BCStyle.POSTAL_CODE, "Postal Code");
+        // builder.addRDN(BCStyle.TELEPHONE_NUMBER, "Telephone Number");
+
         return builder.build();
     }
 
