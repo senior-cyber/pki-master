@@ -1,19 +1,19 @@
 package com.senior.cyber.pki.web.pages.session;
 
+import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.Permission;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.jdbc.query.DeleteQuery;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
-import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
@@ -89,10 +89,7 @@ public class SessionBrowsePage extends MasterPage {
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_SessionBrowse_Revoke_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_SessionBrowse_Revoke_Action);
             }
             String uuid = model.get("uuid", String.class);
             NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);

@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.web.utility;
 
+import com.senior.cyber.frmk.common.exception.UnauthorizedResponseStatusException;
 import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.web.exception.UnauthorizedResponseStatusException;
 import com.senior.cyber.pki.web.factory.WicketFactory;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;

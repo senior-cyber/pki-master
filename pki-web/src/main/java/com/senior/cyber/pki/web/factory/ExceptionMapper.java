@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.web.factory;
 
-import com.senior.cyber.pki.web.exception.UnauthorizedInstantiationException;
+import com.senior.cyber.frmk.common.exception.UnauthorizedInstantiationException;
 import org.apache.wicket.Application;
 import org.apache.wicket.DefaultExceptionMapper;
 import org.apache.wicket.core.request.handler.PageProvider;
@@ -14,7 +14,7 @@ public class ExceptionMapper extends DefaultExceptionMapper {
         if (e instanceof UnauthorizedInstantiationException) {
             PageParameters parameters = new PageParameters();
             parameters.add("role", ((UnauthorizedInstantiationException) e).getRoles());
-            parameters.add("page", ((UnauthorizedInstantiationException) e).getComponentClassName());
+            parameters.add("page", ((UnauthorizedInstantiationException) e).getClassName());
             PageProvider provider = new PageProvider(Application.get().getApplicationSettings().getAccessDeniedPage(), parameters);
             return createPageRequestHandler(provider);
         } else {

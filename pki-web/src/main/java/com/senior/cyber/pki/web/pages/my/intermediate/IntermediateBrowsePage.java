@@ -1,6 +1,16 @@
 package com.senior.cyber.pki.web.pages.my.intermediate;
 
+import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.Permission;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
@@ -10,15 +20,6 @@ import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.utility.MemoryResourceStream;
-import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -228,10 +229,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Revoke_Action);
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
@@ -239,10 +237,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             setResponsePage(IntermediateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Copy_Action);
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();

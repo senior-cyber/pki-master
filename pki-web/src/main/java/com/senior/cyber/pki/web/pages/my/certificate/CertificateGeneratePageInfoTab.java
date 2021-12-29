@@ -4,6 +4,7 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.pki.CertificateUtils;
 import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
@@ -30,7 +31,10 @@ import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.pki.web.utility.*;
+import com.senior.cyber.pki.web.utility.CertificateUtility;
+import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
+import com.senior.cyber.pki.web.utility.KeyPairUtility;
+import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.CertificateCommonNameValidator;
 import com.senior.cyber.pki.web.validator.CertificateSanValidator;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
@@ -48,26 +52,13 @@ import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.validation.validator.EmailAddressValidator;
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.DERPrintableString;
-import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
-import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Security;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -352,10 +343,7 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyCertificateGenerate_Issue_Action);
         }
         try {
             long serial = System.currentTimeMillis();

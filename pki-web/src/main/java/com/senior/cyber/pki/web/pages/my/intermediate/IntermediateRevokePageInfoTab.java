@@ -1,6 +1,16 @@
 package com.senior.cyber.pki.web.pages.my.intermediate;
 
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.Permission;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.layout.Size;
+import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
+import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
+import com.senior.cyber.frmk.common.wicket.layout.UIRow;
+import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
+import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
@@ -11,15 +21,6 @@ import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
-import com.senior.cyber.frmk.common.wicket.layout.Size;
-import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
-import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
-import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
-import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -279,10 +280,7 @@ public class IntermediateRevokePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateRevoke_Revoke_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyIntermediateRevoke_Revoke_Action);
         }
 
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);

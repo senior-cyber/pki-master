@@ -4,6 +4,7 @@ import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.pki.CertificateUtils;
 import com.senior.cyber.frmk.common.pki.CsrUtils;
 import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
@@ -17,7 +18,10 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.FileUploadField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.Intermediate;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
@@ -26,18 +30,13 @@ import com.senior.cyber.pki.web.dto.*;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
-import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.CertificateUtility;
 import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
-import com.senior.cyber.pki.web.utility.KeyPairUtility;
-import com.senior.cyber.pki.web.utility.SubjectUtility;
-import com.senior.cyber.pki.web.validator.CertificateCommonNameValidator;
 import com.senior.cyber.pki.web.validator.CertificateSanValidator;
 import com.senior.cyber.pki.web.validator.CsrValidator;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -48,20 +47,16 @@ import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
-import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
-import org.apache.wicket.validation.validator.EmailAddressValidator;
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -217,10 +212,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyCertificateGenerate_Issue_Action);
         }
         try {
             long serial = System.currentTimeMillis();

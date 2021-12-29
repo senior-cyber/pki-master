@@ -1,13 +1,12 @@
 package com.senior.cyber.pki.web.factory;
 
-import com.senior.cyber.pki.web.exception.UnauthorizedInstantiationException;
+import com.senior.cyber.frmk.common.exception.UnauthorizedInstantiationException;
 import com.senior.cyber.pki.web.pages.DeniedPage;
 import com.senior.cyber.pki.web.pages.ErrorPage;
 import com.senior.cyber.pki.web.pages.LoginPage;
 import com.senior.cyber.pki.web.pages.my.profile.MyProfilePage;
 import org.apache.wicket.Component;
 import org.apache.wicket.Page;
-import org.apache.wicket.authorization.IUnauthorizedComponentInstantiationListener;
 import org.apache.wicket.authroles.authentication.AbstractAuthenticatedWebSession;
 import org.apache.wicket.markup.html.WebPage;
 

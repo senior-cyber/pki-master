@@ -4,6 +4,7 @@ package com.senior.cyber.pki.web.pages.my.intermediate;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.pki.CertificateUtils;
 import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
@@ -314,10 +315,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateGenerate_Issue_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyIntermediateGenerate_Issue_Action);
         }
         try {
             long serial = System.currentTimeMillis();

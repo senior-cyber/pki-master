@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
@@ -109,7 +110,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_IssueNewRoot_Action)) {
+            if (Permission.hasAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyRootBrowse_IssueNewRoot_Action)) {
             } else {
                 this.createButton.setVisible(false);
             }
@@ -126,10 +127,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Download_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyRootBrowse_Download_Action);
         }
         try {
             long uuid = tuple.get("uuid", long.class);
@@ -226,10 +224,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Revoke_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyRootBrowse_Revoke_Action);
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();
@@ -237,10 +232,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
             setResponsePage(RootRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Copy_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyRootBrowse_Copy_Action);
             }
             long uuid = model.get("uuid", long.class);
             PageParameters parameters = new PageParameters();

@@ -3,6 +3,8 @@ package com.senior.cyber.pki.web.pages.my.key;
 import com.google.crypto.tink.*;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.exception.UnauthorizedInstantiationException;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.TextCell;
@@ -202,12 +204,9 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getQueue().isEmpty() && getSession().getPwd() != null) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Create_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyKey_Create_Action);
             } else {
-                throw new WicketRuntimeException("No Permission");
+                throw new UnauthorizedInstantiationException(this.getClass());
             }
         }
         try {
@@ -284,22 +283,16 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         if ("Delete".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getLoginUserId() == userId) {
-                    if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
-                    } else {
-                        throw new WicketRuntimeException("No Permission");
-                    }
+                    Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyKey_Delete_Action);
                 } else {
-                    throw new WicketRuntimeException("No Permission");
+                    throw new UnauthorizedInstantiationException(this.getClass());
                 }
             }
             keyRepository.deleteById(uuid);
             target.add(this.key_browse_table);
         } else if ("Show Secret".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-                } else {
-                    throw new WicketRuntimeException("No Permission");
-                }
+                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyKey_ShowSecret_Action);
             }
             shown.add(uuid);
             target.add(this.key_browse_table);

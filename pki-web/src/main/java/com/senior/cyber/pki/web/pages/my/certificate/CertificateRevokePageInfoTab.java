@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -296,10 +297,7 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateRevoke_Revoke_Action)) {
-            } else {
-                throw new WicketRuntimeException("No Permission");
-            }
+            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyCertificateRevoke_Revoke_Action);
         }
 
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
