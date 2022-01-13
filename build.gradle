@@ -1,24 +1,30 @@
 buildscript {
     ext {
+        // Nexus Repository Configuration
+        nexus_url = 'http://192.168.1.24:8081/repository'
+        nexus_uid = 'admin'
+        nexus_pwd = 'password'
+
+        // Dependency Management
         poi = '5.1.0' // https://mvnrepository.com/artifact/org.apache.poi/poi
         wicket = '9.7.0' // https://mvnrepository.com/artifact/org.apache.wicket/wicket
-        spring_boot = '2.6.2' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web
+        spring_boot = '2.6.2' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
         reflections = '0.10.2' // https://mvnrepository.com/artifact/org.reflections/reflections
         servlet = '4.0.1' // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
         commons_lang3 = '3.12.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
         commons_text = '1.9' // https://mvnrepository.com/artifact/org.apache.commons/commons-text
         spring = '5.3.14' // https://mvnrepository.com/artifact/org.springframework/spring-context
-        jooq = '3.15.5' // https://mvnrepository.com/artifact/org.jooq/jooq
+        jooq = '3.16.1' // https://mvnrepository.com/artifact/org.jooq/jooq
         spring_dependency_management = '1.0.11.RELEASE' // https://mvnrepository.com/artifact/io.spring.dependency-management/io.spring.dependency-management.gradle.plugin
         joda_time = '2.10.13' // https://mvnrepository.com/artifact/joda-time/joda-time
         commons_io = '2.11.0' // https://mvnrepository.com/artifact/commons-io/commons-io
         metamodel = '5.3.3' // https://mvnrepository.com/artifact/org.apache.metamodel/MetaModel-core
         liquibase = '4.6.2' // https://mvnrepository.com/artifact/org.liquibase/liquibase-core
         commons_dbcp2 = '2.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2
-        flyway = '8.3.0' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
+        flyway = '8.4.0' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
         gson = '2.8.9' // https://mvnrepository.com/artifact/com.google.code.gson/gson
         bouncycastle = '1.70' // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
-        spring_cloud = '2021.0.0' // https://github.com/spring-cloud/spring-cloud-release/tags
+        spring_cloud = '2021.0.0' // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-dependencies
         guava = '31.0.1-jre' // https://mvnrepository.com/artifact/com.google.guava/guava
         httpclient = '4.5.13' // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
 
@@ -27,5 +33,13 @@ buildscript {
         commons_csv = '1.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
         commons_compress = '1.21' // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
         google_tink = '1.6.1' // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            url "$nexus_url/maven-public/"
+            allowInsecureProtocol = true
+        }
+        mavenCentral()
     }
 }
