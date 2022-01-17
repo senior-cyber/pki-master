@@ -48,8 +48,10 @@ dependencies {
     implementation "org.jasypt:jasypt:${jasypt}"
 
     implementation "mysql:mysql-connector-java"
-    implementation "org.flywaydb:flyway-core:${flyway}"
-    implementation "org.liquibase:liquibase-core:${liquibase}"
+    implementation "org.flywaydb:flyway-core"
+    implementation "org.liquibase:liquibase-core"
+//    implementation "org.flywaydb:flyway-core:${flyway}"
+//    implementation "org.liquibase:liquibase-core:${liquibase}"
 
     implementation "com.google.crypto.tink:tink:${google_tink}"
 }
