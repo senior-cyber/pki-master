@@ -33,6 +33,7 @@ buildscript {
         commons_csv = '1.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
         commons_compress = '1.21' // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
         google_tink = '1.6.1' // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
+        mysql = '8.0.27' // https://mvnrepository.com/artifact/mysql/mysql-connector-java
     }
     repositories {
         mavenLocal()
