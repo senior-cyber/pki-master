@@ -1,3 +1,5 @@
+server:
+  port: 8080
 webui:
   servlet:
     load-on-startup: 1
@@ -5,11 +7,11 @@ webui:
   configuration-type: DEPLOYMENT
   wicket-factory: com.senior.cyber.pki.web.factory.WicketFactory
   pkg: com.senior.cyber.pki.web.pages
-  admin-lte: D:/github/ColorlibHQ/AdminLTE
+  admin-lte: /opt/ColorlibHQ/AdminLTE
   csrf: false
 pki:
   api:
-    address: http://192.168.1.8:4040
+    address: http://192.168.1.3:4080
 spring:
   jpa:
     properties:
@@ -35,7 +37,5 @@ spring:
 app:
   mode: Individual
   secret: 123123a
-server:
-  port: 8080
 crypto:
   iv: Lxomdim3thxLYtOu8NmaXg==
