@@ -1,0 +1,41 @@
+webui:
+  servlet:
+    load-on-startup: 1
+    path: /*
+  configuration-type: DEPLOYMENT
+  wicket-factory: com.senior.cyber.pki.web.factory.WicketFactory
+  pkg: com.senior.cyber.pki.web.pages
+  admin-lte: D:/github/ColorlibHQ/AdminLTE
+  csrf: false
+pki:
+  api:
+    address: http://192.168.1.8:4040
+spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+  mvc:
+    servlet:
+      path: /api
+      load-on-startup: 1
+  datasource:
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    url: jdbc:mysql://192.168.1.24:3306/pki_master
+  flyway:
+    locations: classpath:com/senior/cyber/pki/dao/flyway
+app:
+  mode: Individual
+  secret: 123123a
+server:
+  port: 8080
+crypto:
+  iv: Lxomdim3thxLYtOu8NmaXg==

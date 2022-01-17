@@ -1,0 +1,24 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  mvc:
+    servlet:
+      path: /api
+      load-on-startup: 1
+  datasource:
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    url: jdbc:mysql://192.168.1.24:3306/pki_master
+  flyway:
+    locations: classpath:com/senior/cyber/pki/dao/flyway
+server:
+  port: 8080
