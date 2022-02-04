@@ -274,7 +274,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             }
         }
 
-        this.cancelButton = new BookmarkablePageLink<>("cancelButton", UserBrowsePage.class);
+        this.cancelButton = new BookmarkablePageLink<>("cancelButton", RootBrowsePage.class);
         this.form.add(this.cancelButton);
 
         this.form.add(new ValidityValidator(this.valid_from_field, this.valid_until_field));
