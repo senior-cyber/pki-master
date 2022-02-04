@@ -15,7 +15,7 @@ public class PkiApiConfiguration {
         return address;
     }
 
-    public void setOcsp(List<String> address) {
+    public void setAddress(List<String> address) {
         this.address = address;
     }
 
