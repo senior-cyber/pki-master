@@ -353,8 +353,6 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
 
-            String httpAddress = pkiApiConfiguration.getAddress();
-
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
 
@@ -391,9 +389,11 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
 
             requestDto.setcRLDistributionPointsCritical(false);
 
-            requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/intermediate/" + intermediate.getSerial() + ".crl"));
-            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/intermediate/" + intermediate.getSerial()));
-            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/intermediate/" + intermediate.getSerial() + ".der"));
+            for (String httpAddress : pkiApiConfiguration.getAddress()) {
+                requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/intermediate/" + intermediate.getSerial() + ".crl"));
+                requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/intermediate/" + intermediate.getSerial()));
+                requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/intermediate/" + intermediate.getSerial() + ".der"));
+            }
 
             String subjectAltNames = StringUtils.trimToEmpty(this.san_value);
             List<String> subjectAltName = new ArrayList<>();

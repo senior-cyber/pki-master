@@ -325,8 +325,6 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
 
-            String httpAddress = pkiApiConfiguration.getAddress();
-
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
 
@@ -350,9 +348,11 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
             requestDto.setSerial(serial);
 
-            requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/root/" + root.getSerial() + ".crl"));
-            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/root/" + root.getSerial()));
-            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/root/" + root.getSerial() + ".der"));
+            for (String httpAddress : pkiApiConfiguration.getAddress()) {
+                requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/root/" + root.getSerial() + ".crl"));
+                requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/root/" + root.getSerial()));
+                requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/root/" + root.getSerial() + ".der"));
+            }
 
             requestDto.setBasicConstraintsCritical(true);
             requestDto.setKeyUsageCritical(true);

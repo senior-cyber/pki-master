@@ -3,17 +3,19 @@ package com.senior.cyber.pki.web.configuration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
 @ConfigurationProperties(prefix = "pki.api", ignoreUnknownFields = true)
 public class PkiApiConfiguration {
 
-    private String address;
+    private List<String> address;
 
-    public String getAddress() {
+    public List<String> getAddress() {
         return address;
     }
 
-    public void setAddress(String address) {
+    public void setOcsp(List<String> address) {
         this.address = address;
     }
 

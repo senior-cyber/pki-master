@@ -233,8 +233,6 @@ public class IssueController {
 
         long serial = System.currentTimeMillis();
 
-        String httpAddress = pkiApiConfiguration.getAddress();
-
         KeyPair key = KeyPairUtility.generate();
 
         X500Name subject = SubjectUtility.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
@@ -249,9 +247,11 @@ public class IssueController {
         requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
         requestDto.setSerial(serial);
 
-        requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/root/" + root.getSerial() + ".crl"));
-        requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/root/" + root.getSerial()));
-        requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/root/" + root.getSerial() + ".der"));
+        for (String httpAddress : pkiApiConfiguration.getAddress()) {
+            requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/root/" + root.getSerial() + ".crl"));
+            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/root/" + root.getSerial()));
+            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/root/" + root.getSerial() + ".der"));
+        }
 
         requestDto.setBasicConstraintsCritical(true);
         requestDto.setKeyUsageCritical(true);
@@ -407,8 +407,6 @@ public class IssueController {
 
         long serial = System.currentTimeMillis();
 
-        String httpAddress = pkiApiConfiguration.getAddress();
-
         KeyPair key = KeyPairUtility.generate();
 
         X500Name subject = SubjectUtility.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
@@ -436,9 +434,11 @@ public class IssueController {
 
         requestDto.setcRLDistributionPointsCritical(false);
 
-        requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/intermediate/" + intermediate.getSerial() + ".crl"));
-        requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/intermediate/" + intermediate.getSerial()));
-        requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/intermediate/" + intermediate.getSerial() + ".der"));
+        for (String httpAddress : pkiApiConfiguration.getAddress()) {
+            requestDto.getCRLDistributionPoints().add(new GeneralNameDto(httpAddress + "/api/pki/crl/intermediate/" + intermediate.getSerial() + ".crl"));
+            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.OCSP, httpAddress + "/api/pki/ocsp/intermediate/" + intermediate.getSerial()));
+            requestDto.getAuthorityInfoAccess().add(new GeneralNameDto(GeneralNameTypeEnum.CA, httpAddress + "/api/pki/intermediate/" + intermediate.getSerial() + ".der"));
+        }
 
         List<String> subjectAltName = new ArrayList<>();
         if (subjectDto.getSubjectAltNames() != null && !subjectDto.getSubjectAltNames().isEmpty()) {

@@ -11,7 +11,9 @@ webui:
   csrf: false
 pki:
   api:
-    address: http://192.168.1.3:4080
+    address:
+      - http://192.168.1.3:4080
+      - http://58.97.205.107:4080
 spring:
   jpa:
     properties:
