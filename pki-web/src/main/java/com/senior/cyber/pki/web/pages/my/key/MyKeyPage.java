@@ -257,6 +257,8 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                     actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
                 }
             }
+        } else {
+            actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
         }
         if (shown.contains(uuid)) {
             actions.add(new ActionItem("Hide Secret", Model.of("Hide Secret"), ItemCss.SUCCESS));
@@ -269,6 +271,8 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                         }
                     }
                 }
+            } else {
+                actions.add(new ActionItem("Show Secret", Model.of("Show Secret"), ItemCss.WARNING));
             }
         }
         return actions;
