@@ -50,9 +50,6 @@ dependencies {
     implementation "mysql:mysql-connector-java"
     implementation "org.flywaydb:flyway-core"
     implementation "org.liquibase:liquibase-core"
-//    implementation "mysql:mysql-connector-java:${mysql}"
-//    implementation "org.flywaydb:flyway-core:${flyway}"
-//    implementation "org.liquibase:liquibase-core:${liquibase}"
 
     implementation "com.google.crypto.tink:tink:${google_tink}"
 }
