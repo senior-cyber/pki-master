@@ -1,9 +1,9 @@
 buildscript {
     ext {
         // Nexus Repository Configuration
-        nexus_url = 'https://58.97.205.107:8443/repository'
+        nexus_url = 'https://149.56.22.39:8443/repository'
         nexus_uid = 'admin'
-        nexus_pwd = 'password'
+        nexus_pwd = System.getProperty('nexusPassword')
 
         // Dependency Management
         poi = '5.2.1' // https://mvnrepository.com/artifact/org.apache.poi/poi
