@@ -61,6 +61,19 @@ public class PKIController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PKIController.class);
 
+    private static final String[] HEADERS_TO_TRY = {
+            "X-Forwarded-For",
+            "Proxy-Client-IP",
+            "WL-Proxy-Client-IP",
+            "HTTP_X_FORWARDED_FOR",
+            "HTTP_X_FORWARDED",
+            "HTTP_X_CLUSTER_CLIENT_IP",
+            "HTTP_CLIENT_IP",
+            "HTTP_FORWARDED_FOR",
+            "HTTP_FORWARDED",
+            "HTTP_VIA",
+            "REMOTE_ADDR"};
+
     @Autowired
     protected IntermediateRepository intermediateRepository;
 
@@ -72,7 +85,7 @@ public class PKIController {
 
     @RequestMapping(path = "/intermediate/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-cert")
     public ResponseEntity<byte[]> intermediate(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Intermediate> optionalIntermediate = intermediateRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         X509Certificate certificate = CertificateUtils.read(intermediate.getCertificate());
@@ -84,7 +97,7 @@ public class PKIController {
 
     @RequestMapping(path = "/root/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-cert")
     public ResponseEntity<byte[]> root(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Root> optionalRoot = rootRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Root root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         X509Certificate certificate = CertificateUtils.read(root.getCertificate());
@@ -96,7 +109,7 @@ public class PKIController {
 
     @RequestMapping(path = "/crl/root/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
     public ResponseEntity<byte[]> crlRoot(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, OperatorCreationException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         LocalDate now = LocalDate.now();
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
 
@@ -151,7 +164,7 @@ public class PKIController {
 
     @RequestMapping(path = "/crl/intermediate/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
     public ResponseEntity<byte[]> crlIntermediate(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, OperatorCreationException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         LocalDate now = LocalDate.now();
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
 
@@ -206,7 +219,7 @@ public class PKIController {
 
     @RequestMapping(path = "/ocsp/root/{serial}", method = RequestMethod.POST, consumes = "application/ocsp-request", produces = "application/ocsp-response")
     public ResponseEntity<byte[]> ocspRoot(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException, OperatorCreationException, OCSPException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Root> optionalRoot = rootRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Root root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         X509Certificate issuerCertificate = CertificateUtils.read(root.getCertificate());
@@ -264,7 +277,7 @@ public class PKIController {
 
     @RequestMapping(path = "/ocsp/intermediate/{serial}", method = RequestMethod.POST, consumes = "application/ocsp-request", produces = "application/ocsp-response")
     public ResponseEntity<byte[]> ocspIntermediate(@PathVariable("serial") String serial, HttpServletRequest request) throws CertificateException, IOException, OperatorCreationException, OCSPException {
-        LOGGER.info("PathInfo [{}]", request.getPathInfo());
+        LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Intermediate> optionalIntermediate = intermediateRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Root root = intermediate.getRoot();
@@ -321,6 +334,16 @@ public class PKIController {
         headers.add("Content-Disposition", "inline");
         headers.add("Content-Type", "application/ocsp-response");
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(ocspResp.getEncoded());
+    }
+
+    protected String getClientIpAddress(HttpServletRequest request) {
+        for (String header : HEADERS_TO_TRY) {
+            String ip = request.getHeader(header);
+            if (ip != null && !"".equals(ip) && !"unknown".equalsIgnoreCase(ip)) {
+                return ip;
+            }
+        }
+        return request.getRemoteAddr();
     }
 
 }
