@@ -101,7 +101,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
         long uuid = object.get("uuid", long.class);
-        return new ClickableCell(this::download, object, uuid + ".zip");
+        return new ClickableCell(this::download, object, uuid + "-" + System.currentTimeMillis() + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {

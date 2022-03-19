@@ -119,7 +119,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
         long uuid = object.get("uuid", long.class);
-        return new ClickableCell(this::download, object, uuid + ".zip");
+        return new ClickableCell(this::download, object, uuid + "-" + System.currentTimeMillis() + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -145,10 +145,13 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
                 StringBuffer buffer = new StringBuffer();
 
+                buffer.append("#JKS entry").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore " + name + ".jks -storepass " + changeit + " -alias " + name + " -import -file " + name + ".crt").append("\n");
+                buffer.append("\n");
                 buffer.append("# Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
-
                 buffer.append("\n");
                 buffer.append("# Installation Instructions for SpringBoot").append("\n");
                 buffer.append("====================================================================================").append("\n");
