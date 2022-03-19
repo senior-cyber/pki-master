@@ -99,7 +99,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
         long uuid = object.get("uuid", long.class);
-        return new ClickableCell(this::download, object, uuid + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd") + ".zip");
+        String name = StringUtils.replace(object.get("common_name", String.class), " ", "_");
+        return new ClickableCell(this::download, object, uuid + "_" + name + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -230,7 +231,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                         public void respond(IRequestCycle requestCycle) {
                             super.respond(requestCycle);
                         }
-                    }.setFileName(uuid + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd") + ".zip")
+                    }.setFileName(uuid + "_" + name + ".zip")
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
         } catch (IOException e) {
