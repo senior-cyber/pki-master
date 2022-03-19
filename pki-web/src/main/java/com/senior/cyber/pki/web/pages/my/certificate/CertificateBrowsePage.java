@@ -25,6 +25,7 @@ import com.senior.cyber.pki.web.utility.MemoryResourceStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -48,10 +49,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Bookmark("/my/certificate/browse")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse})
@@ -101,7 +99,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
         long uuid = object.get("uuid", long.class);
-        return new ClickableCell(this::download, object, uuid + "-" + System.currentTimeMillis() + ".zip");
+        return new ClickableCell(this::download, object, uuid + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd") + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -232,7 +230,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                         public void respond(IRequestCycle requestCycle) {
                             super.respond(requestCycle);
                         }
-                    }.setFileName(uuid + ".zip")
+                    }.setFileName(uuid + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd") + ".zip")
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
         } catch (IOException e) {
