@@ -8,11 +8,11 @@ sourceCompatibility = '11'
 
 repositories {
 	mavenLocal()
+	mavenCentral()
 	maven {
 		url "$nexus_url/maven-public/"
 		allowInsecureProtocol = true
 	}
-	mavenCentral()
 }
 
 dependencies {
