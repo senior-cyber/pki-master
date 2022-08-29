@@ -217,7 +217,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server:").append("\n");
-                buffer.append("  ssl:.enabled=true").append("\n");
+                buffer.append("  ssl:").append("\n");
                 buffer.append("    enabled: true").append("\n");
                 buffer.append("    key-store: /your/path/to/" + name + ".p12").append("\n");
                 buffer.append("    key-store-type: PKCS12").append("\n");
