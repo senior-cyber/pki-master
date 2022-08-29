@@ -154,7 +154,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                 buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
 
-                buffer.append("# Installation Instructions for SpringBoot (property").append("\n");
+                buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server.ssl.enabled=true").append("\n");
                 buffer.append("server.ssl.client-auth=need").append("\n");
@@ -163,7 +163,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                 buffer.append("server.ssl.trust-store-password=" + changeit).append("\n");
                 buffer.append("\n");
 
-                buffer.append("# Installation Instructions for SpringBoot (yaml").append("\n");
+                buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server:").append("\n");
                 buffer.append("  ssl:").append("\n");
