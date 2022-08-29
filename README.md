@@ -8,6 +8,10 @@ MySQL 8 - sudo apt-get install mysql-server
 # Compile / Build
 
 ```shell
+mkdir -p /opt/ColorlibHQ
+cd /opt/ColorlibHQ
+git clone https://github.com/ColorlibHQ/AdminLTE.git
+
 cd ~
 git clone https://github.com/senior-cyber/frmk-master.git
 cd frmk-master
