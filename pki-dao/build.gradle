@@ -30,6 +30,5 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-jdbc:${spring_boot}"
 	implementation "org.liquibase:liquibase-core:${liquibase}"
 	implementation "org.flywaydb:flyway-core:${flyway}"
-//    implementation "org.flywaydb:flyway-core"
-//    implementation "org.liquibase:liquibase-core"
+	implementation "org.flywaydb:flyway-mysql:${flyway}"
 }
