@@ -57,9 +57,9 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/pki")
-public class PKIController {
+public class PkiController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PKIController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PkiController.class);
 
     private static final String[] HEADERS_TO_TRY = {
             "X-Forwarded-For",

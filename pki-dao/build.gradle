@@ -4,7 +4,9 @@ plugins {
 
 group = 'com.senior.cyber.pki'
 version = '0.0.1'
-sourceCompatibility = '11'
+
+sourceCompatibility = "$java_version"
+targetCompatibility = "$java_version"
 
 repositories {
 	mavenLocal()
