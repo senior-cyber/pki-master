@@ -124,6 +124,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             String changeit = "changeit";
 
             String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
+            String intermediateName = StringUtils.replace("intermediate-" + intermediate.getCommonName(), " ", "_");
 
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
@@ -137,7 +138,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             }
 
             {
-                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(StringUtils.replace("intermediate-" + intermediate.getCommonName(), " ", "_") + ".crt");
+                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(intermediateName + ".crt");
                 intermediateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(intermediateEntry);
                 zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -169,32 +170,75 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
                 buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
-                buffer.append("# Installation Instructions for Apache").append("\n");
+
+                buffer.append("# Installation Instructions for Apache2").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("SSLCertificateFile /your/path/to/" + name + ".crt").append("\n");
                 buffer.append("SSLCertificateKeyFile /your/path/to/" + name + ".pem").append("\n");
                 buffer.append("SSLCertificateChainFile /your/path/to/" + caChain).append("\n");
                 buffer.append("\n");
-                buffer.append("# Installation Instructions for SpringBoot").append("\n");
+
+                buffer.append("# Installation Instructions for GitLab").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("letsencrypt['enable'] = false").append("\n");
+                buffer.append("nginx['ssl_certificate'] = '/etc/gitlab/ssl/" + fullChain + "'").append("\n");
+                buffer.append("nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/" + name + ".pem'").append("\n");
+                buffer.append("/etc/gitlab/trusted-certs/" + rootName + ".crt").append("\n");
+                buffer.append("/etc/gitlab/trusted-certs/" + intermediateName + ".crt").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for Tomcat (Http11NioProtocol)").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11NioProtocol\" maxThreads=\"150\" SSLEnabled=\"true\">").append("\n");
+                buffer.append("    <SSLHostConfig>").append("\n");
+                buffer.append("        <Certificate certificateKeystoreFile=\"conf/" + name + ".p12\" certificateKeystorePassword=\"" + changeit + "\" type=\"EC\" />").append("\n");
+                buffer.append("    </SSLHostConfig>").append("\n");
+                buffer.append("</Connector>").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for Tomcat (Http11AprProtocol)").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11AprProtocol\" maxThreads=\"150\" SSLEnabled=\"true\" >").append("\n");
+                buffer.append("    <UpgradeProtocol className=\"org.apache.coyote.http2.Http2Protocol\" />").append("\n");
+                buffer.append("    <SSLHostConfig>").append("\n");
+                buffer.append("        <Certificate certificateKeyFile=\"conf/" + name + ".pem\" certificateFile=\"conf/" + name + ".crt\" certificateChainFile=\"conf/" + caChain + "\" type=\"EC\" />").append("\n");
+                buffer.append("    </SSLHostConfig>").append("\n");
+                buffer.append("</Connector>").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (property").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server.ssl.enabled=true").append("\n");
                 buffer.append("server.ssl.key-store=/your/path/to/" + name + ".p12").append("\n");
                 buffer.append("server.ssl.key-store-type=PKCS12").append("\n");
-                buffer.append("server.ssl.key-store-password=changeit").append("\n");
+                buffer.append("server.ssl.key-store-password=" + changeit).append("\n");
                 buffer.append("\n");
-                buffer.append("# Import/Delete JDK-11 cacert entry").append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (yaml").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("server:").append("\n");
+                buffer.append("  ssl:.enabled=true").append("\n");
+                buffer.append("    enabled: true").append("\n");
+                buffer.append("    key-store: /your/path/to/" + name + ".p12").append("\n");
+                buffer.append("    key-store-type: PKCS12").append("\n");
+                buffer.append("    key-store-password: " + changeit).append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Import/Delete JDK-11 RootCA entry").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
                 buffer.append("\n");
-                buffer.append("# Import/Delete JDK-8 cacert entry").append("\n");
+
+                buffer.append("# Import/Delete JDK-8 RootCA entry").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
                 buffer.append("\n");
-                buffer.append("# Create Trust Store P12 File").append("\n");
+
+                buffer.append("# Create RootCA Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
 

@@ -152,13 +152,29 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
 
             {
                 StringBuffer buffer = new StringBuffer();
-                buffer.append("# JKS entry").append("\n");
+                buffer.append("# Create Trust Store JKS File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore " + rootName + ".jks -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
                 buffer.append("\n");
+
                 buffer.append("# Create Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Import/Delete JDK-11 RootCA entry").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Import/Delete JDK-8 RootCA entry").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
+                buffer.append("\n");
 
                 String crt = buffer.toString();
                 ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");

@@ -144,21 +144,34 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
                 StringBuffer buffer = new StringBuffer();
 
-                buffer.append("#JKS entry").append("\n");
+                buffer.append("# Create Trust Store JKS File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore " + name + ".jks -storepass " + changeit + " -alias " + name + " -import -file " + name + ".crt").append("\n");
                 buffer.append("\n");
-                buffer.append("# Installation Instructions for SpringBoot").append("\n");
+
+                buffer.append("# Create Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
-                buffer.append("# Installation Instructions for SpringBoot").append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (property").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("server.ssl.enabled=true").append("\n");
                 buffer.append("server.ssl.client-auth=need").append("\n");
                 buffer.append("server.ssl.trust-store=/your/path/to/" + name + ".p12").append("\n");
                 buffer.append("server.ssl.trust-store-type=PKCS12").append("\n");
                 buffer.append("server.ssl.trust-store-password=" + changeit).append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (yaml").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("server:").append("\n");
+                buffer.append("  ssl:").append("\n");
+                buffer.append("    enabled: true").append("\n");
+                buffer.append("    client-auth: need").append("\n");
+                buffer.append("    trust-store: /your/path/to/" + name + ".p12").append("\n");
+                buffer.append("    trust-store-type: PKCS12").append("\n");
+                buffer.append("    trust-store-password: " + changeit).append("\n");
 
                 String crt = buffer.toString();
                 ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
