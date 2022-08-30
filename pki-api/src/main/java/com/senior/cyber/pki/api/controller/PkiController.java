@@ -141,7 +141,6 @@ public class PkiController {
         }
 
         int keySize = 256;
-        keySize = 1;
         String format = "";
         if (issuerPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
@@ -196,7 +195,6 @@ public class PkiController {
         }
 
         int keySize = 256;
-        keySize = 1;
         String format = "";
         if (issuerPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
@@ -230,7 +228,6 @@ public class PkiController {
         DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
 
         int keySize = 256;
-        keySize = 1;
         String format = "";
         if (issuerPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
@@ -292,7 +289,6 @@ public class PkiController {
         DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
 
         int keySize = 256;
-        // keySize = 1;
         String format = "";
         if (issuerPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
