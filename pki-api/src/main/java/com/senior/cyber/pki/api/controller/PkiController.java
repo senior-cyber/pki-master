@@ -51,7 +51,6 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -240,7 +239,6 @@ public class PkiController {
 
         Date now = LocalDate.now().toDate();
 
-        List<X509CertificateHolder> lists = new ArrayList<>();
         JcaBasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(issuerCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
         for (Req req : ocspReq.getRequestList()) {
             Optional<Intermediate> optionalIntermediate = this.intermediateRepository.findBySerialAndRoot(req.getCertID().getSerialNumber().longValueExact(), root);
@@ -248,9 +246,8 @@ public class PkiController {
             if (intermediate == null) {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
-                X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
-                lists.add(new JcaX509CertificateHolder(cert));
                 if ("Good".equals(intermediate.getStatus())) {
+                    X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
                     try {
                         cert.checkValidity();
                         ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);
@@ -266,7 +263,7 @@ public class PkiController {
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + keySize + "WITH" + format);
         ContentSigner contentSigner = contentSignerBuilder.build(issuerPrivateKey);
 
-        BasicOCSPResp resp = ocspRespBuilder.build(contentSigner, lists.toArray(new X509CertificateHolder[0]), now);
+        BasicOCSPResp resp = ocspRespBuilder.build(contentSigner, new X509CertificateHolder[]{new JcaX509CertificateHolder(issuerCertificate)}, now);
         OCSPRespBuilder respBuilder = new OCSPRespBuilder();
         OCSPResp ocspResp = respBuilder.build(OCSPRespBuilder.SUCCESSFUL, resp);
         HttpHeaders headers = new HttpHeaders();
@@ -280,8 +277,8 @@ public class PkiController {
         LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Intermediate> optionalIntermediate = intermediateRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        // Root root = intermediate.getRoot();
-        // X509Certificate rootCertificate = CertificateUtils.read(root.getCertificate());
+        Root root = intermediate.getRoot();
+        X509Certificate rootCertificate = CertificateUtils.read(root.getCertificate());
         X509Certificate issuerCertificate = CertificateUtils.read(intermediate.getCertificate());
         PrivateKey issuerPrivateKey = PrivateKeyUtils.read(intermediate.getPrivateKey());
 
@@ -301,7 +298,6 @@ public class PkiController {
             format = "DSA";
         }
 
-        List<X509CertificateHolder> lists = new ArrayList<>();
         JcaBasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(issuerCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
         for (Req req : ocspReq.getRequestList()) {
             Optional<Certificate> optionalCertificate = this.certificateRepository.findBySerialAndIntermediate(req.getCertID().getSerialNumber().longValueExact(), intermediate);
@@ -309,9 +305,8 @@ public class PkiController {
             if (certificate == null) {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
-                X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
-                lists.add(new JcaX509CertificateHolder(cert));
                 if ("Good".equals(certificate.getStatus())) {
+                    X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
                     try {
                         cert.checkValidity();
                         ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);
@@ -327,7 +322,8 @@ public class PkiController {
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + keySize + "WITH" + format);
         ContentSigner contentSigner = contentSignerBuilder.build(issuerPrivateKey);
 
-        BasicOCSPResp resp = ocspRespBuilder.build(contentSigner, lists.toArray(new X509CertificateHolder[0]), now);
+
+        BasicOCSPResp resp = ocspRespBuilder.build(contentSigner, new X509CertificateHolder[]{new JcaX509CertificateHolder(issuerCertificate), new JcaX509CertificateHolder(rootCertificate)}, now);
         OCSPRespBuilder respBuilder = new OCSPRespBuilder();
         OCSPResp ocspResp = respBuilder.build(OCSPRespBuilder.SUCCESSFUL, resp);
         HttpHeaders headers = new HttpHeaders();
