@@ -189,14 +189,6 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                 zipArchiveOutputStream.closeArchiveEntry();
             }
 
-            {
-                ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(name + ".pem");
-                privateKeyEntry.setSize(intermediate.getPrivateKey().getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
-                zipArchiveOutputStream.write(intermediate.getPrivateKey().getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
             zipArchiveOutputStream.close();
 
             IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
