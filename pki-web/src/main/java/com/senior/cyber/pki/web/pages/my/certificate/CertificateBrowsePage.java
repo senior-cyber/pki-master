@@ -119,6 +119,11 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             Root root = intermediate.getRoot();
 
             String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
+            String publicCertificate = name + ".cr";
+            String publicKey = name + "-public.pem";
+            String privateKey = name + "-private.pem";
+            String opensshPrivateKey = name + "-openssh-private.pem";
+            String puttyPrivateKey = name + "-putty-private.ppk";
             String caChain = name + "_ca-chain.crt";
             String fullChain = name + "_full-chain.crt";
             String changeit = "changeit";
@@ -167,22 +172,43 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("# Reference OpenSSL command line to create p12/pfx file").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
-                buffer.append("openssl pkcs12 -inkey " + name + ".pem -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
+                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
                 buffer.append("\n");
 
                 buffer.append("# Installation Instructions for Apache2").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("SSLCertificateFile /your/path/to/" + name + ".crt").append("\n");
-                buffer.append("SSLCertificateKeyFile /your/path/to/" + name + ".pem").append("\n");
+                buffer.append("SSLCertificateFile /your/path/to/" + publicCertificate).append("\n");
+                buffer.append("SSLCertificateKeyFile /your/path/to/" + privateKey).append("\n");
                 buffer.append("SSLCertificateChainFile /your/path/to/" + caChain).append("\n");
+                buffer.append("\n");
+
+
+                buffer.append("# Create OpenSSH Key Base Authentication ~/.ssh/authorized_keys").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("cp " + privateKey + " ~/.ssh/id_ecdsa").append("\n");
+                buffer.append("ssh-keygen -y -f ~/.ssh/id_ecdsa > ~/.ssh/id_ecdsa.pub").append("\n");
+                buffer.append("ssh-keygen -p -f ~/.ssh/id_ecdsa").append("\n");
+                buffer.append("ssh-copy-id -i ~/.ssh/id_ecdsa.pub {user}@{target-ip}").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Create Putty ppk file").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("# for ubuntu").append("\n");
+                buffer.append("sudo apt-get install putty-tools").append("\n");
+                buffer.append("# for rhel/centos").append("\n");
+                buffer.append("sudo yum install putty").append("\n");
+                buffer.append("cp " + privateKey + " " + opensshPrivateKey).append("\n");
+                buffer.append("chmod 600 " + opensshPrivateKey).append("\n");
+                buffer.append("ssh-keygen -p -f " + opensshPrivateKey).append("\n");
+                buffer.append("puttygen " + opensshPrivateKey + " -o " + puttyPrivateKey).append("\n");
                 buffer.append("\n");
 
                 buffer.append("# Installation Instructions for GitLab").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("letsencrypt['enable'] = false").append("\n");
                 buffer.append("nginx['ssl_certificate'] = '/etc/gitlab/ssl/" + fullChain + "'").append("\n");
-                buffer.append("nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/" + name + ".pem'").append("\n");
+                buffer.append("nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/" + privateKey + "'").append("\n");
                 buffer.append("/etc/gitlab/trusted-certs/" + rootName + ".crt").append("\n");
                 buffer.append("/etc/gitlab/trusted-certs/" + intermediateName + ".crt").append("\n");
                 buffer.append("\n");
@@ -201,7 +227,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11AprProtocol\" maxThreads=\"150\" SSLEnabled=\"true\" >").append("\n");
                 buffer.append("    <UpgradeProtocol className=\"org.apache.coyote.http2.Http2Protocol\" />").append("\n");
                 buffer.append("    <SSLHostConfig>").append("\n");
-                buffer.append("        <Certificate certificateKeyFile=\"conf/" + name + ".pem\" certificateFile=\"conf/" + name + ".crt\" certificateChainFile=\"conf/" + caChain + "\" type=\"EC\" />").append("\n");
+                buffer.append("        <Certificate certificateKeyFile=\"conf/" + privateKey + "\" certificateFile=\"conf/" + publicCertificate + "\" certificateChainFile=\"conf/" + caChain + "\" type=\"EC\" />").append("\n");
                 buffer.append("    </SSLHostConfig>").append("\n");
                 buffer.append("</Connector>").append("\n");
                 buffer.append("\n");
@@ -241,6 +267,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("# Create RootCA Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("\n");
 
                 String crt = buffer.toString();
                 ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
