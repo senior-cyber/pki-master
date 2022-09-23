@@ -119,7 +119,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             Root root = intermediate.getRoot();
 
             String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
-            String publicCertificate = name + ".cr";
+            String publicCertificate = name + ".crt";
             String publicKey = name + "-public.pem";
             String privateKey = name + "-private.pem";
             String opensshPrivateKey = name + "-openssh-private.pem";
