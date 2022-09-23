@@ -183,10 +183,10 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("SSLCertificateChainFile /your/path/to/" + caChain).append("\n");
                 buffer.append("\n");
 
-
                 buffer.append("# Create OpenSSH Key Base Authentication ~/.ssh/authorized_keys").append("\n");
                 buffer.append("====================================================================================").append("\n");
                 buffer.append("cp " + privateKey + " ~/.ssh/id_ecdsa").append("\n");
+                buffer.append("chmod 600 ~/.ssh/id_ecdsa").append("\n");
                 buffer.append("ssh-keygen -y -f ~/.ssh/id_ecdsa > ~/.ssh/id_ecdsa.pub").append("\n");
                 buffer.append("ssh-keygen -p -f ~/.ssh/id_ecdsa").append("\n");
                 buffer.append("ssh-copy-id -i ~/.ssh/id_ecdsa.pub {user}@{target-ip}").append("\n");
