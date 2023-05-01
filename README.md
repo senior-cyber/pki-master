@@ -4,6 +4,20 @@
 #### Gitlab
 #### SpringBoot
 
+```text
+PARAMS
+${API-PORT} = 4080
+${WEB-PORT} = 5080
+${IP} = 192.168.1.140
+${DB-UID} = root
+${DB-PWD} = password
+${DB-NAME} = my_pki
+${DB-IP} = localhost
+${DB-PORT} = 3306
+${DB-DRIVER} = com.mysql.cj.jdbc.Driver
+${DB-DIALECT} = org.hibernate.dialect.MySQL8Dialect
+```
+
 # Prerequisite
 
 ```text
@@ -37,12 +51,12 @@ cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
 #### Configuration File (/opt/apps/pki-master/pki-api.yaml)
 ```yaml
 server:
-  port: 4080
+  port: ${API-PORT}
 spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${DB-DIALECT}
         format_sql: true
     show-sql: true
     hibernate:
@@ -54,10 +68,10 @@ spring:
       path: /api
       load-on-startup: 1
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: password
-    url: jdbc:mysql://localhost:3306/my_pki
+    driver-class-name: ${DB-DRIVER}
+    username: ${DB-UID}
+    password: ${DB-PWD}
+    url: jdbc:mysql://${DB-IP}:${DB-PORT}/${DB-NAME}
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
 ```
@@ -95,7 +109,7 @@ sudo service pki-api status
 #### Configuration File (/opt/apps/pki-master/pki-web.yaml)
 ```yaml
 server:
-  port: 5080
+  port: ${WEB-PORT}
 webui:
   servlet:
     load-on-startup: 1
@@ -108,12 +122,12 @@ webui:
 pki:
   api:
     address:
-      - http://192.168.1.140:4080
+      - http://${IP}:${API-PORT}
 spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${DB-DIALECT}
         format_sql: true
     hibernate:
       ddl-auto: none
@@ -125,10 +139,10 @@ spring:
       path: /api
       load-on-startup: 1
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: password
-    url: jdbc:mysql://localhost:3306/my_pki
+    driver-class-name: ${DB-DRIVER}
+    username: ${DB-UID}
+    password: ${DB-PWD}
+    url: jdbc:mysql://${DB-IP}:${DB-PORT}/${DB-NAME}
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
 app:
@@ -169,7 +183,7 @@ sudo service pki-web status
 
 #### Default Credential
 ```text
-http://192.168.1.140:5080
+http://${IP}:${WEB-PORT}
 UID : admin
 PWD : admin
 ```
