@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        java_version = '11'
+        java_version = '17'
 
         // Nexus Repository Configuration
         nexus_url = 'https://149.56.22.39:8443/repository'
@@ -8,34 +8,34 @@ buildscript {
         nexus_pwd = System.getProperty('nexusPassword')
 
         // Dependency Management
-        poi = '5.2.2' // https://mvnrepository.com/artifact/org.apache.poi/poi
-        wicket = '9.11.0' // https://mvnrepository.com/artifact/org.apache.wicket/wicket
-        spring_boot = '2.7.3' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
+        poi = '5.2.3' // https://mvnrepository.com/artifact/org.apache.poi/poi
+        wicket = '9.13.0' // https://mvnrepository.com/artifact/org.apache.wicket/wicket
+        spring_boot = '2.7.11' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
         reflections = '0.10.2' // https://mvnrepository.com/artifact/org.reflections/reflections
         servlet = '4.0.1' // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
         commons_lang3 = '3.12.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
-        commons_text = '1.9' // https://mvnrepository.com/artifact/org.apache.commons/commons-text
-        spring = '5.3.22' // https://mvnrepository.com/artifact/org.springframework/spring-context
-        jooq = '3.17.3' // https://mvnrepository.com/artifact/org.jooq/jooq
-        spring_dependency_management = '1.0.13.RELEASE' // https://mvnrepository.com/artifact/io.spring.dependency-management/io.spring.dependency-management.gradle.plugin
-        joda_time = '2.11.1' // https://mvnrepository.com/artifact/joda-time/joda-time
+        commons_text = '1.10.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-text
+        spring = '5.3.27' // https://mvnrepository.com/artifact/org.springframework/spring-context
+        jooq = '3.18.3' // https://mvnrepository.com/artifact/org.jooq/jooq
+        spring_dependency_management = '1.1.0' // https://mvnrepository.com/artifact/io.spring.dependency-management/io.spring.dependency-management.gradle.plugin
+        joda_time = '2.12.5' // https://mvnrepository.com/artifact/joda-time/joda-time
         commons_io = '2.11.0' // https://mvnrepository.com/artifact/commons-io/commons-io
         metamodel = '5.3.3' // https://mvnrepository.com/artifact/org.apache.metamodel/MetaModel-core
-        liquibase = '4.15.0' // https://mvnrepository.com/artifact/org.liquibase/liquibase-core
+        liquibase = '4.21.1' // https://mvnrepository.com/artifact/org.liquibase/liquibase-core
         commons_dbcp2 = '2.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2
-        flyway = '9.2.0' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
-        gson = '2.9.1' // https://mvnrepository.com/artifact/com.google.code.gson/gson
+        flyway = '9.16.3' // https://mvnrepository.com/artifact/org.flywaydb/flyway-core
+        gson = '2.10.1' // https://mvnrepository.com/artifact/com.google.code.gson/gson
         bouncycastle = '1.70' // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on
-        spring_cloud = '2021.0.3' // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-dependencies
+        spring_cloud = '2022.0.2' // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-dependencies
         guava = '31.1-jre' // https://mvnrepository.com/artifact/com.google.guava/guava
-        httpclient = '4.5.13' // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
+        httpclient = '4.5.14' // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
 
         commons_validator = '1.7' // https://mvnrepository.com/artifact/commons-validator/commons-validator
         jasypt = '1.9.3' // https://mvnrepository.com/artifact/org.jasypt/jasypt
-        commons_csv = '1.9.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
-        commons_compress = '1.21' // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
-        google_tink = '1.7.0' // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
-        mysql = '8.0.30' // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+        commons_csv = '1.10.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
+        commons_compress = '1.23.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
+        google_tink = '1.9.0' // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
+        mysql = '8.0.33' // https://mvnrepository.com/artifact/mysql/mysql-connector-java
     }
     repositories {
         mavenLocal()
