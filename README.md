@@ -1,11 +1,24 @@
-# Support
-#### Apache2
-#### Tomcat (Apr+Nio)
-#### Gitlab
-#### SpringBoot
+## Tested
 
+| No | Name             |
+|----|------------------|
+| 1  | Apache2          |
+| 2  | Tomcat (Apr+Nio) |
+| 3  | Gitlab           |
+| 4  | SpringBoot       |
+| 5  | Golang           |
+| 6  | Java             |
+| 7  | PHP              |
+| 8  | .Net             |
+| 9  | C/C++            |
+| 10 | Android          |
+| 11 | Kotlin           |
+| 12 | iOS              |
+| 13 | Swift            |
+| 14 | Objective-C      |
+
+#### Param to Replace
 ```text
-PARAMS
 ${API-PORT} = 4080
 ${WEB-PORT} = 5080
 ${IP} = 192.168.1.140
@@ -16,16 +29,17 @@ ${DB-IP} = localhost
 ${DB-PORT} = 3306
 ${DB-DRIVER} = com.mysql.cj.jdbc.Driver
 ${DB-DIALECT} = org.hibernate.dialect.MySQL8Dialect
+${JDK-17} = /opt/apps/java/17.0.7
 ```
 
-# Prerequisite
+## Prerequisite
 
 ```text
 JDK 17 - https://www.azul.com/downloads/?version=java-17-lts&os=ubuntu&architecture=x86-64-bit&package=jdk
 MySQL 8 - sudo apt-get install mysql-server
 ```
 
-# Compile / Build
+## Compile / Build
 
 ```shell
 mkdir -p /opt/apps/ColorlibHQ
@@ -47,8 +61,10 @@ cp pki-web/build/libs/pki-web.jar /opt/apps/pki-master
 cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
 ```
 
-# PKI API
+## PKI API
+
 #### Configuration File (/opt/apps/pki-master/pki-api.yaml)
+
 ```yaml
 server:
   port: ${API-PORT}
@@ -90,7 +106,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=/opt/apps/java/17.0.7/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-api
+ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-api
 StartLimitInterval=0
 
 [Install]
@@ -105,8 +121,10 @@ sudo service pki-api start
 sudo service pki-api status
 ```
 
-# PKI WEB
+## PKI WEB
+
 #### Configuration File (/opt/apps/pki-master/pki-web.yaml)
+
 ```yaml
 server:
   port: ${WEB-PORT}
@@ -166,7 +184,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=/opt/apps/java/17.0.7/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-web
+ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-web
 StartLimitInterval=0
 
 [Install]
@@ -182,6 +200,7 @@ sudo service pki-web status
 ```
 
 #### Default Credential
+
 ```text
 http://${IP}:${WEB-PORT}
 UID : admin
