@@ -14,8 +14,8 @@ MySQL 8 - sudo apt-get install mysql-server
 # Compile / Build
 
 ```shell
-mkdir -p /opt/ColorlibHQ
-cd /opt/ColorlibHQ
+mkdir -p /opt/apps/ColorlibHQ
+cd /opt/apps/ColorlibHQ
 git clone https://github.com/ColorlibHQ/AdminLTE.git
 
 cd ~
@@ -28,13 +28,13 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 make build
 
-mkdir -p /opt/pki-master
-cp pki-web/build/libs/pki-web.jar /opt/pki-master
-cp pki-web/build/libs/pki-api.jar /opt/pki-master
+mkdir -p /opt/apps/pki-master
+cp pki-web/build/libs/pki-web.jar /opt/apps/pki-master
+cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
 ```
 
 # PKI API
-#### Configuration File (/opt/pki-master/pki-api.yaml)
+#### Configuration File (/opt/apps/pki-master/pki-api.yaml)
 ```yaml
 server:
   port: 4080
@@ -56,7 +56,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: root
+    password: password
     url: jdbc:mysql://localhost:3306/my_pki
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
@@ -75,8 +75,8 @@ Restart=always
 RestartSec=1
 User=root
 Group=root
-WorkingDirectory=/opt/pki-master
-ExecStart=/opt/apps/java/17.0.4.1/bin/java -jar /opt/pki-master/pki-api.jar --spring.config.location=file:///opt/pki-master/ --spring.config.name=pki-api
+WorkingDirectory=/opt/apps/pki-master
+ExecStart=/opt/apps/java/17.0.7/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-api
 StartLimitInterval=0
 
 [Install]
@@ -92,7 +92,7 @@ sudo service pki-api status
 ```
 
 # PKI WEB
-#### Configuration File (/opt/pki-master/pki-web.yaml)
+#### Configuration File (/opt/apps/pki-master/pki-web.yaml)
 ```yaml
 server:
   port: 5080
@@ -103,12 +103,12 @@ webui:
   configuration-type: DEPLOYMENT
   wicket-factory: com.senior.cyber.pki.web.factory.WicketFactory
   pkg: com.senior.cyber.pki.web.pages
-  admin-lte: /opt/ColorlibHQ/AdminLTE
+  admin-lte: /opt/apps/ColorlibHQ/AdminLTE
   csrf: false
 pki:
   api:
     address:
-      - http://localhost:4080
+      - http://192.168.1.140:4080
 spring:
   jpa:
     properties:
@@ -127,7 +127,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: root
+    password: password
     url: jdbc:mysql://localhost:3306/my_pki
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
@@ -136,7 +136,6 @@ app:
   secret: 12345678
 crypto:
   iv: Lxomdim3thxLYtOu8NmaXg==
-
 ```
 
 #### SystemD Configuration
@@ -152,8 +151,8 @@ Restart=always
 RestartSec=1
 User=root
 Group=root
-WorkingDirectory=/opt/pki-master
-ExecStart=/opt/apps/java/17.0.4.1/bin/java -jar /opt/pki-master/pki-web.jar --spring.config.location=file:///opt/pki-master/ --spring.config.name=pki-web
+WorkingDirectory=/opt/apps/pki-master
+ExecStart=/opt/apps/java/17.0.7/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-web
 StartLimitInterval=0
 
 [Install]
@@ -170,7 +169,7 @@ sudo service pki-web status
 
 #### Default Credential
 ```text
-http://localhost:5080
+http://192.168.1.140:5080
 UID : admin
 PWD : admin
 ```

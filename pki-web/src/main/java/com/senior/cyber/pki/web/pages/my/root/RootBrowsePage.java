@@ -139,11 +139,14 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
 
             String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
 
+            String basename = uuid + "_" + rootName;
+            String filename = basename + ".zip";
+
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
 
             {
-                ZipArchiveEntry rootEntry = new ZipArchiveEntry(rootName + ".crt");
+                ZipArchiveEntry rootEntry = new ZipArchiveEntry(basename + "/" + rootName + ".crt");
                 rootEntry.setSize(root.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(rootEntry);
                 zipArchiveOutputStream.write(root.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -177,7 +180,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
                 buffer.append("\n");
 
                 String crt = buffer.toString();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -193,7 +196,7 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
                         public void respond(IRequestCycle requestCycle) {
                             super.respond(requestCycle);
                         }
-                    }.setFileName(uuid + "_" + rootName + ".zip")
+                    }.setFileName(filename)
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
 

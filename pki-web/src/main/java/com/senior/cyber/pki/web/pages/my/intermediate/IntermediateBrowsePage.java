@@ -135,6 +135,9 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
             String name = StringUtils.replace(intermediate.getCommonName(), " ", "_");
 
+            String basename = uuid + "_" + name;
+            String filename = basename + ".zip";
+
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
 
@@ -174,7 +177,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                 buffer.append("    trust-store-password: " + changeit).append("\n");
 
                 String crt = buffer.toString();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -182,7 +185,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             }
 
             {
-                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(name + ".crt");
+                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
                 certificateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(certificateEntry);
                 zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -198,7 +201,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
                         public void respond(IRequestCycle requestCycle) {
                             super.respond(requestCycle);
                         }
-                    }.setFileName(uuid + "_" + name + ".zip")
+                    }.setFileName(filename)
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
 

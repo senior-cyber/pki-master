@@ -119,8 +119,12 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             Root root = intermediate.getRoot();
 
             String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
+
+            String basename = uuid + "_" + name;
+            String filename = basename + ".zip";
+
             String publicCertificate = name + ".crt";
-            String publicKey = name + "-public.pem";
+            // String publicKey = name + "-public.pem";
             String privateKey = name + "-private.pem";
             String opensshPrivateKey = name + "-openssh-private.pem";
             String puttyPrivateKey = name + "-putty-private.ppk";
@@ -135,7 +139,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
 
             {
-                ZipArchiveEntry rootEntry = new ZipArchiveEntry(rootName + ".crt");
+                ZipArchiveEntry rootEntry = new ZipArchiveEntry(basename + "/" + rootName + ".crt");
                 rootEntry.setSize(root.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(rootEntry);
                 zipArchiveOutputStream.write(root.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -143,7 +147,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             }
 
             {
-                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(intermediateName + ".crt");
+                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(basename + "/" + intermediateName + ".crt");
                 intermediateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(intermediateEntry);
                 zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -152,7 +156,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
             {
                 String crt = intermediate.getCertificate() + root.getCertificate();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(caChain);
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + caChain);
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -161,7 +165,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
             {
                 String crt = certificate.getCertificate() + intermediate.getCertificate() + root.getCertificate();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(fullChain);
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + fullChain);
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -270,7 +274,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                 buffer.append("\n");
 
                 String crt = buffer.toString();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry("README.txt");
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
                 caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
                 zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
@@ -278,7 +282,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             }
 
             {
-                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(name + ".crt");
+                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
                 certificateEntry.setSize(certificate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(certificateEntry);
                 zipArchiveOutputStream.write(certificate.getCertificate().getBytes(StandardCharsets.UTF_8));
@@ -286,7 +290,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             }
 
             if (certificate.getPrivateKey() != null && !"".equals(certificate.getPrivateKey())) {
-                ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(name + ".pem");
+                ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(basename + "/" + name + ".pem");
                 privateKeyEntry.setSize(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
                 zipArchiveOutputStream.write(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8));
@@ -302,7 +306,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
                         public void respond(IRequestCycle requestCycle) {
                             super.respond(requestCycle);
                         }
-                    }.setFileName(uuid + "_" + name + ".zip")
+                    }.setFileName(filename)
                             .setContentDisposition(ContentDisposition.INLINE)
                             .setCacheDuration(Duration.ZERO));
         } catch (IOException e) {
