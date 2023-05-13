@@ -52,9 +52,8 @@ cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
 
 ```yaml
 OVERRIDE_SERVER_PORT: 4080
-OVERRIDE_DB_HOST: localhost
+OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
 OVERRIDE_DB_PORT: 3306
-OVERRIDE_DB_NAME: pki_master
 OVERRIDE_DB_UID: root
 OVERRIDE_DB_PWD: password
 OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
@@ -98,11 +97,9 @@ sudo service pki-api status
 
 ```yaml
 OVERRIDE_SERVER_PORT: 5080
-OVERRIDE_DB_HOST: localhost
-OVERRIDE_DB_PORT: 3306
+OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
 OVERRIDE_DB_UID: root
 OVERRIDE_DB_PWD: password
-OVERRIDE_DB_NAME: pki_master
 OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
 OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect
 OVERRIDE_ADMIN_LTE: /opt/apps/ColorlibHQ/AdminLTE

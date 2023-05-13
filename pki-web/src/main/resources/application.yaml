@@ -32,7 +32,7 @@ spring:
     username: ${OVERRIDE_DB_UID}
     password: ${OVERRIDE_DB_PWD}
     driver-class-name: ${OVERRIDE_DB_DRIVER}
-    url: jdbc:mysql://${OVERRIDE_DB_HOST}:${OVERRIDE_DB_PORT}/${OVERRIDE_DB_NAME}
+    url: ${OVERRIDE_DB_URL}
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
 app:
