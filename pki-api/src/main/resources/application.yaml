@@ -1,0 +1,35 @@
+server:
+  port: ${OVERRIDE_SERVER_PORT}
+spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: ${OVERRIDE_DB_DIALECT}
+        format_sql: true
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  mvc:
+    servlet:
+      path: /api
+      load-on-startup: 1
+  datasource:
+    username: ${OVERRIDE_DB_UID}
+    password: ${OVERRIDE_DB_PWD}
+    driver-class-name: ${OVERRIDE_DB_DRIVER}
+    url: jdbc:mysql://${OVERRIDE_DB_HOST}:${OVERRIDE_DB_PORT}/${OVERRIDE_DB_NAME}
+  flyway:
+    locations: classpath:com/senior/cyber/pki/dao/flyway
+logging:
+  file:
+    path: ${OVERRIDE_LOG_FILE_PATH}
+    name: ${OVERRIDE_LOG_FILE_NAME}
+  pattern:
+    console: "%d %-5level %logger : %msg%n"
+    file: "%d %-5level [%thread] %logger : %msg%n"
+  level:
+    ROOT: INFO
+    org.springframework.web: ERROR
+    org.hibernate: ERROR
