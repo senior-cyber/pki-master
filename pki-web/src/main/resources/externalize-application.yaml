@@ -1,0 +1,10 @@
+OVERRIDE_SERVER_PORT: 5080
+OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
+OVERRIDE_DB_UID: root
+OVERRIDE_DB_PWD: password
+OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
+OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect
+OVERRIDE_ADMIN_LTE: /opt/ColorlibHQ/AdminLTE
+OVERRIDE_PKI_API_URL: http://localhost:4080
+OVERRIDE_LOG_FILE_PATH: /opt/apps/pki-master
+OVERRIDE_LOG_FILE_NAME: pki-web.log

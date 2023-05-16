@@ -17,21 +17,6 @@
 | 13 | Swift            |
 | 14 | Objective-C      |
 
-#### Param to Replace
-```text
-${API-PORT} = 4080
-${WEB-PORT} = 5080
-${IP} = 192.168.1.140
-${DB-UID} = root
-${DB-PWD} = password
-${DB-NAME} = my_pki
-${DB-IP} = localhost
-${DB-PORT} = 3306
-${DB-DRIVER} = com.mysql.cj.jdbc.Driver
-${DB-DIALECT} = org.hibernate.dialect.MySQL8Dialect
-${JDK-17} = /opt/apps/java/17.0.7
-```
-
 ## Prerequisite
 
 ```text
@@ -66,30 +51,15 @@ cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
 #### Configuration File (/opt/apps/pki-master/pki-api.yaml)
 
 ```yaml
-server:
-  port: ${API-PORT}
-spring:
-  jpa:
-    properties:
-      hibernate:
-        dialect: ${DB-DIALECT}
-        format_sql: true
-    show-sql: true
-    hibernate:
-      ddl-auto: none
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-  mvc:
-    servlet:
-      path: /api
-      load-on-startup: 1
-  datasource:
-    driver-class-name: ${DB-DRIVER}
-    username: ${DB-UID}
-    password: ${DB-PWD}
-    url: jdbc:mysql://${DB-IP}:${DB-PORT}/${DB-NAME}
-  flyway:
-    locations: classpath:com/senior/cyber/pki/dao/flyway
+OVERRIDE_SERVER_PORT: 4080
+OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
+OVERRIDE_DB_PORT: 3306
+OVERRIDE_DB_UID: root
+OVERRIDE_DB_PWD: password
+OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
+OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect 
+OVERRIDE_LOG_FILE_PATH: /opt/apps/pki-master
+OVERRIDE_LOG_FILE_NAME: pki-api.log
 ```
 
 #### SystemD Configuration
@@ -106,7 +76,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-api
+ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=classpath:/application.yaml,file:./pki-api.yaml
 StartLimitInterval=0
 
 [Install]
@@ -126,48 +96,16 @@ sudo service pki-api status
 #### Configuration File (/opt/apps/pki-master/pki-web.yaml)
 
 ```yaml
-server:
-  port: ${WEB-PORT}
-webui:
-  servlet:
-    load-on-startup: 1
-    path: /*
-  configuration-type: DEPLOYMENT
-  wicket-factory: com.senior.cyber.pki.web.factory.WicketFactory
-  pkg: com.senior.cyber.pki.web.pages
-  admin-lte: /opt/apps/ColorlibHQ/AdminLTE
-  csrf: false
-pki:
-  api:
-    address:
-      - http://${IP}:${API-PORT}
-spring:
-  jpa:
-    properties:
-      hibernate:
-        dialect: ${DB-DIALECT}
-        format_sql: true
-    hibernate:
-      ddl-auto: none
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
-  mvc:
-    servlet:
-      path: /api
-      load-on-startup: 1
-  datasource:
-    driver-class-name: ${DB-DRIVER}
-    username: ${DB-UID}
-    password: ${DB-PWD}
-    url: jdbc:mysql://${DB-IP}:${DB-PORT}/${DB-NAME}
-  flyway:
-    locations: classpath:com/senior/cyber/pki/dao/flyway
-app:
-  mode: Individual
-  secret: 12345678
-crypto:
-  iv: Lxomdim3thxLYtOu8NmaXg==
+OVERRIDE_SERVER_PORT: 5080
+OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
+OVERRIDE_DB_UID: root
+OVERRIDE_DB_PWD: password
+OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
+OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect
+OVERRIDE_ADMIN_LTE: /opt/apps/ColorlibHQ/AdminLTE
+OVERRIDE_PKI_API_URL: http://localhost:4080
+OVERRIDE_LOG_FILE_PATH: /opt/apps/pki-master
+OVERRIDE_LOG_FILE_NAME: pki-web.log
 ```
 
 #### SystemD Configuration
@@ -184,7 +122,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=file:///opt/apps/pki-master/ --spring.config.name=pki-web
+ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=classpath:/application.yaml,file:./pki-web.yaml
 StartLimitInterval=0
 
 [Install]
