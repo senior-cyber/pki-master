@@ -76,7 +76,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-api.jar --spring.config.location=classpath:/application.yaml,file:./pki-api.yaml
+ExecStart=${JDK-17}/bin/java -jar pki-api.jar --spring.config.location=classpath:/application.yaml,file:./pki-api.yaml
 StartLimitInterval=0
 
 [Install]
@@ -122,7 +122,7 @@ RestartSec=1
 User=root
 Group=root
 WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar /opt/apps/pki-master/pki-web.jar --spring.config.location=classpath:/application.yaml,file:./pki-web.yaml
+ExecStart=${JDK-17}/bin/java -jar pki-web.jar --spring.config.location=classpath:/application.yaml,file:./pki-web.yaml
 StartLimitInterval=0
 
 [Install]
