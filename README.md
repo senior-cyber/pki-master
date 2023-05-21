@@ -133,8 +133,8 @@ WantedBy=multi-user.target
 sudo chmod 755 /etc/systemd/system/pki-web.service
 sudo systemctl enable pki-web
 sudo systemctl daemon-reload
-sudo service pki-web start
-sudo service pki-web status
+sudo systemctl start pki-web 
+sudo systemctl status pki-web
 ```
 
 #### Default Credential
