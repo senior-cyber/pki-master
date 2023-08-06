@@ -42,14 +42,6 @@ public class BootApplication {
     }
 
     @Bean
-    public Gson createGson() {
-        GsonBuilder builder = new GsonBuilder();
-        builder.excludeFieldsWithoutExposeAnnotation();
-        builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-        return builder.create();
-    }
-
-    @Bean
     public PasswordEncryptor createPasswordEncryptor() {
         return new StrongPasswordEncryptor();
     }

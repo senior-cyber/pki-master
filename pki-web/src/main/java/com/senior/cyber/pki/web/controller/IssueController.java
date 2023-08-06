@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.web.controller;
 
 import com.google.gson.Gson;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.x509.CertificateUtils;
+import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
 import com.senior.cyber.pki.web.dto.*;

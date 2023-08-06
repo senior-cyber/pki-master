@@ -1,11 +1,9 @@
 package com.senior.cyber.pki.web.dto;
 
-import com.senior.cyber.pki.web.gson.CertificationSignRequestAdaptor;
-import com.senior.cyber.pki.web.gson.PrivateKeyTypeAdapter;
-import com.senior.cyber.pki.web.gson.X509CertificateTypeAdapter;
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.senior.cyber.frmk.common.jackson.*;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 import java.security.PrivateKey;
@@ -15,83 +13,67 @@ import java.util.List;
 
 public class CertificateRequestDto {
 
-    @Expose
-    @SerializedName("csr")
-    @JsonAdapter(CertificationSignRequestAdaptor.class)
+    @JsonProperty("csr")
+    @JsonSerialize(using = CertificateRequestSerializer.class)
+    @JsonDeserialize(using = CertificateRequestDeserializer.class)
     private PKCS10CertificationRequest csr;
 
-    @Expose
-    @SerializedName("duration")
+    @JsonProperty("duration")
     private Integer duration;
 
-    @Expose
-    @SerializedName("issuerCertificate")
-    @JsonAdapter(X509CertificateTypeAdapter.class)
+    @JsonProperty("issuerCertificate")
+    @JsonSerialize(using = CertificateSerializer.class)
+    @JsonDeserialize(using = CertificateDeserializer.class)
     private X509Certificate issuerCertificate;
 
-    @Expose
-    @SerializedName("issuerPrivateKey")
-    @JsonAdapter(PrivateKeyTypeAdapter.class)
+    @JsonProperty("issuerPrivateKey")
+    @JsonSerialize(using = PrivateKeySerializer.class)
+    @JsonDeserialize(using = PrivateKeyDeserializer.class)
     private PrivateKey issuerPrivateKey;
 
-    @Expose
-    @SerializedName("basicConstraints")
+    @JsonProperty("basicConstraints")
     private boolean basicConstraints;
 
-    @Expose
-    @SerializedName("keyUsage")
+    @JsonProperty("keyUsage")
     private List<KeyUsage> keyUsage;
 
-    @Expose
-    @SerializedName("extendedKeyUsage")
+    @JsonProperty("extendedKeyUsage")
     private List<ExtendedKeyUsage> extendedKeyUsage;
 
-    @Expose
-    @SerializedName("subjectAlternativeName")
+    @JsonProperty("subjectAlternativeName")
     private List<GeneralNameDto> subjectAlternativeName = new ArrayList<>();
 
-    @Expose
-    @SerializedName("cRLDistributionPoints")
+    @JsonProperty("cRLDistributionPoints")
     private List<GeneralNameDto> cRLDistributionPoints = new ArrayList<>();
 
-    @Expose
-    @SerializedName("authorityInfoAccess")
+    @JsonProperty("authorityInfoAccess")
     private List<GeneralNameDto> authorityInfoAccess = new ArrayList<>();
 
-    @Expose
-    @SerializedName("serial")
+    @JsonProperty("serial")
     private Long serial = System.currentTimeMillis();
 
-    @Expose
-    @SerializedName("basicConstraintsCritical")
+    @JsonProperty("basicConstraintsCritical")
     private boolean basicConstraintsCritical = true;
 
-    @Expose
-    @SerializedName("subjectKeyIdentifierCritical")
+    @JsonProperty("subjectKeyIdentifierCritical")
     private boolean subjectKeyIdentifierCritical = true;
 
-    @Expose
-    @SerializedName("authorityKeyIdentifierCritical")
+    @JsonProperty("authorityKeyIdentifierCritical")
     private boolean authorityKeyIdentifierCritical = true;
 
-    @Expose
-    @SerializedName("keyUsageCritical")
+    @JsonProperty("keyUsageCritical")
     private boolean keyUsageCritical = true;
 
-    @Expose
-    @SerializedName("extendedKeyUsageCritical")
+    @JsonProperty("extendedKeyUsageCritical")
     private boolean extendedKeyUsageCritical = true;
 
-    @Expose
-    @SerializedName("cRLDistributionPointsCritical")
+    @JsonProperty("cRLDistributionPointsCritical")
     private boolean cRLDistributionPointsCritical = true;
 
-    @Expose
-    @SerializedName("authorityInfoAccessCritical")
+    @JsonProperty("authorityInfoAccessCritical")
     private boolean authorityInfoAccessCritical = true;
 
-    @Expose
-    @SerializedName("subjectAlternativeNameCritical")
+    @JsonProperty("subjectAlternativeNameCritical")
     private boolean subjectAlternativeNameCritical = true;
 
     public List<GeneralNameDto> getcRLDistributionPoints() {

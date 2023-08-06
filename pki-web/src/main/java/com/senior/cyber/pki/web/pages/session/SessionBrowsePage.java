@@ -8,6 +8,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.jdbc.query.DeleteQuery;
+import com.senior.cyber.frmk.jdbc.query.Param;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
@@ -23,7 +24,8 @@ import org.apache.wicket.model.Model;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
-import javax.persistence.Tuple;
+import jakarta.persistence.Tuple;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,11 +98,11 @@ public class SessionBrowsePage extends MasterPage {
             DeleteQuery deleteQuery = null;
 
             deleteQuery = new DeleteQuery("TBL_SESSION_ATTRIBUTES");
-            deleteQuery.addWhere("SESSION_PRIMARY_ID = :SESSION_PRIMARY_ID", uuid);
+            deleteQuery.addWhere("SESSION_PRIMARY_ID = :SESSION_PRIMARY_ID", new Param("SESSION_PRIMARY_ID", uuid));
             named.update(deleteQuery.toSQL(), deleteQuery.toParam());
 
             deleteQuery = new DeleteQuery("TBL_SESSION");
-            deleteQuery.addWhere("PRIMARY_ID = :PRIMARY_ID", uuid);
+            deleteQuery.addWhere("PRIMARY_ID = :PRIMARY_ID", new Param("PRIMARY_ID", uuid));
             named.update(deleteQuery.toSQL(), deleteQuery.toParam());
 
             target.add(this.session_browse_table);

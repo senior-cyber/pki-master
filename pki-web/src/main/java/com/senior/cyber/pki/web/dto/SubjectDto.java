@@ -1,64 +1,49 @@
 package com.senior.cyber.pki.web.dto;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.bind.DateTypeAdapter;
-import com.senior.cyber.pki.web.gson.Iso8601Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 import java.util.List;
 
 public class SubjectDto {
 
-    @Expose
-    @SerializedName("rootCommonName")
+    @JsonProperty("rootCommonName")
     private String rootCommonName;
 
-    @Expose
-    @SerializedName("intermediateCommonName")
+    @JsonProperty("intermediateCommonName")
     private String intermediateCommonName;
 
-    @Expose
-    @SerializedName("country")
+    @JsonProperty("country")
     private String country;
 
-    @Expose
-    @SerializedName("organization")
+    @JsonProperty("organization")
     private String organization;
 
-    @Expose
-    @SerializedName("organizationalUnit")
+    @JsonProperty("organizationalUnit")
     private String organizationalUnit;
 
-    @Expose
-    @SerializedName("commonName")
+    @JsonProperty("commonName")
     private String commonName;
 
-    @Expose
-    @SerializedName("localityName")
+    @JsonProperty("localityName")
     private String localityName;
 
-    @Expose
-    @SerializedName("stateOrProvinceName")
+    @JsonProperty("stateOrProvinceName")
     private String stateOrProvinceName;
 
-    @Expose
-    @SerializedName("emailAddress")
+    @JsonProperty("emailAddress")
     private String emailAddress;
 
-    @Expose
-    @SerializedName("validFrom")
-    @JsonAdapter(Iso8601Date.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonProperty("validFrom")
     private Date validFrom;
 
-    @Expose
-    @SerializedName("validUtil")
-    @JsonAdapter(Iso8601Date.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonProperty("validUtil")
     private Date validUtil;
 
-    @Expose
-    @SerializedName("subjectAltNames")
+    @JsonProperty("subjectAltNames")
     private List<String> subjectAltNames;
 
     public List<String> getSubjectAltNames() {

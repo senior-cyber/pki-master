@@ -5,16 +5,14 @@ plugins {
 group = 'com.senior.cyber.pki'
 version = '0.0.1'
 
-sourceCompatibility = "$java_version"
-targetCompatibility = "$java_version"
+java {
+	sourceCompatibility = "$java_version"
+	targetCompatibility = "$java_version"
+}
 
 repositories {
 	mavenLocal()
 	mavenCentral()
-	maven {
-		url "$nexus_url/maven-public/"
-		allowInsecureProtocol = true
-	}
 }
 
 dependencies {
@@ -30,5 +28,5 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-jdbc:${spring_boot}"
 	implementation "org.liquibase:liquibase-core:${liquibase}"
 	implementation "org.flywaydb:flyway-core:${flyway}"
-	implementation "org.flywaydb:flyway-mysql:${flyway}"
+	implementation "com.mysql:mysql-connector-j:${mysql}"
 }

@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.dao.entity;
 
-import javax.persistence.metamodel.SingularAttribute;
-import javax.persistence.metamodel.StaticMetamodel;
+import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.StaticMetamodel;
 
 @StaticMetamodel(Iban.class)
 public abstract class Iban_ {

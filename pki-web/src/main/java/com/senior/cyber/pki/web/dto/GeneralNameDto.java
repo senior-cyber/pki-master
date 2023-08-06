@@ -1,21 +1,17 @@
 package com.senior.cyber.pki.web.dto;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bouncycastle.asn1.x509.GeneralName;
 
 public class GeneralNameDto {
 
-    @Expose
-    @SerializedName("type")
+    @JsonProperty("type")
     private GeneralNameTypeEnum type;
 
-    @Expose
-    @SerializedName("tag")
+    @JsonProperty("tag")
     private int tag;
 
-    @Expose
-    @SerializedName("name")
+    @JsonProperty("name")
     private String name;
 
     public GeneralNameDto() {

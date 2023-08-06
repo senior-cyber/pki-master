@@ -7,4 +7,5 @@ public abstract class LiquibaseMigration extends LiquibaseJavaMigration {
     public LiquibaseMigration() {
         super("/liquibase_output/");
     }
+
 }

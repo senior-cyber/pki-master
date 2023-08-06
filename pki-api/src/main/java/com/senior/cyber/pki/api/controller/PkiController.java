@@ -1,13 +1,14 @@
 package com.senior.cyber.pki.api.controller;
 
+import com.senior.cyber.frmk.common.x509.CertificateUtils;
+import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.api.repository.CertificateRepository;
 import com.senior.cyber.pki.api.repository.IntermediateRepository;
 import com.senior.cyber.pki.api.repository.RootRepository;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
-import com.senior.cyber.frmk.common.pki.CertificateUtils;
-import com.senior.cyber.frmk.common.pki.PrivateKeyUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.x509.CRLNumber;
@@ -39,7 +40,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;

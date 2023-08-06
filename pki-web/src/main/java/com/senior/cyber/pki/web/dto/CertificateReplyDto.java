@@ -1,17 +1,18 @@
 package com.senior.cyber.pki.web.dto;
 
-import com.senior.cyber.pki.web.gson.X509CertificateTypeAdapter;
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 
 import java.security.cert.X509Certificate;
 
 public class CertificateReplyDto {
 
-    @Expose
-    @SerializedName("certificate")
-    @JsonAdapter(X509CertificateTypeAdapter.class)
+    @JsonProperty("certificate")
+    @JsonSerialize(using = CertificateSerializer.class)
+    @JsonDeserialize(using = CertificateDeserializer.class)
     private X509Certificate certificate;
 
     public CertificateReplyDto() {

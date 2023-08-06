@@ -7,16 +7,14 @@ plugins {
 group = 'com.senior.cyber.pki'
 version = '1.0.0'
 
-sourceCompatibility = "$java_version"
-targetCompatibility = "$java_version"
+java {
+    sourceCompatibility = "$java_version"
+    targetCompatibility = "$java_version"
+}
 
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url "$nexus_url/maven-public/"
-        allowInsecureProtocol = true
-    }
 }
 
 dependencies {
@@ -34,24 +32,25 @@ dependencies {
 
     implementation "org.apache.wicket:wicket-auth-roles:${wicket}"
 
-    implementation "com.google.code.gson:gson:${gson}"
     implementation "commons-io:commons-io:${commons_io}"
     implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.apache.wicket:wicket-core:${wicket}"
     implementation "org.apache.wicket:wicket-extensions:${wicket}"
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-json"
     implementation "org.springframework.session:spring-session-jdbc"
 
     implementation "org.apache.httpcomponents:httpclient:${httpclient}"
     implementation "org.apache.commons:commons-compress:${commons_compress}"
 
-    implementation "org.jasypt:jasypt:${jasypt}"
+    implementation "com.google.guava:guava:${guava}"
 
-    implementation "mysql:mysql-connector-java:${mysql}"
+    implementation "org.jasypt:jasypt:${jasypt}"
     implementation "org.flywaydb:flyway-core:${flyway}"
     implementation "org.flywaydb:flyway-mysql:${flyway}"
     implementation "org.liquibase:liquibase-core:${liquibase}"
+    implementation "com.mysql:mysql-connector-j:${mysql}"
 
     implementation "com.google.crypto.tink:tink:${google_tink}"
 }

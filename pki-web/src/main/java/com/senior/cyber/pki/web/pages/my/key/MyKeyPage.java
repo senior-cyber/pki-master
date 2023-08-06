@@ -51,7 +51,7 @@ import org.springframework.context.ApplicationContext;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.persistence.Tuple;
+import jakarta.persistence.Tuple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
