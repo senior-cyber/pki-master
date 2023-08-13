@@ -156,7 +156,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
 
             EntityGraph<User> graph = entityManager.createEntityGraph(User.class);
-            graph.addAttributeNodes("denyRoles");
+            graph.addAttributeNodes(User_.denyRoles);
 
             Root<User> root = criteriaQuery.from(User.class);
             criteriaQuery.select(root);
@@ -180,7 +180,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
 
         EntityGraph<User> graph = entityManager.createEntityGraph(User.class);
-        graph.addAttributeNodes("denyRoles");
+        graph.addAttributeNodes(User_.denyRoles);
 
         Root<User> root = criteriaQuery.from(User.class);
         criteriaQuery.select(root);

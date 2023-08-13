@@ -146,7 +146,7 @@ public class GroupModifyPageRoleTab extends ContentPanel {
             CriteriaQuery<Group> criteriaQuery = criteriaBuilder.createQuery(Group.class);
 
             EntityGraph<Group> graph = entityManager.createEntityGraph(Group.class);
-            graph.addAttributeNodes("roles");
+            graph.addAttributeNodes(Group_.roles);
 
             Root<Group> root = criteriaQuery.from(Group.class);
             criteriaQuery.select(root);

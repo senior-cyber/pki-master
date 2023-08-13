@@ -146,7 +146,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
 
             EntityGraph<User> graph = entityManager.createEntityGraph(User.class);
-            graph.addAttributeNodes("groups");
+            graph.addAttributeNodes(User_.groups);
 
             Root<User> root = criteriaQuery.from(User.class);
             criteriaQuery.select(root);
