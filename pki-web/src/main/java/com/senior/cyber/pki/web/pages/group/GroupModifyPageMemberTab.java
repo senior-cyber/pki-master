@@ -149,7 +149,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
             CriteriaQuery<Group> criteriaQuery = criteriaBuilder.createQuery(Group.class);
 
             EntityGraph<Group> graph = entityManager.createEntityGraph(Group.class);
-            graph.addAttributeNodes("users");
+            graph.addAttributeNodes(Group_.users);
 
             Root<Group> root = criteriaQuery.from(Group.class);
             criteriaQuery.select(root);
@@ -175,7 +175,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
         CriteriaQuery<Group> criteriaQuery = criteriaBuilder.createQuery(Group.class);
 
         EntityGraph<Group> graph = entityManager.createEntityGraph(Group.class);
-        graph.addAttributeNodes("users");
+        graph.addAttributeNodes(Group_.users);
 
         Root<Group> root = criteriaQuery.from(Group.class);
         criteriaQuery.select(root);

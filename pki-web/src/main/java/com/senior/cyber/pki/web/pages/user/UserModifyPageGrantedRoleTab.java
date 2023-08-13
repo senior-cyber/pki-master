@@ -153,7 +153,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
 
             EntityGraph<User> graph = entityManager.createEntityGraph(User.class);
-            graph.addAttributeNodes("roles");
+            graph.addAttributeNodes(User_.roles);
 
             Root<User> root = criteriaQuery.from(User.class);
             criteriaQuery.select(root);
@@ -177,7 +177,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
 
         EntityGraph<User> graph = entityManager.createEntityGraph(User.class);
-        graph.addAttributeNodes("roles");
+        graph.addAttributeNodes(User_.roles);
 
         Root<User> root = criteriaQuery.from(User.class);
         criteriaQuery.select(root);
