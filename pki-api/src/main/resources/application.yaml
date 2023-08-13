@@ -1,35 +1,33 @@
 server:
-  port: ${OVERRIDE_SERVER_PORT}
+  port: ${override.server.port}
 spring:
   jpa:
-    properties:
-      hibernate:
-        dialect: ${OVERRIDE_DB_DIALECT}
-        format_sql: true
     show-sql: true
     hibernate:
       ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database: mysql
+    database-platform: com.senior.cyber.pki.dao.dialect.MySQLDialect
   mvc:
     servlet:
       path: /api
       load-on-startup: 1
   datasource:
-    username: ${OVERRIDE_DB_UID}
-    password: ${OVERRIDE_DB_PWD}
-    driver-class-name: ${OVERRIDE_DB_DRIVER}
-    url: ${OVERRIDE_DB_URL}
+    username: ${override.datasource.username}
+    password: ${override.datasource.password}
+    url: ${override.datasource.url}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
 logging:
   file:
-    path: ${OVERRIDE_LOG_FILE_PATH}
-    name: ${OVERRIDE_LOG_FILE_NAME}
+    path: ${override.logging.file.path}
+    name: ${override.logging.file.name}
   pattern:
     console: "%d %-5level %logger : %msg%n"
     file: "%d %-5level [%thread] %logger : %msg%n"
   level:
-    ROOT: INFO
-    org.springframework.web: ERROR
-    org.hibernate: ERROR
+    root: info
+    sql: info
+    web: info

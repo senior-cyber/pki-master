@@ -1,12 +1,5 @@
 package com.senior.cyber.pki.web.pages.user;
 
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.Session;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.web.pages.MasterPage;
-import com.senior.cyber.pki.web.repository.HSessionRepository;
-import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -15,6 +8,14 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.BooleanConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.Session;
+import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.web.data.MySqlDataProvider;
+import com.senior.cyber.pki.web.pages.MasterPage;
+import com.senior.cyber.pki.web.repository.HSessionRepository;
+import com.senior.cyber.pki.web.repository.UserRepository;
+import jakarta.persistence.Tuple;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -27,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import jakarta.persistence.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

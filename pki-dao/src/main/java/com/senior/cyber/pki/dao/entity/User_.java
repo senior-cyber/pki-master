@@ -3,6 +3,7 @@ package com.senior.cyber.pki.dao.entity;
 import jakarta.persistence.metamodel.MapAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.persistence.metamodel.StaticMetamodel;
+
 import java.util.Date;
 
 @StaticMetamodel(User.class)

@@ -1,8 +1,5 @@
 package com.senior.cyber.pki.web.pages.role;
 
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -11,7 +8,11 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.BooleanConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.web.data.MySqlDataProvider;
+import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.pki.web.repository.RoleRepository;
+import jakarta.persistence.Tuple;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -21,7 +22,6 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.filter.Filte
 import org.apache.wicket.model.Model;
 import org.springframework.context.ApplicationContext;
 
-import jakarta.persistence.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

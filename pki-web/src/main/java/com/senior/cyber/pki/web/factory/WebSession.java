@@ -7,16 +7,15 @@ import com.senior.cyber.pki.web.repository.HSessionRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.RoleUtility;
 import com.senior.cyber.pki.web.utility.UserUtility;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.request.Request;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
-import org.jasypt.util.password.PasswordEncryptor;
 import org.jasypt.util.text.TextEncryptor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;

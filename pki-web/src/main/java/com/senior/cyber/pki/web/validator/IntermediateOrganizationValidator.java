@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.web.validator;
 
+import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
@@ -7,7 +8,6 @@ import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.validation.IValidatable;
 import org.apache.wicket.validation.IValidator;

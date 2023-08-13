@@ -1,7 +1,5 @@
 package com.senior.cyber.pki.api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.util.password.PasswordEncryptor;
 import org.jasypt.util.password.StrongPasswordEncryptor;

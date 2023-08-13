@@ -1,0 +1,16 @@
+override:
+  server:
+    port: 5080
+  webui:
+    admin-lte: /Users/socheatkhauv/github/ColorlibHQ/v3
+  pki:
+    api:
+      address-1: http://localhost:4080
+  datasource:
+    username: root
+    password: password
+    url: jdbc:mysql://localhost:3306/pki_master
+  logging:
+    file:
+      path: /opt/apps/pki-master/
+      name: pki-web.log

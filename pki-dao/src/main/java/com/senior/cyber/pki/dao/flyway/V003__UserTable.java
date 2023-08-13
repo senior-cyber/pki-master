@@ -26,11 +26,11 @@ public class V003__UserTable extends LiquibaseMigration {
 
         InsertQuery insertQuery = null;
         insertQuery = new InsertQuery("tbl_user");
-        insertQuery.addValue("display_name = :display_name", "Senior Cyber");
+        insertQuery.addValue("display_name", ":display_name", new Param("display_name", "Senior Cyber"));
         insertQuery.addValue("enabled", ":enabled", new Param("enabled", true));
         insertQuery.addValue("login", ":login", new Param("login", "admin"));
         insertQuery.addValue("pwd", ":pwd", new Param("pwd", passwordEncryptor.encryptPassword("admin")));
-        insertQuery.addValue("email_address", ":email_address", new Param("email_address", "ADMIN_EMAIL"));
+        insertQuery.addValue("email_address", ":email_address", new Param("email_address", ADMIN_EMAIL));
         insertQuery.addValue("last_seen", ":last_seen", new Param("last_seen", new Date()));
         named.update(insertQuery.toSQL(), insertQuery.toParam());
     }

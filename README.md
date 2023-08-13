@@ -41,25 +41,29 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 make build
 
-mkdir -p /opt/apps/pki-master
-cp pki-web/build/libs/pki-web.jar /opt/apps/pki-master
-cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master
+mkdir -p /opt/apps/pki-master/web
+cp pki-web/build/libs/pki-web.jar /opt/apps/pki-master/web
+
+mkdir -p /opt/apps/pki-master/api
+cp pki-api/build/libs/pki-api.jar /opt/apps/pki-master/api
 ```
 
 ## PKI API
 
-#### Configuration File (/opt/apps/pki-master/pki-api.yaml)
+#### Configuration File (/opt/apps/pki-master/api/application-external.yaml)
 
 ```yaml
-OVERRIDE_SERVER_PORT: 4080
-OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
-OVERRIDE_DB_PORT: 3306
-OVERRIDE_DB_UID: root
-OVERRIDE_DB_PWD: password
-OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
-OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect 
-OVERRIDE_LOG_FILE_PATH: /opt/apps/pki-master
-OVERRIDE_LOG_FILE_NAME: pki-api.log
+override:
+  server:
+    port: 4080
+  datasource:
+    username: root
+    password: password
+    url: jdbc:mysql://localhost:3306/pki_master
+  logging:
+    file:
+      path: /opt/apps/pki-master/api/
+      name: pki-api.log
 ```
 
 #### SystemD Configuration
@@ -75,8 +79,8 @@ Restart=always
 RestartSec=1
 User=root
 Group=root
-WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar pki-api.jar --spring.config.location=classpath:/application.yaml,file:./pki-api.yaml
+WorkingDirectory=/opt/apps/pki-master/api
+ExecStart=${JDK-17}/bin/java -jar pki-api.jar  --spring.config.location=file:./,classpath:/ --spring.profiles.active=external
 StartLimitInterval=0
 
 [Install]
@@ -93,19 +97,25 @@ sudo service pki-api status
 
 ## PKI WEB
 
-#### Configuration File (/opt/apps/pki-master/pki-web.yaml)
+#### Configuration File (/opt/apps/pki-master/web/application-external.yaml)
 
 ```yaml
-OVERRIDE_SERVER_PORT: 5080
-OVERRIDE_DB_URL: jdbc:mysql://localhost:3306/pki_master
-OVERRIDE_DB_UID: root
-OVERRIDE_DB_PWD: password
-OVERRIDE_DB_DRIVER: com.mysql.cj.jdbc.Driver
-OVERRIDE_DB_DIALECT: org.hibernate.dialect.MySQL8Dialect
-OVERRIDE_ADMIN_LTE: /opt/apps/ColorlibHQ/AdminLTE
-OVERRIDE_PKI_API_URL: http://localhost:4080
-OVERRIDE_LOG_FILE_PATH: /opt/apps/pki-master
-OVERRIDE_LOG_FILE_NAME: pki-web.log
+override:
+  server:
+    port: 5080
+  webui:
+    admin-lte: /Users/socheatkhauv/github/ColorlibHQ/v3
+  pki:
+    api:
+      address-1: http://localhost:4080
+  datasource:
+    username: root
+    password: password
+    url: jdbc:mysql://localhost:3306/pki_master
+  logging:
+    file:
+      path: /opt/apps/pki-master/web/
+      name: pki-web.log
 ```
 
 #### SystemD Configuration
@@ -121,8 +131,8 @@ Restart=always
 RestartSec=1
 User=root
 Group=root
-WorkingDirectory=/opt/apps/pki-master
-ExecStart=${JDK-17}/bin/java -jar pki-web.jar --spring.config.location=classpath:/application.yaml,file:./pki-web.yaml
+WorkingDirectory=/opt/apps/pki-master/web
+ExecStart=${JDK-17}/bin/java -jar pki-web.jar --spring.config.location=file:./,classpath:/ --spring.profiles.active=external
 StartLimitInterval=0
 
 [Install]

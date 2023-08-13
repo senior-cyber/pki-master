@@ -1,12 +1,5 @@
 package com.senior.cyber.pki.web.pages.user;
 
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.entity.User_;
-import com.senior.cyber.pki.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.web.data.SingleChoiceProvider;
-import com.senior.cyber.pki.web.repository.RoleRepository;
-import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -23,6 +16,20 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.User_;
+import com.senior.cyber.pki.web.data.MySqlDataProvider;
+import com.senior.cyber.pki.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.web.repository.RoleRepository;
+import com.senior.cyber.pki.web.repository.UserRepository;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
@@ -37,13 +44,6 @@ import org.apache.wicket.model.PropertyModel;
 import org.hibernate.jpa.QueryHints;
 import org.springframework.context.ApplicationContext;
 
-import jakarta.persistence.EntityGraph;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Tuple;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import java.util.*;
 
 public class UserModifyPageGrantedRoleTab extends ContentPanel {

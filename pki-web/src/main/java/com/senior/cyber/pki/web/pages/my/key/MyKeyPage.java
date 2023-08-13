@@ -29,6 +29,7 @@ import com.senior.cyber.pki.web.repository.KeyRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.Crypto;
 import com.senior.cyber.pki.web.validator.KeyNameValidator;
+import jakarta.persistence.Tuple;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -51,7 +52,6 @@ import org.springframework.context.ApplicationContext;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import jakarta.persistence.Tuple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

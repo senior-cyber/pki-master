@@ -24,7 +24,6 @@ import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.dto.CertificateRequestDto;
 import com.senior.cyber.pki.web.factory.WebSession;
-import com.senior.cyber.pki.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.RootRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;

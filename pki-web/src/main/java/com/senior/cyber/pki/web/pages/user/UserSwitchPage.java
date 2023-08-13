@@ -1,10 +1,6 @@
 package com.senior.cyber.pki.web.pages.user;
 
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.web.data.SingleChoiceProvider;
-import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -14,13 +10,15 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
+import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.web.pages.MasterPage;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
-import org.springframework.context.ApplicationContext;
 
 @Bookmark("/user/switch")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_UserSwitch})
