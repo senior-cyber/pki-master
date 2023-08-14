@@ -101,7 +101,7 @@ public class OcspUtility {
                 continue;
             }
             ASN1TaggedObject taggedObject = (ASN1TaggedObject) name.toASN1Primitive();
-            DERIA5String string = DERIA5String.getInstance(taggedObject, false);
+            ASN1IA5String string = DERIA5String.getInstance(taggedObject, false);
             urls.add(string.getString());
         }
         return urls;
