@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
@@ -143,13 +144,13 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
-        this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_intermediate", "intermediate_id", "common_name");
-        this.intermediate_provider.applyWhere("status", "status = '" + Intermediate.STATUS_GOOD + "'");
+        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+        this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Intermediate_.class), Sql.column(Intermediate_.id), Sql.column(Intermediate_.commonName));
+        this.intermediate_provider.applyWhere("status", Sql.column(Intermediate_.status) + " = '" + Intermediate.STATUS_GOOD + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.intermediate_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.intermediate_provider.applyWhere("user", Sql.column(Intermediate_.user) + " = " + session.getUserId());
         }
 
         long uuid = getPage().getPageParameters().get("uuid").toLong(-1);

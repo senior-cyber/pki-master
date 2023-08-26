@@ -13,7 +13,4 @@ public abstract class Group_ {
     public static volatile MapAttribute<Group, String, Role> roles;
     public static volatile MapAttribute<Group, String, User> users;
 
-    public Group_() {
-    }
-
 }

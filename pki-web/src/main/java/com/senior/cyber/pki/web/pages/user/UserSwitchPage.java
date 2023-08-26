@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -11,6 +12,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User_;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import org.apache.wicket.MarkupContainer;
@@ -42,8 +44,8 @@ public class UserSwitchPage extends MasterPage {
         this.user_provider = new SingleChoiceProvider<>(
                 Long.class, new LongConvertor(),
                 String.class, new StringConvertor(),
-                "tbl_user", "user_id", "display_name");
-        this.user_provider.applyWhere("NOT", "user_id NOT IN (" + getSession().getUserId() + ")");
+                Sql.table(User_.class), Sql.column(User_.id), Sql.column(User_.displayName));
+        this.user_provider.applyWhere("NOT", Sql.column(User_.id) + " NOT IN (" + getSession().getUserId() + ")");
     }
 
     @Override

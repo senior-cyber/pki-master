@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -16,9 +17,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.entity.User_;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.repository.RoleRepository;
@@ -77,28 +76,23 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
     protected void onInitData() {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        ApplicationContext context = WicketFactory.getApplicationContext();
-//		DataContext dataContext = context.getBean(DataContext.class);
-//		Role roleTable = Role.staticInitialize(dataContext);
-//		UserDeny userDenyTable = UserDeny.staticInitialize(dataContext);
-
-        String not_in = "SELECT ud.r_role_id FROM tbl_deny_role ud WHERE ud.r_user_id = " + this.uuid;
+        String not_in = "SELECT " + Sql.column(DenyRole_.roleId) + " FROM " + Sql.table(DenyRole_.class) + " WHERE " + Sql.column(DenyRole_.userId) + " = " + this.uuid;
         this.role_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(),
                 String.class, new StringConvertor(),
-                "tbl_role r", "r.role_id", "r.name");
-        this.role_provider.applyWhere("UserDeny", "r.role_id NOT IN (" + not_in + ")");
+                Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+        this.role_provider.applyWhere("UserDeny", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
 
-        this.role_browse_provider = new MySqlDataProvider("tbl_role r");
-        this.role_browse_provider.applyJoin("UserDeny", "INNER JOIN tbl_deny_role ud ON ud.r_role_id = r.role_id");
-        this.role_browse_provider.applyWhere("Group", "ud.r_user_id = " + this.uuid);
+        this.role_browse_provider = new MySqlDataProvider(Sql.table(Role_.class));
+        this.role_browse_provider.applyJoin("UserDeny", "INNER JOIN " + Sql.table(DenyRole_.class) + " ON " + Sql.column(DenyRole_.roleId) + " = " + Sql.column(Role_.id));
+        this.role_browse_provider.applyWhere("Group", Sql.column(DenyRole_.userId) + " = " + this.uuid);
         this.role_browse_provider.setSort("role", SortOrder.ASCENDING);
-        this.role_browse_provider.setCountField("ud.deny_role_id");
-        this.role_browse_provider.selectNormalColumn("uuid", "ud.deny_role_id", new StringConvertor());
+        this.role_browse_provider.setCountField(Sql.column(DenyRole_.id));
+        this.role_browse_provider.selectNormalColumn("uuid", Sql.column(DenyRole_.id), new StringConvertor());
 
         this.role_browse_column = new ArrayList<>();
-        this.role_browse_column.add(Column.normalColumn(Model.of("Role"), "role", "r.name", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", "r.description", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", "r.enabled", this.role_browse_provider, new BooleanConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Role"), "role", Sql.column(Role_.name), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", Sql.column(Role_.description), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Role_.enabled), this.role_browse_provider, new BooleanConvertor()));
         this.role_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::role_browse_action_link, this::role_browse_action_click));
     }
 

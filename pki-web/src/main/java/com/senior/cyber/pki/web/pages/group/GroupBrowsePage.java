@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.group;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -16,7 +17,9 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2MultipleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Group;
+import com.senior.cyber.pki.dao.entity.Group_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.Role_;
 import com.senior.cyber.pki.web.data.MultipleChoiceProvider;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
@@ -69,16 +72,16 @@ public class GroupBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.role_provider = new MultipleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_role", "role_id", "name");
+        this.role_provider = new MultipleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
 
-        this.group_browse_provider = new MySqlDataProvider("tbl_group");
+        this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
         this.group_browse_provider.setSort("id", SortOrder.DESCENDING);
-        this.group_browse_provider.setCountField("group_id");
+        this.group_browse_provider.setCountField(Sql.column(Group_.id));
 
         this.group_browse_column = new ArrayList<>();
-        this.group_browse_column.add(Column.normalColumn(Model.of("ID"), "id", "group_id", this.group_browse_provider, new LongConvertor()));
-        this.group_browse_column.add(Column.normalColumn(Model.of("Name"), "name", "name", this.group_browse_provider, new StringConvertor()));
-        this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", "enabled", this.group_browse_provider, new BooleanConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Group_.id), this.group_browse_provider, new LongConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("Name"), "name", Sql.column(Group_.name), this.group_browse_provider, new StringConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Group_.enabled), this.group_browse_provider, new BooleanConvertor()));
         this.group_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::group_browse_action_link, this::group_browse_action_click));
     }
 

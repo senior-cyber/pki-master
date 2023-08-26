@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.group;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -16,9 +17,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Group;
-import com.senior.cyber.pki.dao.entity.Group_;
-import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.repository.GroupRepository;
@@ -76,21 +75,21 @@ public class GroupModifyPageRoleTab extends ContentPanel {
     protected void onInitData() {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        String not_in = "SELECT gr.r_role_id FROM tbl_group_role gr WHERE gr.r_group_id = " + this.uuid;
-        this.role_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_role r", "r.role_id", "r.name");
-        this.role_provider.applyWhere("GroupRole", "r.role_id NOT IN (" + not_in + ")");
+        String not_in = "SELECT " + Sql.column(GroupRole_.roleId) + " FROM " + Sql.table(GroupRole_.class) + " WHERE " + Sql.column(GroupRole_.groupId) + " = " + this.uuid;
+        this.role_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+        this.role_provider.applyWhere("GroupRole", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
 
-        this.role_browse_provider = new MySqlDataProvider("tbl_role r");
-        this.role_browse_provider.applyJoin("GroupRole", "INNER JOIN tbl_group_role gr ON gr.r_role_id = r.role_id");
-        this.role_browse_provider.applyWhere("Group", "gr.r_group_id = " + this.uuid);
+        this.role_browse_provider = new MySqlDataProvider(Sql.table(Role_.class));
+        this.role_browse_provider.applyJoin("GroupRole", "INNER JOIN " + Sql.table(GroupRole_.class) + " ON " + Sql.column(GroupRole_.roleId) + " = " + Sql.column(Role_.id));
+        this.role_browse_provider.applyWhere("Group", Sql.column(GroupRole_.groupId) + " = " + this.uuid);
         this.role_browse_provider.setSort("role", SortOrder.ASCENDING);
-        this.role_browse_provider.setCountField("gr.group_role_id");
-        this.role_browse_provider.selectNormalColumn("uuid", "gr.group_role_id", new StringConvertor());
+        this.role_browse_provider.setCountField(Sql.column(GroupRole_.id));
+        this.role_browse_provider.selectNormalColumn("uuid", Sql.column(GroupRole_.id), new StringConvertor());
 
         this.role_browse_column = new ArrayList<>();
-        this.role_browse_column.add(Column.normalColumn(Model.of("Role"), "role", "r.name", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", "r.description", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", "r.enabled", this.role_browse_provider, new BooleanConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Role"), "role", Sql.column(Role_.name), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", Sql.column(Role_.description), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Role_.enabled), this.role_browse_provider, new BooleanConvertor()));
         this.role_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::role_browse_action_link, this::role_browse_action_click));
     }
 

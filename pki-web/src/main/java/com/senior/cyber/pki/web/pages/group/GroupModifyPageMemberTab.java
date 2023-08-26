@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.group;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -15,9 +16,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Group;
-import com.senior.cyber.pki.dao.entity.Group_;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.repository.GroupRepository;
@@ -75,24 +74,24 @@ public class GroupModifyPageMemberTab extends ContentPanel {
     protected void onInitData() {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        String not_in = "SELECT ug.r_user_id FROM tbl_user_group ug WHERE ug.r_group_id = " + this.uuid;
+        String not_in = "SELECT " + Sql.column(UserGroup_.userId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.groupId) + " = " + this.uuid;
         this.user_provider = new SingleChoiceProvider<>(
                 Long.class, new LongConvertor(),
                 String.class, new StringConvertor(),
-                "tbl_user u", "u.user_id",
-                "u.display_name");
-        this.user_provider.applyWhere("UserGroup", "u.user_id NOT IN (" + not_in + ")");
+                Sql.table(User_.class), Sql.column(User_.id),
+                Sql.column(User_.displayName));
+        this.user_provider.applyWhere("UserGroup", Sql.column(User_.id) + " NOT IN (" + not_in + ")");
 
-        this.user_browse_provider = new MySqlDataProvider("tbl_user u");
-        this.user_browse_provider.applyJoin("UserGroup", "INNER JOIN tbl_user_group ug ON ug.r_user_id = u.user_id");
-        this.user_browse_provider.applyWhere("Group", "ug.r_group_id = " + this.uuid);
+        this.user_browse_provider = new MySqlDataProvider(Sql.table(User_.class));
+        this.user_browse_provider.applyJoin("UserGroup", "INNER JOIN " + Sql.table(UserGroup_.class) + " ON " + Sql.column(UserGroup_.userId) + " = " + Sql.column(User_.id));
+        this.user_browse_provider.applyWhere("Group", Sql.column(UserGroup_.groupId) + " = " + this.uuid);
         this.user_browse_provider.setSort("full_name", SortOrder.ASCENDING);
-        this.user_browse_provider.setCountField("ug.user_group_id");
-        this.user_browse_provider.selectNormalColumn("uuid", "ug.user_group_id", new StringConvertor());
+        this.user_browse_provider.setCountField(Sql.column(UserGroup_.id));
+        this.user_browse_provider.selectNormalColumn("uuid", Sql.column(UserGroup_.id), new StringConvertor());
 
         this.user_browse_column = new ArrayList<>();
-        this.user_browse_column.add(Column.normalColumn(Model.of("Name"), "full_name", "u.display_name", this.user_browse_provider, new StringConvertor()));
-        this.user_browse_column.add(Column.normalColumn(Model.of("Login"), "login", "u.login", this.user_browse_provider, new StringConvertor()));
+        this.user_browse_column.add(Column.normalColumn(Model.of("Name"), "full_name", Sql.column(User_.displayName), this.user_browse_provider, new StringConvertor()));
+        this.user_browse_column.add(Column.normalColumn(Model.of("Login"), "login", Sql.column(User_.login), this.user_browse_provider, new StringConvertor()));
         this.user_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::user_browse_action_link, this::user_browse_action_click));
     }
 

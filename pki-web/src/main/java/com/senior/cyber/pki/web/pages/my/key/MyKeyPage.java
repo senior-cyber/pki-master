@@ -4,6 +4,7 @@ import com.google.crypto.tink.*;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.exception.UnauthorizedInstantiationException;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -18,6 +19,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Key;
+import com.senior.cyber.pki.dao.entity.Key_;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
@@ -88,23 +90,23 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         WebSession session = getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        this.key_browse_provider = new MySqlDataProvider("tbl_key");
+        this.key_browse_provider = new MySqlDataProvider(Sql.table(Key_.class));
         this.key_browse_provider.setSort("key_id", SortOrder.DESCENDING);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.key_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.key_browse_provider.applyWhere("user", Sql.column(Key_.user) + " = " + session.getUserId());
         }
         this.key_browse_provider.setCountField("key_id");
-        this.key_browse_provider.selectNormalColumn("user_id", "user_id", new LongConvertor());
+        this.key_browse_provider.selectNormalColumn("user_id", Sql.column(Key_.user), new LongConvertor());
 
         this.key_browse_column = new ArrayList<>();
-        this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "key_id", this.key_browse_provider, new LongConvertor()));
-        this.key_browse_column.add(Column.normalColumn(Model.of("Client ID"), "client_id", "client_id", this.key_browse_provider, new StringConvertor()));
+        this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Key_.id), this.key_browse_provider, new LongConvertor()));
+        this.key_browse_column.add(Column.normalColumn(Model.of("Client ID"), "client_id", Sql.column(Key_.clientId), this.key_browse_provider, new StringConvertor()));
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
-                this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
+                this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", Sql.column(Key_.clientSecret), this.key_browse_provider, new StringConvertor(), this));
             }
         } else {
-            this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", "client_secret", this.key_browse_provider, new StringConvertor(), this));
+            this.key_browse_column.add(Column.normalColumn(Model.of("Client Secret"), "client_secret", Sql.column(Key_.clientSecret), this.key_browse_provider, new StringConvertor(), this));
         }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {

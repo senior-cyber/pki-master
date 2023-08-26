@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.intermediate;
 
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
@@ -132,14 +133,14 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.root_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_root", "root_id", "common_name");
-        this.root_provider.applyWhere("status", "status = '" + Root.STATUS_GOOD + "'");
+        this.root_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Root_.class), Sql.column(Root_.id), Sql.column(Root_.commonName));
+        this.root_provider.applyWhere("status", Sql.column(Root_.status) + " = '" + Root.STATUS_GOOD + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.root_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.root_provider.applyWhere("user", Sql.column(Root_.user) + " = " + session.getUserId());
         }
-        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
+        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
         long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);

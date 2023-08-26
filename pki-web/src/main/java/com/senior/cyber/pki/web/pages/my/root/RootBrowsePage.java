@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -13,6 +14,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.Root;
+import com.senior.cyber.pki.dao.entity.Root_;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
@@ -68,24 +70,24 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
-        this.root_browse_provider = new MySqlDataProvider("tbl_root");
-        this.root_browse_provider.setSort("root_id", SortOrder.DESCENDING);
+        this.root_browse_provider = new MySqlDataProvider(Sql.table(Root_.class));
+        this.root_browse_provider.setSort(Sql.column(Root_.id), SortOrder.DESCENDING);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.root_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.root_browse_provider.applyWhere("user", Sql.column(Root_.user) + " = " + session.getUserId());
         }
-        this.root_browse_provider.setCountField("root_id");
+        this.root_browse_provider.setCountField(Sql.column(Root_.id));
 
         this.root_browse_column = new ArrayList<>();
-        this.root_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "root_id", this.root_browse_provider, new LongConvertor()));
-        this.root_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.root_browse_provider, new StringConvertor()));
-        this.root_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.root_browse_provider, new DateConvertor()));
-        this.root_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.root_browse_provider, new StringConvertor()));
+        this.root_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Root_.id), this.root_browse_provider, new LongConvertor()));
+        this.root_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Root_.commonName), this.root_browse_provider, new StringConvertor()));
+        this.root_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Root_.validUntil), this.root_browse_provider, new DateConvertor()));
+        this.root_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Root_.status), this.root_browse_provider, new StringConvertor()));
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Download_Action)) {
-                this.root_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.root_browse_provider, new StringConvertor(), this));
+                this.root_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Root_.status), this.root_browse_provider, new StringConvertor(), this));
             }
         } else {
-            this.root_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.root_browse_provider, new StringConvertor(), this));
+            this.root_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Root_.status), this.root_browse_provider, new StringConvertor(), this));
         }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyRootBrowse_Copy_Action)) {

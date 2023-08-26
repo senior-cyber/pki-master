@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -11,6 +12,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.User_;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.pki.web.repository.HSessionRepository;
@@ -47,17 +49,16 @@ public class UserBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.user_browse_provider = new MySqlDataProvider("tbl_user u");
-        this.user_browse_provider.setCountField("u.user_id");
-
-        this.user_browse_provider.selectNormalColumn("uuid", "u.user_id", new LongConvertor());
+        this.user_browse_provider = new MySqlDataProvider(Sql.table(User_.class));
+        this.user_browse_provider.setCountField(Sql.column(User_.id));
+        this.user_browse_provider.selectNormalColumn("uuid", Sql.column(User_.id), new LongConvertor());
 
         this.user_browse_provider.setSort("uuid", SortOrder.DESCENDING);
 
         this.user_browse_column = new ArrayList<>();
-        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Display Name"), "display_name", "u.display_name", this.user_browse_provider, new StringConvertor()));
-        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Email Address"), "email_address", "u.email_address", this.user_browse_provider, new StringConvertor()));
-        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Enabled"), "enabled", "u.enabled", this.user_browse_provider, new BooleanConvertor()));
+        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Display Name"), "display_name", Sql.column(User_.displayName), this.user_browse_provider, new StringConvertor()));
+        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Email Address"), "email_address", Sql.column(User_.emailAddress), this.user_browse_provider, new StringConvertor()));
+        this.user_browse_column.add(FilteredColumn.normalColumn(Model.of("Enabled"), "enabled", Sql.column(User_.enabled), this.user_browse_provider, new BooleanConvertor()));
         this.user_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::user_browse_action_link, this::user_browse_action_click));
     }
 

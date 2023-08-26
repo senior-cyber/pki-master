@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.csr;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
@@ -18,10 +19,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.CsrUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Intermediate;
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
@@ -106,12 +104,12 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_intermediate", "intermediate_id", "common_name");
-        this.intermediate_provider.applyWhere("status", "status = '" + Intermediate.STATUS_GOOD + "'");
+        this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Intermediate_.class), Sql.column(Intermediate_.id), Sql.column(Intermediate_.commonName));
+        this.intermediate_provider.applyWhere("status", Sql.column(Intermediate_.status) + " = '" + Intermediate.STATUS_GOOD + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.intermediate_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.intermediate_provider.applyWhere("user", Sql.column(Intermediate_.user) + " = " + session.getUserId());
         }
 
         LocalDate now = LocalDate.now();

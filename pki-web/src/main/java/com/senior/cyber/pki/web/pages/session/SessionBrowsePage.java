@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.session;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -10,6 +11,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.jdbc.query.DeleteQuery;
 import com.senior.cyber.frmk.jdbc.query.Param;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.Session_;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
@@ -43,14 +45,14 @@ public class SessionBrowsePage extends MasterPage {
     protected void onInitData() {
         super.onInitData();
 
-        this.session_browse_provider = new MySqlDataProvider("TBL_SESSION sp");
-        this.session_browse_provider.setSort("sp.SESSION_ID", SortOrder.DESCENDING);
-        this.session_browse_provider.setCountField("sp.SESSION_ID");
-        this.session_browse_provider.selectNormalColumn("uuid", "sp.PRIMARY_ID", new StringConvertor());
+        this.session_browse_provider = new MySqlDataProvider(Sql.table(Session_.class));
+        this.session_browse_provider.setSort(Sql.column(Session_.sessionId), SortOrder.DESCENDING);
+        this.session_browse_provider.setCountField(Sql.column(Session_.sessionId));
+        this.session_browse_provider.selectNormalColumn("uuid", Sql.column(Session_.id), new StringConvertor());
 
         this.session_browse_column = new ArrayList<>();
-        this.session_browse_column.add(Column.normalColumn(Model.of("Session ID"), "sessionId", "sp.SESSION_ID", this.session_browse_provider, new StringConvertor()));
-        this.session_browse_column.add(Column.normalColumn(Model.of("Login"), "login", "sp.login", this.session_browse_provider, new StringConvertor()));
+        this.session_browse_column.add(Column.normalColumn(Model.of("Session ID"), "sessionId", Sql.column(Session_.sessionId), this.session_browse_provider, new StringConvertor()));
+        this.session_browse_column.add(Column.normalColumn(Model.of("Login"), "login", Sql.column(Session_.login), this.session_browse_provider, new StringConvertor()));
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
@@ -100,8 +102,8 @@ public class SessionBrowsePage extends MasterPage {
             deleteQuery.addWhere("SESSION_PRIMARY_ID = :SESSION_PRIMARY_ID", new Param("SESSION_PRIMARY_ID", uuid));
             named.update(deleteQuery.toSQL(), deleteQuery.toParam());
 
-            deleteQuery = new DeleteQuery("TBL_SESSION");
-            deleteQuery.addWhere("PRIMARY_ID = :PRIMARY_ID", new Param("PRIMARY_ID", uuid));
+            deleteQuery = new DeleteQuery(Sql.table(Session_.class));
+            deleteQuery.addWhere(Sql.column(Session_.id) + " = :id", new Param("id", uuid));
             named.update(deleteQuery.toSQL(), deleteQuery.toParam());
 
             target.add(this.session_browse_table);

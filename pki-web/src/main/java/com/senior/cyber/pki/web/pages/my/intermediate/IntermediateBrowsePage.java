@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.my.intermediate;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -12,6 +13,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.Intermediate;
+import com.senior.cyber.pki.dao.entity.Intermediate_;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
@@ -68,24 +70,24 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
-        this.intermediate_browse_provider = new MySqlDataProvider("tbl_intermediate");
-        this.intermediate_browse_provider.setSort("intermediate_id", SortOrder.DESCENDING);
+        this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Intermediate_.class));
+        this.intermediate_browse_provider.setSort(Sql.column(Intermediate_.id), SortOrder.DESCENDING);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.intermediate_browse_provider.applyWhere("user", "user_id = " + session.getUserId());
+            this.intermediate_browse_provider.applyWhere("user", Sql.column(Intermediate_.user) + " = " + session.getUserId());
         }
-        this.intermediate_browse_provider.setCountField("intermediate_id");
+        this.intermediate_browse_provider.setCountField(Sql.column(Intermediate_.id));
 
         this.intermediate_browse_column = new ArrayList<>();
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", "intermediate_id", this.intermediate_browse_provider, new LongConvertor()));
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", "common_name", this.intermediate_browse_provider, new StringConvertor()));
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", "valid_until", this.intermediate_browse_provider, new DateConvertor()));
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", "status", this.intermediate_browse_provider, new StringConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Intermediate_.id), this.intermediate_browse_provider, new LongConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Intermediate_.commonName), this.intermediate_browse_provider, new StringConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Intermediate_.validUntil), this.intermediate_browse_provider, new DateConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Intermediate_.status), this.intermediate_browse_provider, new StringConvertor()));
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
-                this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
+                this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Intermediate_.status), this.intermediate_browse_provider, new StringConvertor(), this));
             }
         } else {
-            this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", "status", this.intermediate_browse_provider, new StringConvertor(), this));
+            this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Intermediate_.status), this.intermediate_browse_provider, new StringConvertor(), this));
         }
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {

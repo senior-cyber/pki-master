@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -16,9 +17,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Group;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.entity.User_;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.web.repository.GroupRepository;
@@ -76,20 +75,20 @@ public class UserModifyPageGroupTab extends ContentPanel {
     protected void onInitData() {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        String not_in = "SELECT ug.r_group_id FROM tbl_user_group ug WHERE ug.r_user_id = " + this.uuid;
-        this.group_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), "tbl_group g", "g.group_id", "g.name");
-        this.group_provider.applyWhere("GroupRole", "g.group_id NOT IN (" + not_in + ")");
+        String not_in = "SELECT " + Sql.column(UserGroup_.groupId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.userId) + " = " + this.uuid;
+        this.group_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Group_.class), Sql.column(Group_.id), Sql.column(Group_.name));
+        this.group_provider.applyWhere("GroupRole", Sql.column(Group_.id) + " NOT IN (" + not_in + ")");
 
-        this.group_browse_provider = new MySqlDataProvider("tbl_group g");
-        this.group_browse_provider.applyJoin("UserGroup", "INNER JOIN tbl_user_group ug ON ug.r_group_id = g.group_id");
-        this.group_browse_provider.applyWhere("User", "ug.r_user_id = " + this.uuid);
+        this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
+        this.group_browse_provider.applyJoin("UserGroup", "INNER JOIN " + Sql.table(UserGroup_.class) + " ON " + Sql.column(UserGroup_.groupId) + " = " + Sql.column(Group_.id));
+        this.group_browse_provider.applyWhere("User", Sql.column(UserGroup_.userId) + " = " + this.uuid);
         this.group_browse_provider.setSort("group_name", SortOrder.ASCENDING);
-        this.group_browse_provider.setCountField("ug.user_group_id");
-        this.group_browse_provider.selectNormalColumn("uuid", "ug.user_group_id", new StringConvertor());
+        this.group_browse_provider.setCountField(Sql.column(UserGroup_.id));
+        this.group_browse_provider.selectNormalColumn("uuid", Sql.column(UserGroup_.id), new StringConvertor());
 
         this.group_browse_column = new ArrayList<>();
-        this.group_browse_column.add(Column.normalColumn(Model.of("Group"), "group_name", "g.name", this.group_browse_provider, new StringConvertor()));
-        this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", "g.enabled", this.group_browse_provider, new BooleanConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("Group"), "group_name", Sql.column(Group_.name), this.group_browse_provider, new StringConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Group_.enabled), this.group_browse_provider, new BooleanConvertor()));
         this.group_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::group_browse_action_link, this::group_browse_action_click));
     }
 

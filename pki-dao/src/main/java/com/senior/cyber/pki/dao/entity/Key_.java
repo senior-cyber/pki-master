@@ -12,7 +12,4 @@ public abstract class Key_ {
     public static volatile SingularAttribute<Key, String> kek;
     public static volatile SingularAttribute<Key, User> user;
 
-    public Key_() {
-    }
-
 }

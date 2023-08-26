@@ -15,7 +15,4 @@ public abstract class Role_ {
     public static volatile MapAttribute<Role, String, User> users;
     public static volatile MapAttribute<Role, String, User> denyUsers;
 
-    public Role_() {
-    }
-
 }

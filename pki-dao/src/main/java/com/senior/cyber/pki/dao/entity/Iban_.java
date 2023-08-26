@@ -12,7 +12,4 @@ public abstract class Iban_ {
     public static volatile SingularAttribute<Iban, String> alpha3Code;
     public static volatile SingularAttribute<Iban, String> alphaNumeric;
 
-    public Iban_() {
-    }
-
 }

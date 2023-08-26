@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
@@ -15,10 +16,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2Singl
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
-import com.senior.cyber.pki.dao.entity.Iban;
-import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.Root;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
@@ -120,7 +118,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
-        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), "tbl_iban", "alpha2_code", "country");
+        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
         WebSession session = (WebSession) getSession();
 

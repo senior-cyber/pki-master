@@ -2,6 +2,7 @@ package com.senior.cyber.pki.web.pages.role;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -9,6 +10,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.Role_;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.web.pages.MasterPage;
 import com.senior.cyber.pki.web.repository.RoleRepository;
@@ -39,15 +41,15 @@ public class RoleBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.role_browse_provider = new MySqlDataProvider("tbl_role");
-        this.role_browse_provider.setSort("role_id", SortOrder.ASCENDING);
-        this.role_browse_provider.setCountField("role_id");
+        this.role_browse_provider = new MySqlDataProvider(Sql.table(Role_.class));
+        this.role_browse_provider.setSort(Sql.column(Role_.id), SortOrder.ASCENDING);
+        this.role_browse_provider.setCountField(Sql.column(Role_.id));
 
         this.role_browse_column = new ArrayList<>();
-        this.role_browse_column.add(Column.normalColumn(Model.of("ID"), "id", "role_id", this.role_browse_provider, new LongConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Name"), "name", "name", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", "description", this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", "enabled", this.role_browse_provider, new BooleanConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Role_.id), this.role_browse_provider, new LongConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Name"), "name", Sql.column(Role_.name), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", Sql.column(Role_.description), this.role_browse_provider, new StringConvertor()));
+        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Role_.enabled), this.role_browse_provider, new BooleanConvertor()));
         this.role_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::role_browse_action_link, this::role_browse_action_click));
     }
 
