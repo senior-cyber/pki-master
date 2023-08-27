@@ -15,6 +15,8 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -41,7 +43,7 @@ import java.util.Optional;
 
 public class IntermediateRevokePageInfoTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 
@@ -115,7 +117,7 @@ public class IntermediateRevokePageInfoTab extends ContentPanel {
     protected void onInitData() {
         this.reason_provider = List.of("unspecified", "keyCompromise", "cACompromise", "affiliationChanged", "superseded", "cessationOfOperation", "certificateHold", "removeFromCRL", "privilegeWithdrawn", "aACompromise");
         WebSession session = (WebSession) getSession();
-        this.uuid = getPage().getPageParameters().get("uuid").toLong(-1L);
+        this.uuid = getPage().getPageParameters().get("uuid").toString();
         ApplicationContext context = WicketFactory.getApplicationContext();
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
 
@@ -291,14 +293,14 @@ public class IntermediateRevokePageInfoTab extends ContentPanel {
 
         intermediate.setRevokedDate(this.date_value);
         intermediate.setRevokedReason(this.reason_value);
-        intermediate.setStatus(Intermediate.STATUS_REVOKED);
+        intermediate.setStatus(IntermediateStatusEnum.Revoked);
         intermediateRepository.save(intermediate);
 
-        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, Certificate.STATUS_GOOD);
+        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, CertificateStatusEnum.Good);
         for (Certificate certificate : certificates) {
             certificate.setRevokedDate(this.date_value);
             certificate.setRevokedReason(this.reason_value);
-            certificate.setStatus(Certificate.STATUS_REVOKED);
+            certificate.setStatus(CertificateStatusEnum.Revoked);
             certificateRepository.save(certificate);
         }
 

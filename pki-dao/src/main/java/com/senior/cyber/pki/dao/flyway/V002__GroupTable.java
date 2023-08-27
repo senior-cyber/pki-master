@@ -21,7 +21,7 @@ public class V002__GroupTable extends LiquibaseMigration {
         Map<String, Object> params = new HashMap<>();
         params.put("name", "Registered");
         params.put("enabled", true);
-        named.update("INSERT INTO tbl_group(name, enabled) VALUES(:name, :enabled)", params);
+        named.update("INSERT INTO tbl_group(group_id, name, enabled) VALUES(UUID(), :name, :enabled)", params);
 
     }
 

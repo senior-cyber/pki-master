@@ -11,6 +11,9 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -38,7 +41,7 @@ import java.util.Optional;
 
 public class RootRevokePageInfoTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 
@@ -107,7 +110,7 @@ public class RootRevokePageInfoTab extends ContentPanel {
     protected void onInitData() {
         this.reason_provider = List.of("unspecified", "keyCompromise", "cACompromise", "affiliationChanged", "superseded", "cessationOfOperation", "certificateHold", "removeFromCRL", "privilegeWithdrawn", "aACompromise");
         WebSession session = (WebSession) getSession();
-        this.uuid = getPage().getPageParameters().get("uuid").toLong(-1L);
+        this.uuid = getPage().getPageParameters().get("uuid").toString();
         ApplicationContext context = WicketFactory.getApplicationContext();
         RootRepository rootRepository = context.getBean(RootRepository.class);
 
@@ -273,20 +276,20 @@ public class RootRevokePageInfoTab extends ContentPanel {
         Root root = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
 
         root.setRevokedDate(this.date_value);
-        root.setStatus(Root.STATUS_REVOKED);
+        root.setStatus(RootStatusEnum.Revoked);
         rootRepository.save(root);
 
-        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, Intermediate.STATUS_GOOD);
+        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, IntermediateStatusEnum.Good);
         for (Intermediate intermediate : intermediates) {
             intermediate.setRevokedDate(this.date_value);
             intermediate.setRevokedReason(this.reason_value);
-            intermediate.setStatus(Intermediate.STATUS_REVOKED);
+            intermediate.setStatus(IntermediateStatusEnum.Revoked);
             intermediateRepository.save(intermediate);
-            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, Certificate.STATUS_GOOD);
+            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, CertificateStatusEnum.Good);
             for (Certificate certificate : certificates) {
                 certificate.setRevokedDate(this.date_value);
                 certificate.setRevokedReason(this.reason_value);
-                certificate.setStatus(Certificate.STATUS_REVOKED);
+                certificate.setStatus(CertificateStatusEnum.Revoked);
                 certificateRepository.save(certificate);
             }
         }

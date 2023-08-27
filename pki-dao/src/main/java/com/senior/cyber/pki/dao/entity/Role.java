@@ -1,12 +1,18 @@
 package com.senior.cyber.pki.dao.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 import java.util.Map;
 
 @Entity
 @Table(name = "tbl_role")
+@Getter
+@Setter
 public class Role implements Serializable {
 
     public static final String NAME_ROOT = "root";
@@ -128,9 +134,10 @@ public class Role implements Serializable {
     public static final String DESCRIPTION_Page_UserExit = "could access user exit page";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator
+    @Setter(AccessLevel.NONE)
     @Column(name = "role_id")
-    private Long id;
+    private String id;
 
     @Column(name = "name")
     private String name;
@@ -144,8 +151,8 @@ public class Role implements Serializable {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "tbl_group_role",
-            joinColumns = @JoinColumn(name = "r_role_id", referencedColumnName = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "r_group_id", referencedColumnName = "group_id")
+            joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id", referencedColumnName = "group_id")
 
     )
     @MapKeyColumn(name = "group_role_id")
@@ -154,8 +161,8 @@ public class Role implements Serializable {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "tbl_user_role",
-            joinColumns = @JoinColumn(name = "r_role_id", referencedColumnName = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "r_user_id", referencedColumnName = "user_id")
+            joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id")
 
     )
     @MapKeyColumn(name = "user_role_id")
@@ -164,61 +171,10 @@ public class Role implements Serializable {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "tbl_deny_role",
-            joinColumns = @JoinColumn(name = "r_role_id", referencedColumnName = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "r_user_id", referencedColumnName = "user_id")
+            joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     )
     @MapKeyColumn(name = "deny_role_id")
     private Map<String, User> denyUsers;
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Map<String, Group> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Map<String, Group> groups) {
-        this.groups = groups;
-    }
-
-    public Map<String, User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Map<String, User> users) {
-        this.users = users;
-    }
-
-    public Map<String, User> getDenyUsers() {
-        return denyUsers;
-    }
-
-    public void setDenyUsers(Map<String, User> denyUsers) {
-        this.denyUsers = denyUsers;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 }

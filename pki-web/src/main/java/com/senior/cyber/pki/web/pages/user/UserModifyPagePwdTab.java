@@ -30,7 +30,7 @@ import java.util.Optional;
 
 public class UserModifyPagePwdTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 
@@ -57,7 +57,7 @@ public class UserModifyPagePwdTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
-        this.uuid = getPage().getPageParameters().get("id").toLong(-1L);
+        this.uuid = getPage().getPageParameters().get("id").toString();
         loadData();
     }
 

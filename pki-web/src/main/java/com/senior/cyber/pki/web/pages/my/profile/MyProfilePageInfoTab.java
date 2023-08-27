@@ -26,7 +26,7 @@ import java.util.Optional;
 
 public class MyProfilePageInfoTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 

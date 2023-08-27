@@ -2,7 +2,7 @@
     <changeSet author="Senior Cyber" id="V002__GroupTable-1">
 
         <createTable tableName="tbl_group">
-            <column autoIncrement="true" name="group_id" type="BIGINT">
+            <column name="group_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_4" nullable="false" primaryKey="true" primaryKeyName="primary_key_2"/>
             </column>
             <column name="name" type="VARCHAR(200)">

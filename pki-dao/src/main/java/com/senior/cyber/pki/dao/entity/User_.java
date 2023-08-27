@@ -9,7 +9,7 @@ import java.util.Date;
 @StaticMetamodel(User.class)
 public abstract class User_ {
 
-    public static volatile SingularAttribute<User, Long> id;
+    public static volatile SingularAttribute<User, String> id;
     public static volatile SingularAttribute<User, String> displayName;
     public static volatile SingularAttribute<User, Boolean> enabled;
     public static volatile SingularAttribute<User, String> login;

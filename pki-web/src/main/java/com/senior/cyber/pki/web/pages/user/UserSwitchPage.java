@@ -33,7 +33,7 @@ public class UserSwitchPage extends MasterPage {
     protected UIColumn user_column;
     protected UIContainer user_container;
     protected Select2SingleChoice user_field;
-    protected SingleChoiceProvider<Long, String> user_provider;
+    protected SingleChoiceProvider<String, String> user_provider;
     protected Option user_value;
 
     protected Button switchButton;
@@ -42,7 +42,7 @@ public class UserSwitchPage extends MasterPage {
     protected void onInitData() {
         super.onInitData();
         this.user_provider = new SingleChoiceProvider<>(
-                Long.class, new LongConvertor(),
+                String.class, new StringConvertor(),
                 String.class, new StringConvertor(),
                 Sql.table(User_.class), Sql.column(User_.id), Sql.column(User_.displayName));
         this.user_provider.applyWhere("NOT", Sql.column(User_.id) + " NOT IN (" + getSession().getUserId() + ")");
@@ -77,7 +77,7 @@ public class UserSwitchPage extends MasterPage {
     }
 
     protected void switchButtonClick() {
-        getSession().switchUser(Long.parseLong(this.user_value.getId()));
+        getSession().switchUser(this.user_value.getId());
         setResponsePage(getApplication().getHomePage());
     }
 

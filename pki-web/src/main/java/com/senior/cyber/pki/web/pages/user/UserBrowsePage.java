@@ -51,7 +51,7 @@ public class UserBrowsePage extends MasterPage {
         super.onInitData();
         this.user_browse_provider = new MySqlDataProvider(Sql.table(User_.class));
         this.user_browse_provider.setCountField(Sql.column(User_.id));
-        this.user_browse_provider.selectNormalColumn("uuid", Sql.column(User_.id), new LongConvertor());
+        this.user_browse_provider.selectNormalColumn("uuid", Sql.column(User_.id), new StringConvertor());
 
         this.user_browse_provider.setSort("uuid", SortOrder.DESCENDING);
 
@@ -89,7 +89,7 @@ public class UserBrowsePage extends MasterPage {
         ApplicationContext context = WicketFactory.getApplicationContext();
         UserRepository userRepository = context.getBean(UserRepository.class);
 
-        long uuid = model.get("uuid", Long.class);
+        String uuid = model.get("uuid", String.class);
 
         if ("Edit".equals(link)) {
             PageParameters parameters = new PageParameters();

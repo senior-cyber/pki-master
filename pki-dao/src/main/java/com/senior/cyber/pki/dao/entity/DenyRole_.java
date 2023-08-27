@@ -6,8 +6,8 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 @StaticMetamodel(DenyRole.class)
 public abstract class DenyRole_ {
 
-    public static volatile SingularAttribute<User, String> id;
-    public static volatile SingularAttribute<User, Long> roleId;
-    public static volatile SingularAttribute<User, Long> userId;
+    public static volatile SingularAttribute<DenyRole, String> id;
+    public static volatile SingularAttribute<DenyRole, String> roleId;
+    public static volatile SingularAttribute<DenyRole, String> userId;
 
 }

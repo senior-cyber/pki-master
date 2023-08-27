@@ -5,16 +5,14 @@
     <changeSet author="Senior Cyber" id="">
 
         <createTable tableName="tbl_group">
-            <column autoIncrement="true" name="group_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_4" nullable="false" primaryKey="true"
-                             primaryKeyName="primary_key_2"/>
+            <column name="group_id" type="VARCHAR(36)">
+                <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="name" type="VARCHAR(200)">
-                <constraints notNullConstraintName="notnull_key_5" nullable="false" unique="true"
-                             uniqueConstraintName="unique_index_2"/>
+                <constraints nullable="false" unique="true"/>
             </column>
             <column defaultValueBoolean="true" name="enabled" type="boolean">
-                <constraints notNullConstraintName="notnull_key_6" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
 

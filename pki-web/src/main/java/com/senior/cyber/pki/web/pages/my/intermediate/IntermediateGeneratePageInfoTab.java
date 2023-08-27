@@ -19,6 +19,8 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
@@ -68,7 +70,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
     protected UIColumn root_column;
     protected UIContainer root_container;
     protected Select2SingleChoice root_field;
-    protected SingleChoiceProvider<Long, String> root_provider;
+    protected SingleChoiceProvider<String, String> root_provider;
     protected Option root_value;
 
     protected UIRow row2;
@@ -133,8 +135,8 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.root_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Root_.class), Sql.column(Root_.id), Sql.column(Root_.commonName));
-        this.root_provider.applyWhere("status", Sql.column(Root_.status) + " = '" + Root.STATUS_GOOD + "'");
+        this.root_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Root_.class), Sql.column(Root_.id), Sql.column(Root_.commonName));
+        this.root_provider.applyWhere("status", Sql.column(Root_.status) + " = '" + RootStatusEnum.Good.name() + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
@@ -142,7 +144,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
         }
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
-        long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
+        String uuid = getPage().getPageParameters().get("uuid").toString();
         IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
@@ -168,7 +170,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             this.state_or_province_name_value = intermediate.getStateOrProvinceName();
             this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
             this.email_address_value = intermediate.getEmailAddress();
-            if (Intermediate.STATUS_GOOD.equals(intermediate.getRoot().getStatus())) {
+            if (intermediate.getRoot().getStatus() == RootStatusEnum.Good) {
                 this.root_value = new Option(String.valueOf(intermediate.getRoot().getId()), intermediate.getRoot().getCommonName());
             }
         }
@@ -329,7 +331,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
 
-            Optional<Root> optionalRoot = rootRepository.findById(Long.parseLong(this.root_value.getId()));
+            Optional<Root> optionalRoot = rootRepository.findById(this.root_value.getId());
             Root root = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
 
             KeyPair key = KeyPairUtility.generate();
@@ -388,7 +390,7 @@ public class IntermediateGeneratePageInfoTab extends ContentPanel {
             intermediate.setValidFrom(validFrom.toDate());
             intermediate.setValidUntil(validUntil.toDate());
 
-            intermediate.setStatus(Intermediate.STATUS_GOOD);
+            intermediate.setStatus(IntermediateStatusEnum.Good);
 
             intermediate.setRoot(root);
 

@@ -15,6 +15,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Intermediate_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
@@ -78,7 +79,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         this.intermediate_browse_provider.setCountField(Sql.column(Intermediate_.id));
 
         this.intermediate_browse_column = new ArrayList<>();
-        this.intermediate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Intermediate_.id), this.intermediate_browse_provider, new LongConvertor()));
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Intermediate_.id), this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Intermediate_.commonName), this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Intermediate_.validUntil), this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Intermediate_.status), this.intermediate_browse_provider, new StringConvertor()));
@@ -120,7 +121,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        long uuid = object.get("uuid", long.class);
+        String uuid = object.get("uuid", String.class);
         String name = StringUtils.replace(object.get("common_name", String.class), " ", "_");
         return new ClickableCell(this::download, object, uuid + "_" + name + ".zip");
     }
@@ -131,7 +132,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             throw new WicketRuntimeException("No Permission");
         }
         try {
-            long uuid = tuple.get("uuid", long.class);
+            String uuid = tuple.get("uuid", String.class);
             ApplicationContext context = WicketFactory.getApplicationContext();
             IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
             Optional<Intermediate> optionalIntermediate = intermediateRepository.findById(uuid);
@@ -226,7 +227,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
         } else {
             actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
-        if (Intermediate.STATUS_GOOD.equals(status)) {
+        if (IntermediateStatusEnum.Good.name().equals(status)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
                     actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
@@ -245,7 +246,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Revoke_Action);
             }
-            long uuid = model.get("uuid", long.class);
+            String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(IntermediateRevokePage.class, parameters);
@@ -253,7 +254,7 @@ public class IntermediateBrowsePage extends MasterPage implements IHtmlTranslato
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Copy_Action);
             }
-            long uuid = model.get("uuid", long.class);
+            String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(IntermediateGeneratePage.class, parameters);

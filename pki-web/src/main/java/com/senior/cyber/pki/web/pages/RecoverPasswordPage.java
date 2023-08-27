@@ -29,7 +29,7 @@ import java.util.Optional;
 @Bookmark("/recover/password")
 public class RecoverPasswordPage extends WebPage {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form = null;
 
@@ -47,7 +47,7 @@ public class RecoverPasswordPage extends WebPage {
 
     protected Button okayButton;
 
-    public RecoverPasswordPage(long userId) {
+    public RecoverPasswordPage(String userId) {
         this.uuid = userId;
     }
 

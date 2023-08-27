@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
 import com.senior.cyber.pki.web.dto.*;
 import com.senior.cyber.pki.web.repository.*;
@@ -76,7 +79,7 @@ public class IssueController {
         if (subjectDto.getCommonName() == null || "".equals(subjectDto.getCommonName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName is required");
         } else {
-            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, "Good");
+            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, RootStatusEnum.Good);
             if (optionalRoot.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName \"" + subjectDto.getCommonName() + "\" is not available");
             }
@@ -165,7 +168,7 @@ public class IssueController {
         root.setValidFrom(validFrom.toDate());
         root.setValidUntil(validUntil.toDate());
 
-        root.setStatus("Good");
+        root.setStatus(RootStatusEnum.Good);
 
         root.setUser(user);
 
@@ -182,7 +185,7 @@ public class IssueController {
         if (subjectDto.getCommonName() == null || "".equals(subjectDto.getCommonName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName is required");
         } else {
-            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, "Good");
+            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, RootStatusEnum.Good);
             if (optionalRoot.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName \"" + subjectDto.getCommonName() + "\" is not available");
             }
@@ -227,7 +230,7 @@ public class IssueController {
         if (subjectDto.getRootCommonName() == null || "".equals(subjectDto.getRootCommonName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rootCommonName is required");
         } else {
-            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getRootCommonName(), user, "Good");
+            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getRootCommonName(), user, RootStatusEnum.Good);
             root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, subjectDto.getRootCommonName() + " is not valid"));
         }
 
@@ -286,7 +289,7 @@ public class IssueController {
         intermediate.setValidFrom(validFrom.toDate());
         intermediate.setValidUntil(validUntil.toDate());
 
-        intermediate.setStatus("Good");
+        intermediate.setStatus(IntermediateStatusEnum.Good);
 
         intermediate.setRoot(root);
 
@@ -356,7 +359,7 @@ public class IssueController {
         if (subjectDto.getCommonName() == null || "".equals(subjectDto.getCommonName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName is required");
         } else {
-            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, "Good");
+            Optional<Root> optionalRoot = rootRepository.findByCommonNameAndUserAndStatus(subjectDto.getCommonName(), user, RootStatusEnum.Good);
             if (optionalRoot.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "commonName \"" + subjectDto.getCommonName() + "\" is not available");
             }
@@ -401,7 +404,7 @@ public class IssueController {
         if (subjectDto.getIntermediateCommonName() == null || "".equals(subjectDto.getIntermediateCommonName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "intermediateCommonName is required");
         } else {
-            Optional<Intermediate> optionalIntermediate = intermediateRepository.findByCommonNameAndUserAndStatus(subjectDto.getIntermediateCommonName(), user, "Good");
+            Optional<Intermediate> optionalIntermediate = intermediateRepository.findByCommonNameAndUserAndStatus(subjectDto.getIntermediateCommonName(), user, IntermediateStatusEnum.Good);
             intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, subjectDto.getIntermediateCommonName() + " is not valid"));
         }
 
@@ -496,7 +499,7 @@ public class IssueController {
         certificate.setValidFrom(validFrom.toDate());
         certificate.setValidUntil(validUntil.toDate());
 
-        certificate.setStatus("Good");
+        certificate.setStatus(CertificateStatusEnum.Good);
 
         certificate.setIntermediate(intermediate);
 

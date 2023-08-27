@@ -2,7 +2,7 @@
     <changeSet author="Senior Cyber" id="V003__UserTable-1">
 
         <createTable tableName="tbl_user">
-            <column autoIncrement="true" name="user_id" type="BIGINT">
+            <column name="user_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_7" nullable="false" primaryKey="true" primaryKeyName="primary_key_3"/>
             </column>
             <column defaultValueBoolean="true" name="enabled" type="boolean">

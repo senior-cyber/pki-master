@@ -81,7 +81,7 @@ public class V001__RoleTable extends LiquibaseMigration {
         roles.put(Role.NAME_Page_UserSwitch, Role.DESCRIPTION_Page_UserSwitch);
         roles.put(Role.NAME_Page_UserExit, Role.DESCRIPTION_Page_UserExit);
 
-        String insert = "INSERT INTO tbl_role(name, description, enabled) VALUES(:name, :description, true)";
+        String insert = "INSERT INTO tbl_role(role_id, name, description, enabled) VALUES(UUID(), :name, :description, true)";
         for (Map.Entry<String, String> role : roles.entrySet()) {
             Map<String, Object> params = new HashMap<>();
             params.put("name", role.getKey());

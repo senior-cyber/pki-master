@@ -5,17 +5,17 @@
     <changeSet author="Senior Cyber" id="">
 
         <createTable tableName="tbl_group_role">
-            <column name="group_role_id" type="VARCHAR(100)">
+            <column name="group_role_id" type="VARCHAR(36)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="r_group_id" type="BIGINT">
+            <column name="group_id" type="VARCHAR(36)">
                 <constraints nullable="false"/>
             </column>
-            <column name="r_role_id" type="BIGINT">
+            <column name="role_id" type="VARCHAR(36)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addUniqueConstraint columnNames="r_group_id,r_role_id" tableName="tbl_group_role"/>
+        <addUniqueConstraint columnNames="group_id,role_id" tableName="tbl_group_role"/>
 
     </changeSet>
 </databaseChangeLog>

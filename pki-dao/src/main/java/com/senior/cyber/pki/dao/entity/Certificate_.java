@@ -8,7 +8,7 @@ import java.util.Date;
 @StaticMetamodel(Certificate.class)
 public abstract class Certificate_ {
 
-    public static volatile SingularAttribute<Certificate, Long> id;
+    public static volatile SingularAttribute<Certificate, String> id;
     public static volatile SingularAttribute<Certificate, Long> serial;
     public static volatile SingularAttribute<Certificate, String> san;
     public static volatile SingularAttribute<Certificate, String> countryCode;

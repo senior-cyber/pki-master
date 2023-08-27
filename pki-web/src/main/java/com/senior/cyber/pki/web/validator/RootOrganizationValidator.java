@@ -3,6 +3,7 @@ package com.senior.cyber.pki.web.validator;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.factory.WebSession;
@@ -27,13 +28,13 @@ public class RootOrganizationValidator implements IValidator<String> {
             RootRepository rootRepository = context.getBean(RootRepository.class);
             Optional<Root> optionalRoot = null;
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                optionalRoot = rootRepository.findByOrganizationAndStatus(organization, "Good");
+                optionalRoot = rootRepository.findByOrganizationAndStatus(organization, RootStatusEnum.Good);
             } else {
                 UserRepository userRepository = context.getBean(UserRepository.class);
                 WebSession session = (WebSession) WebSession.get();
                 Optional<User> optionalUser = userRepository.findById(session.getUserId());
                 User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-                optionalRoot = rootRepository.findByOrganizationAndUserAndStatus(organization, user, "Good");
+                optionalRoot = rootRepository.findByOrganizationAndUserAndStatus(organization, user, RootStatusEnum.Good);
             }
             optionalRoot.ifPresent(root -> validatable.error(new ValidationError(organization + " is not available")));
         }

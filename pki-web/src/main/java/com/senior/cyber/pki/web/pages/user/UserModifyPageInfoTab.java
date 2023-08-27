@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public class UserModifyPageInfoTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 
@@ -52,7 +52,7 @@ public class UserModifyPageInfoTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
-        this.uuid = getPage().getPageParameters().get("id").toLong(-1L);
+        this.uuid = getPage().getPageParameters().get("id").toString();
         loadData();
     }
 

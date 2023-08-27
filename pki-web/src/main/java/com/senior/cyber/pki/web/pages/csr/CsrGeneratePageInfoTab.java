@@ -117,7 +117,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
 
-        long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
+        String uuid = getPage().getPageParameters().get("uuid").toString();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 

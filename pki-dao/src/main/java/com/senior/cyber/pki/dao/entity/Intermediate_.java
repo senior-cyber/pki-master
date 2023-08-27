@@ -8,7 +8,7 @@ import java.util.Date;
 @StaticMetamodel(Intermediate.class)
 public abstract class Intermediate_ {
 
-    public static volatile SingularAttribute<Intermediate, Long> id;
+    public static volatile SingularAttribute<Intermediate, String> id;
     public static volatile SingularAttribute<Intermediate, Long> serial;
     public static volatile SingularAttribute<Intermediate, String> countryCode;
     public static volatile SingularAttribute<Intermediate, String> organization;

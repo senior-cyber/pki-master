@@ -2,17 +2,17 @@
     <changeSet author="Senior Cyber" id="V007__DenyRoleTable-1">
 
         <createTable tableName="tbl_deny_role">
-            <column name="deny_role_id" type="VARCHAR(100)">
+            <column name="deny_role_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_23" nullable="false" primaryKey="true" primaryKeyName="primary_key_7"/>
             </column>
-            <column name="r_role_id" type="BIGINT">
+            <column name="role_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_24" nullable="false" unique="false" uniqueConstraintName="unique_index_8"/>
             </column>
-            <column name="r_user_id" type="BIGINT">
+            <column name="user_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_25" nullable="false" unique="false" uniqueConstraintName="unique_index_9"/>
             </column>
         </createTable>
-        <addUniqueConstraint columnNames="r_role_id,r_user_id" constraintName="unique_index_10" tableName="tbl_deny_role"/>
+        <addUniqueConstraint columnNames="role_id,user_id" constraintName="unique_index_10" tableName="tbl_deny_role"/>
 
     </changeSet>
 </databaseChangeLog>

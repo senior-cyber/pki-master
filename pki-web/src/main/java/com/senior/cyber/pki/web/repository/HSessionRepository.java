@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface HSessionRepository extends JpaRepository<Session, Long> {
+public interface HSessionRepository extends JpaRepository<Session, String> {
 
     Optional<Session> findBySessionId(String sessionId);
 

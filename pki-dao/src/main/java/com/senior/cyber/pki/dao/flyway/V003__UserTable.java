@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 public class V003__UserTable extends LiquibaseMigration {
 
@@ -26,6 +27,7 @@ public class V003__UserTable extends LiquibaseMigration {
 
         InsertQuery insertQuery = null;
         insertQuery = new InsertQuery("tbl_user");
+        insertQuery.addValue("user_id", ":user_id", new Param("user_id", UUID.randomUUID().toString()));
         insertQuery.addValue("display_name", ":display_name", new Param("display_name", "Senior Cyber"));
         insertQuery.addValue("enabled", ":enabled", new Param("enabled", true));
         insertQuery.addValue("login", ":login", new Param("login", "admin"));

@@ -40,7 +40,7 @@ public class V006__GroupRoleTable extends LiquibaseMigration {
             params.put("group", group);
             params.put("role", role);
             params.put("group_role_id", UUID.randomUUID().toString());
-            named.update("INSERT INTO tbl_group_role(group_role_id, r_group_id, r_role_id) VALUES(:group_role_id, (SELECT group_id FROM tbl_group WHERE name = :group), (SELECT role_id FROM tbl_role WHERE name = :role))", params);
+            named.update("INSERT INTO tbl_group_role(group_role_id, group_id, role_id) VALUES(:group_role_id, (SELECT group_id FROM tbl_group WHERE name = :group), (SELECT role_id FROM tbl_role WHERE name = :role))", params);
         }
     }
 

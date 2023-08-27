@@ -7,7 +7,7 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 @StaticMetamodel(Role.class)
 public abstract class Role_ {
 
-    public static volatile SingularAttribute<Role, Long> id;
+    public static volatile SingularAttribute<Role, String> id;
     public static volatile SingularAttribute<Role, String> name;
     public static volatile SingularAttribute<Role, String> description;
     public static volatile SingularAttribute<Role, Boolean> enabled;

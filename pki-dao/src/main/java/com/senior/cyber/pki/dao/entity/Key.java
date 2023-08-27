@@ -1,17 +1,24 @@
 package com.senior.cyber.pki.dao.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 
 @Entity
 @Table(name = "tbl_key")
+@Getter
+@Setter
 public class Key implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator
     @Column(name = "key_id")
-    private Long id;
+    @Setter(AccessLevel.NONE)
+    private String id;
 
     @Column(name = "client_id")
     private String clientId;
@@ -26,39 +33,4 @@ public class Key implements Serializable {
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getKek() {
-        return kek;
-    }
-
-    public void setKek(String kek) {
-        this.kek = kek;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
 }

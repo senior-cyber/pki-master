@@ -24,7 +24,7 @@ public class V004__UserRoleTable extends LiquibaseMigration {
         roles.put("user", V003__UserTable.ADMIN_EMAIL);
         roles.put("role", Role.NAME_ROOT);
         roles.put("user_role_id", UUID.randomUUID().toString());
-        named.update("INSERT INTO tbl_user_role(user_role_id, r_user_id, r_role_id) VALUES(:user_role_id,(SELECT user_id FROM tbl_user WHERE email_address = :user), (SELECT role_id FROM tbl_role WHERE name = :role))", roles);
+        named.update("INSERT INTO tbl_user_role(user_role_id, user_id, role_id) VALUES(:user_role_id,(SELECT user_id FROM tbl_user WHERE email_address = :user), (SELECT role_id FROM tbl_role WHERE name = :role))", roles);
     }
 
 }

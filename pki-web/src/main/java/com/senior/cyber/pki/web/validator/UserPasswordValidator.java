@@ -13,9 +13,9 @@ import java.util.Optional;
 
 public class UserPasswordValidator implements IValidator<String> {
 
-    private final long userId;
+    private final String userId;
 
-    public UserPasswordValidator(long userId) {
+    public UserPasswordValidator(String userId) {
         this.userId = userId;
     }
 

@@ -6,8 +6,8 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 @StaticMetamodel(GroupRole.class)
 public abstract class GroupRole_ {
 
-    public static volatile SingularAttribute<User, String> id;
-    public static volatile SingularAttribute<User, Long> groupId;
-    public static volatile SingularAttribute<User, Long> roleId;
+    public static volatile SingularAttribute<GroupRole, String> id;
+    public static volatile SingularAttribute<GroupRole, String> groupId;
+    public static volatile SingularAttribute<GroupRole, String> roleId;
 
 }

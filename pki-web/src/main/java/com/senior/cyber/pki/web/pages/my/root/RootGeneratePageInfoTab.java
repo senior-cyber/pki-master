@@ -17,6 +17,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.SingleChoiceProvider;
@@ -122,7 +123,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
 
         WebSession session = (WebSession) getSession();
 
-        long uuid = getPage().getPageParameters().get("uuid").toLong(-1);
+        String uuid = getPage().getPageParameters().get("uuid").toString();
         ApplicationContext context = WicketFactory.getApplicationContext();
         RootRepository certificateRepository = context.getBean(RootRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
@@ -342,7 +343,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             root.setValidFrom(validFrom.toDate());
             root.setValidUntil(validUntil.toDate());
 
-            root.setStatus(Root.STATUS_GOOD);
+            root.setStatus(RootStatusEnum.Good);
 
             root.setUser(user);
 

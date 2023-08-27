@@ -4,6 +4,9 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
+import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.RootRepository;
@@ -41,7 +44,7 @@ public class RevokeController {
     protected CertificateRepository certificateRepository;
 
     @RequestMapping(path = "/root/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> root(@PathVariable("id") long id,
+    public ResponseEntity<Void> root(@PathVariable("id") String id,
                                      HttpServletRequest request) {
         User user = UserUtility.authenticate(request);
 
@@ -51,20 +54,20 @@ public class RevokeController {
         Date now = LocalDate.now().toDate();
 
         root.setRevokedDate(now);
-        root.setStatus("Revoked");
+        root.setStatus(RootStatusEnum.Revoked);
         rootRepository.save(root);
 
-        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, "Good");
+        List<Intermediate> intermediates = intermediateRepository.findByRootAndStatus(root, IntermediateStatusEnum.Good);
         for (Intermediate intermediate : intermediates) {
             intermediate.setRevokedDate(now);
             intermediate.setRevokedReason("issuer was revoked");
-            intermediate.setStatus("Revoked");
+            intermediate.setStatus(IntermediateStatusEnum.Revoked);
             intermediateRepository.save(intermediate);
-            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, "Good");
+            List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, CertificateStatusEnum.Good);
             for (Certificate certificate : certificates) {
                 certificate.setRevokedDate(now);
                 certificate.setRevokedReason("issuer was revoked");
-                certificate.setStatus("Revoked");
+                certificate.setStatus(CertificateStatusEnum.Revoked);
                 certificateRepository.save(certificate);
             }
         }
@@ -72,7 +75,7 @@ public class RevokeController {
     }
 
     @RequestMapping(path = "/intermediate/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> intermediate(@PathVariable("id") long id,
+    public ResponseEntity<Void> intermediate(@PathVariable("id") String id,
                                              HttpServletRequest request) {
         User user = UserUtility.authenticate(request);
 
@@ -83,14 +86,14 @@ public class RevokeController {
 
         intermediate.setRevokedDate(now);
         intermediate.setRevokedReason("Unknown");
-        intermediate.setStatus("Revoked");
+        intermediate.setStatus(IntermediateStatusEnum.Revoked);
         intermediateRepository.save(intermediate);
 
-        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, "Good");
+        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(intermediate, CertificateStatusEnum.Good);
         for (Certificate certificate : certificates) {
             certificate.setRevokedDate(now);
             certificate.setRevokedReason("issuer was revoked");
-            certificate.setStatus("Revoked");
+            certificate.setStatus(CertificateStatusEnum.Revoked);
             certificateRepository.save(certificate);
         }
 
@@ -98,7 +101,7 @@ public class RevokeController {
     }
 
     @RequestMapping(path = "/certificate/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> certificate(@PathVariable("id") long id,
+    public ResponseEntity<Void> certificate(@PathVariable("id") String id,
                                             HttpServletRequest request) {
         User user = UserUtility.authenticate(request);
 
@@ -110,7 +113,7 @@ public class RevokeController {
         certificate.setRevokedDate(now);
         certificate.setRevokedReason("Unknown");
 
-        certificate.setStatus("Revoked");
+        certificate.setStatus(CertificateStatusEnum.Revoked);
 
         certificateRepository.save(certificate);
         return ResponseEntity.ok(null);

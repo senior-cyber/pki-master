@@ -56,7 +56,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
     protected UIColumn group_column;
     protected UIContainer group_container;
     protected Select2SingleChoice group_field;
-    protected SingleChoiceProvider<Long, String> group_provider;
+    protected SingleChoiceProvider<String, String> group_provider;
     protected Option group_value;
 
     protected Button addButton;
@@ -76,7 +76,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
         String not_in = "SELECT " + Sql.column(UserGroup_.groupId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.userId) + " = " + this.uuid;
-        this.group_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Group_.class), Sql.column(Group_.id), Sql.column(Group_.name));
+        this.group_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Group_.class), Sql.column(Group_.id), Sql.column(Group_.name));
         this.group_provider.applyWhere("GroupRole", Sql.column(Group_.id) + " NOT IN (" + not_in + ")");
 
         this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
@@ -178,7 +178,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
         query.setHint(QueryHints.HINT_LOADGRAPH, graph);
         User user = query.getSingleResult();
 
-        Group group = groupRepository.findById(Long.valueOf(this.group_value.getId())).orElseThrow();
+        Group group = groupRepository.findById(this.group_value.getId()).orElseThrow();
         if (user.getGroups() == null || user.getGroups().isEmpty()) {
             Map<String, Group> groups = new HashMap<>();
             groups.put(UUID.randomUUID().toString(), group);

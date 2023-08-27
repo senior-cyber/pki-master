@@ -12,12 +12,12 @@ import java.util.Optional;
 
 public class GroupNameValidator implements IValidator<String> {
 
-    private Long uuid;
+    private String uuid;
 
     public GroupNameValidator() {
     }
 
-    public GroupNameValidator(Long groupId) {
+    public GroupNameValidator(String groupId) {
         this.uuid = groupId;
     }
 

@@ -2,7 +2,7 @@
     <changeSet author="Senior Cyber" id="V001__RoleTable-1">
 
         <createTable tableName="tbl_role">
-            <column autoIncrement="true" name="role_id" type="BIGINT">
+            <column name="role_id" type="VARCHAR(36)">
                 <constraints notNullConstraintName="notnull_key_1" nullable="false" primaryKey="true" primaryKeyName="primary_key_1"/>
             </column>
             <column name="name" type="VARCHAR(200)">

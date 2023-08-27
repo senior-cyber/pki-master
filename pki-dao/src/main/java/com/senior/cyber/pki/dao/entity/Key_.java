@@ -6,7 +6,7 @@ import jakarta.persistence.metamodel.StaticMetamodel;
 @StaticMetamodel(Key.class)
 public abstract class Key_ {
 
-    public static volatile SingularAttribute<Key, Long> id;
+    public static volatile SingularAttribute<Key, String> id;
     public static volatile SingularAttribute<Key, String> clientId;
     public static volatile SingularAttribute<Key, String> clientSecret;
     public static volatile SingularAttribute<Key, String> kek;

@@ -23,11 +23,11 @@ import java.util.Optional;
 
 public class WebSession extends AuthenticatedWebSession {
 
-    protected Long userId;
+    protected String userId;
 
     protected String pwd;
 
-    protected List<Long> queue;
+    protected List<String> queue;
 
     protected Roles roles;
 
@@ -93,11 +93,11 @@ public class WebSession extends AuthenticatedWebSession {
         return true;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void switchUser(long userId) {
+    public void switchUser(String userId) {
         this.queue.add(this.userId);
         this.userId = userId;
 
@@ -116,7 +116,7 @@ public class WebSession extends AuthenticatedWebSession {
         this.roles = r;
     }
 
-    public long getLoginUserId() {
+    public String getLoginUserId() {
         if (this.queue == null || this.queue.isEmpty()) {
             return this.userId;
         } else {
@@ -142,7 +142,7 @@ public class WebSession extends AuthenticatedWebSession {
         this.roles = r;
     }
 
-    public List<Long> getQueue() {
+    public List<String> getQueue() {
         return Collections.unmodifiableList(queue);
     }
 

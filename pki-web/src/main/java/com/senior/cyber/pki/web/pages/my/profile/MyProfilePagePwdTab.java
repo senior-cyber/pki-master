@@ -36,7 +36,7 @@ import java.util.Optional;
 
 public class MyProfilePagePwdTab extends ContentPanel {
 
-    protected long uuid;
+    protected String uuid;
 
     protected Form<Void> form;
 

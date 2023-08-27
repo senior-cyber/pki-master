@@ -59,7 +59,7 @@ public class GroupBrowsePage extends MasterPage {
     protected UIColumn role_column;
     protected UIContainer role_container;
     protected Select2MultipleChoice role_field;
-    protected MultipleChoiceProvider<Long, String> role_provider;
+    protected MultipleChoiceProvider<String, String> role_provider;
     protected List<Option> role_value;
 
     protected Button createButton;
@@ -72,14 +72,14 @@ public class GroupBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.role_provider = new MultipleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+        this.role_provider = new MultipleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
 
         this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
         this.group_browse_provider.setSort("id", SortOrder.DESCENDING);
         this.group_browse_provider.setCountField(Sql.column(Group_.id));
 
         this.group_browse_column = new ArrayList<>();
-        this.group_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Group_.id), this.group_browse_provider, new LongConvertor()));
+        this.group_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Group_.id), this.group_browse_provider, new StringConvertor()));
         this.group_browse_column.add(Column.normalColumn(Model.of("Name"), "name", Sql.column(Group_.name), this.group_browse_provider, new StringConvertor()));
         this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Group_.enabled), this.group_browse_provider, new BooleanConvertor()));
         this.group_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::group_browse_action_link, this::group_browse_action_click));
@@ -143,7 +143,7 @@ public class GroupBrowsePage extends MasterPage {
     protected void group_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
         ApplicationContext context = WicketFactory.getApplicationContext();
         GroupRepository groupRepository = context.getBean(GroupRepository.class);
-        long id = model.get("id", long.class);
+        String id = model.get("id", String.class);
         if ("Edit".equals(link)) {
             PageParameters parameters = new PageParameters();
             parameters.add("id", id);
@@ -177,7 +177,7 @@ public class GroupBrowsePage extends MasterPage {
 
         if (this.role_value != null) {
             for (Option option : this.role_value) {
-                Optional<Role> roleOptional = roleRepository.findById(Long.valueOf(option.getId()));
+                Optional<Role> roleOptional = roleRepository.findById(option.getId());
                 roles.put(UUID.randomUUID().toString(), roleOptional.orElseThrow());
             }
         }

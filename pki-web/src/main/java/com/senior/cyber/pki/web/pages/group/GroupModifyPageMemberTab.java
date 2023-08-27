@@ -55,7 +55,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
     protected UIColumn user_column;
     protected UIContainer user_container;
     protected Select2SingleChoice user_field;
-    protected SingleChoiceProvider<Long, String> user_provider;
+    protected SingleChoiceProvider<String, String> user_provider;
     protected Option user_value;
 
     protected Button addButton;
@@ -76,7 +76,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
 
         String not_in = "SELECT " + Sql.column(UserGroup_.userId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.groupId) + " = " + this.uuid;
         this.user_provider = new SingleChoiceProvider<>(
-                Long.class, new LongConvertor(),
+                String.class, new StringConvertor(),
                 String.class, new StringConvertor(),
                 Sql.table(User_.class), Sql.column(User_.id),
                 Sql.column(User_.displayName));
@@ -183,7 +183,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
         query.setHint(QueryHints.HINT_LOADGRAPH, graph);
         Group group = query.getSingleResult();
 
-        User user = userRepository.findById(Long.valueOf(this.user_value.getId())).orElseThrow();
+        User user = userRepository.findById(this.user_value.getId()).orElseThrow();
         if (group.getUsers() == null || group.getUsers().isEmpty()) {
             Map<String, User> users = new HashMap<>();
             users.put(UUID.randomUUID().toString(), user);

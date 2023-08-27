@@ -56,7 +56,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
     protected UIColumn role_column;
     protected UIContainer role_container;
     protected Select2SingleChoice role_field;
-    protected SingleChoiceProvider<Long, String> role_provider;
+    protected SingleChoiceProvider<String, String> role_provider;
     protected Option role_value;
 
     protected Button denyButton;
@@ -77,7 +77,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
         String not_in = "SELECT " + Sql.column(DenyRole_.roleId) + " FROM " + Sql.table(DenyRole_.class) + " WHERE " + Sql.column(DenyRole_.userId) + " = " + this.uuid;
-        this.role_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(),
+        this.role_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(),
                 String.class, new StringConvertor(),
                 Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
         this.role_provider.applyWhere("UserDeny", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
@@ -183,7 +183,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
         query.setHint(QueryHints.HINT_LOADGRAPH, graph);
         User user = query.getSingleResult();
 
-        Role role = roleRepository.findById(Long.valueOf(this.role_value.getId())).orElseThrow();
+        Role role = roleRepository.findById(this.role_value.getId()).orElseThrow();
         if (user.getDenyRoles() == null || user.getDenyRoles().isEmpty()) {
             Map<String, Role> roles = new HashMap<>();
             roles.put(UUID.randomUUID().toString(), role);

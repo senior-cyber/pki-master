@@ -13,6 +13,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.data.MySqlDataProvider;
@@ -76,7 +77,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_provider.setCountField(Sql.column(Certificate_.id));
 
         this.certificate_browse_column = new ArrayList<>();
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Certificate_.id), this.certificate_browse_provider, new LongConvertor()));
+        this.certificate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Certificate_.id), this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.certificate_browse_provider, new DateConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor()));
@@ -98,7 +99,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        long uuid = object.get("uuid", long.class);
+        String uuid = object.get("uuid", String.class);
         String name = StringUtils.replace(object.get("common_name", String.class), " ", "_");
         return new ClickableCell(this::download, object, uuid + "_" + name + ".zip");
     }
@@ -110,7 +111,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Download_Action);
         }
         try {
-            long uuid = tuple.get("uuid", long.class);
+            String uuid = tuple.get("uuid", String.class);
 
             CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
             Optional<Certificate> optionalCertificate = certificateRepository.findById(uuid);
@@ -347,7 +348,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         } else {
             actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
-        if (Certificate.STATUS_GOOD.equals(status)) {
+        if (CertificateStatusEnum.Good.name().equals(status)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
                     actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
@@ -366,7 +367,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Revoke_Action);
             }
-            long uuid = model.get("uuid", long.class);
+            String  uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateRevokePage.class, parameters);
@@ -374,7 +375,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Copy_Action);
             }
-            long uuid = model.get("uuid", long.class);
+            String  uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateGeneratePage.class, parameters);

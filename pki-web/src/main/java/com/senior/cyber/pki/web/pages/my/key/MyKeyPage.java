@@ -80,7 +80,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     protected List<IColumn<Tuple, String>> key_browse_column;
     protected AbstractDataTable<Tuple, String> key_browse_table;
 
-    protected List<Long> shown = new ArrayList<>();
+    protected List<String> shown = new ArrayList<>();
 
     protected transient AES256TextEncryptor textEncryptor;
 
@@ -96,10 +96,10 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             this.key_browse_provider.applyWhere("user", Sql.column(Key_.user) + " = " + session.getUserId());
         }
         this.key_browse_provider.setCountField("key_id");
-        this.key_browse_provider.selectNormalColumn("user_id", Sql.column(Key_.user), new LongConvertor());
+        this.key_browse_provider.selectNormalColumn("user_id", Sql.column(Key_.user), new StringConvertor());
 
         this.key_browse_column = new ArrayList<>();
-        this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Key_.id), this.key_browse_provider, new LongConvertor()));
+        this.key_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Key_.id), this.key_browse_provider, new StringConvertor()));
         this.key_browse_column.add(Column.normalColumn(Model.of("Client ID"), "client_id", Sql.column(Key_.clientId), this.key_browse_provider, new StringConvertor()));
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_ShowSecret_Action)) {
@@ -119,7 +119,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        long userId = object.get("user_id", long.class);
+        String userId = object.get("user_id", String.class);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
@@ -135,7 +135,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
             } catch (IllegalArgumentException | EncryptionOperationNotPossibleException e) {
             }
         }
-        long uuid = object.get("uuid", long.class);
+        String uuid = object.get("uuid", String.class);
         if (shown.contains(uuid)) {
             try {
                 String client_secret = object.get("client_secret", String.class);
@@ -144,7 +144,7 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
                 return new TextCell("");
             }
         } else {
-            if (userId == getSession().getLoginUserId()) {
+            if (userId.equals(getSession().getLoginUserId())) {
                 return new TextCell("*********");
             } else {
                 return new TextCell("");
@@ -248,14 +248,14 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
     }
 
     protected List<ActionItem> key_browse_action_link(String link, Tuple model) {
-        long uuid = model.get("uuid", long.class);
-        long userId = model.get("user_id", long.class);
+        String uuid = model.get("uuid", String.class);
+        String userId = model.get("user_id", String.class);
         List<ActionItem> actions = new ArrayList<>(0);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyKey_Delete_Action)) {
-                if (getSession().getLoginUserId() == userId) {
+                if (getSession().getLoginUserId().equals(userId)) {
                     actions.add(new ActionItem("Delete", Model.of("Delete"), ItemCss.DANGER));
                 }
             }
@@ -284,11 +284,11 @@ public class MyKeyPage extends MasterPage implements IHtmlTranslator<Tuple> {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         KeyRepository keyRepository = context.getBean(KeyRepository.class);
-        long userId = model.get("user_id", long.class);
-        long uuid = model.get("uuid", long.class);
+        String userId = model.get("user_id", String.class);
+        String uuid = model.get("uuid", String.class);
         if ("Delete".equals(link)) {
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getLoginUserId() == userId) {
+                if (getSession().getLoginUserId().equals(userId)) {
                     Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyKey_Delete_Action);
                 } else {
                     throw new UnauthorizedInstantiationException(this.getClass());

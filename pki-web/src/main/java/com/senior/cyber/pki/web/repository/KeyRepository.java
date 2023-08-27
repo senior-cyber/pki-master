@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface KeyRepository extends JpaRepository<Key, Long> {
+public interface KeyRepository extends JpaRepository<Key, String> {
 
     Optional<Key> findByClientId(String clientId);
 

@@ -8,7 +8,7 @@ import java.util.Date;
 @StaticMetamodel(Root.class)
 public abstract class Root_ {
 
-    public static volatile SingularAttribute<Root, Long> id;
+    public static volatile SingularAttribute<Root, String> id;
     public static volatile SingularAttribute<Root, Long> serial;
     public static volatile SingularAttribute<Root, String> countryCode;
     public static volatile SingularAttribute<Root, String> organization;

@@ -20,6 +20,8 @@ import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.CsrUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
 import com.senior.cyber.pki.web.configuration.PkiApiConfiguration;
@@ -74,7 +76,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
     protected UIColumn intermediate_column;
     protected UIContainer intermediate_container;
     protected Select2SingleChoice intermediate_field;
-    protected SingleChoiceProvider<Long, String> intermediate_provider;
+    protected SingleChoiceProvider<String, String> intermediate_provider;
     protected Option intermediate_value;
 
     protected UIColumn valid_from_column;
@@ -104,8 +106,8 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.intermediate_provider = new SingleChoiceProvider<>(Long.class, new LongConvertor(), String.class, new StringConvertor(), Sql.table(Intermediate_.class), Sql.column(Intermediate_.id), Sql.column(Intermediate_.commonName));
-        this.intermediate_provider.applyWhere("status", Sql.column(Intermediate_.status) + " = '" + Intermediate.STATUS_GOOD + "'");
+        this.intermediate_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Intermediate_.class), Sql.column(Intermediate_.id), Sql.column(Intermediate_.commonName));
+        this.intermediate_provider.applyWhere("status", Sql.column(Intermediate_.status) + " = '" + IntermediateStatusEnum.Good.name() + "'");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
@@ -223,7 +225,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
 
-            Optional<Intermediate> optionalRoot = intermediateRepository.findById(Long.parseLong(this.intermediate_value.getId()));
+            Optional<Intermediate> optionalRoot = intermediateRepository.findById(this.intermediate_value.getId());
             Intermediate intermediate = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
 
             FileUpload csrFile = this.csr_value.get(0);
@@ -314,7 +316,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());
 
-            certificate.setStatus(Certificate.STATUS_GOOD);
+            certificate.setStatus(CertificateStatusEnum.Good);
 
             certificate.setIntermediate(intermediate);
 

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface IbanRepository extends JpaRepository<Iban, Long> {
+public interface IbanRepository extends JpaRepository<Iban, String> {
 
     Optional<Iban> findByAlpha2Code(String alpha2Code);
 
