@@ -3,6 +3,8 @@ package com.senior.cyber.pki.api.repository;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,16 +16,16 @@ public interface IntermediateRepository extends JpaRepository<Intermediate, Long
 
     Optional<Intermediate> findBySerial(long serial);
 
-    Optional<Intermediate> findByIdAndUser(long id, User user);
+    Optional<Intermediate> findByIdAndUser(String id, User user);
 
     Optional<Intermediate> findBySerialAndRoot(long serial, Root root);
 
     List<Intermediate> findByRoot(Root root);
 
-    List<Intermediate> findByRootAndStatus(Root root, String status);
+    List<Intermediate> findByRootAndStatus(Root root, IntermediateStatusEnum status);
 
-    Optional<Intermediate> findByCommonNameAndUserAndStatus(String commonName, User user, String status);
+    Optional<Intermediate> findByCommonNameAndUserAndStatus(String commonName, User user, IntermediateStatusEnum status);
 
-    Optional<Intermediate> findByOrganizationAndUserAndStatus(String organization, User user, String status);
+    Optional<Intermediate> findByOrganizationAndUserAndStatus(String organization, User user, IntermediateStatusEnum status);
 
 }

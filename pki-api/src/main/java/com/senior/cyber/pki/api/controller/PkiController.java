@@ -8,6 +8,8 @@ import com.senior.cyber.pki.api.repository.RootRepository;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Intermediate;
 import com.senior.cyber.pki.dao.entity.Root;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -33,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -130,7 +131,7 @@ public class PkiController {
 
         for (Intermediate intermediate : intermediates) {
             X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
-            if ("Good".equals(intermediate.getStatus())) {
+            if (intermediate.getStatus() == IntermediateStatusEnum.Good) {
                 try {
                     cert.checkValidity();
                 } catch (CertificateExpiredException | CertificateNotYetValidException e) {
@@ -184,7 +185,7 @@ public class PkiController {
 
         for (Certificate certificate : certificates) {
             X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
-            if ("Good".equals(certificate.getStatus())) {
+            if (certificate.getStatus() == CertificateStatusEnum.Good) {
                 try {
                     cert.checkValidity();
                 } catch (CertificateExpiredException | CertificateNotYetValidException e) {
@@ -247,7 +248,7 @@ public class PkiController {
             if (intermediate == null) {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
-                if ("Good".equals(intermediate.getStatus())) {
+                if (intermediate.getStatus() == IntermediateStatusEnum.Good) {
                     X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
                     try {
                         cert.checkValidity();
@@ -306,7 +307,7 @@ public class PkiController {
             if (certificate == null) {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
-                if ("Good".equals(certificate.getStatus())) {
+                if (certificate.getStatus() == CertificateStatusEnum.Good) {
                     X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
                     try {
                         cert.checkValidity();
@@ -336,7 +337,7 @@ public class PkiController {
     protected String getClientIpAddress(HttpServletRequest request) {
         for (String header : HEADERS_TO_TRY) {
             String ip = request.getHeader(header);
-            if (ip != null && !"".equals(ip) && !"unknown".equalsIgnoreCase(ip)) {
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
                 return ip;
             }
         }
