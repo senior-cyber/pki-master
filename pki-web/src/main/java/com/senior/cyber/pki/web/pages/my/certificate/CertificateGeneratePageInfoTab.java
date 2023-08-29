@@ -18,7 +18,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.frmk.common.x509.*;
+import com.senior.cyber.frmk.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
@@ -442,8 +442,8 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             certificate.setEmailAddress(this.email_address_value);
             certificate.setSan(this.san_value);
 
-            certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
-            certificate.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
+            certificate.setCertificate(x509Certificate);
+            certificate.setPrivateKey(key.getPrivate());
 
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());

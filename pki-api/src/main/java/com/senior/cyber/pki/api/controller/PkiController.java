@@ -2,8 +2,8 @@ package com.senior.cyber.pki.api.controller;
 
 import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
-import com.senior.cyber.frmk.common.x509.CertificateUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
+import com.senior.cyber.frmk.x509.CertificateUtils;
+import com.senior.cyber.frmk.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.api.repository.CertificateRepository;
 import com.senior.cyber.pki.api.repository.IntermediateRepository;
 import com.senior.cyber.pki.api.repository.RootRepository;
@@ -186,7 +186,7 @@ public class PkiController {
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())).getEncoded());
 
         for (Certificate certificate : certificates) {
-            X509Certificate cert = CertificateDeserializer.convert(certificate.getCertificate());
+            X509Certificate cert = certificate.getCertificate();
             if (certificate.getStatus() == CertificateStatusEnum.Good) {
                 try {
                     cert.checkValidity();
@@ -310,7 +310,7 @@ public class PkiController {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
                 if (certificate.getStatus() == CertificateStatusEnum.Good) {
-                    X509Certificate cert = CertificateDeserializer.convert(certificate.getCertificate());
+                    X509Certificate cert = certificate.getCertificate();
                     try {
                         cert.checkValidity();
                         ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);

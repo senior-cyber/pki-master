@@ -318,7 +318,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             certificate.setEmailAddress(csrDto.getEmailAddress());
             certificate.setSan(this.san_value);
 
-            certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
+            certificate.setCertificate(x509Certificate);
 
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());

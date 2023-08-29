@@ -5,7 +5,7 @@ import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
-import com.senior.cyber.frmk.common.x509.*;
+import com.senior.cyber.frmk.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
@@ -496,8 +496,8 @@ public class IssueController {
             certificate.setSan(StringUtils.join(subjectDto.getSubjectAltNames(), ","));
         }
 
-        certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
-        certificate.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
+        certificate.setCertificate(x509Certificate);
+        certificate.setPrivateKey(key.getPrivate());
 
         certificate.setValidFrom(validFrom.toDate());
         certificate.setValidUntil(validUntil.toDate());
@@ -600,18 +600,20 @@ public class IssueController {
         }
 
         {
+            String text = CertificateSerializer.convert(certificate.getCertificate());
             ZipArchiveEntry certificateEntry = new ZipArchiveEntry(name + ".crt");
-            certificateEntry.setSize(certificate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
+            certificateEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
             zipArchiveOutputStream.putArchiveEntry(certificateEntry);
-            zipArchiveOutputStream.write(certificate.getCertificate().getBytes(StandardCharsets.UTF_8));
+            zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
             zipArchiveOutputStream.closeArchiveEntry();
         }
 
         {
+            String text = PrivateKeySerializer.convert(certificate.getPrivateKey());
             ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(name + ".pem");
-            privateKeyEntry.setSize(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8).length);
+            privateKeyEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
             zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
-            zipArchiveOutputStream.write(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8));
+            zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
             zipArchiveOutputStream.closeArchiveEntry();
         }
 

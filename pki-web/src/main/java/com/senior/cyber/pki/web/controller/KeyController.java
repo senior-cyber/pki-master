@@ -6,7 +6,7 @@ import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
 import com.senior.cyber.frmk.common.jackson.PublicKeyDeserializer;
 import com.senior.cyber.frmk.common.jackson.PublicKeySerializer;
-import com.senior.cyber.frmk.common.x509.PublicKeyUtils;
+import com.senior.cyber.frmk.x509.PublicKeyUtils;
 import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.web.configuration.SslConfiguration;
 import com.senior.cyber.pki.web.repository.KeyRepository;

@@ -1,6 +1,9 @@
 package com.senior.cyber.pki.dao.entity;
 
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.type.CertificateAttributeConverter;
+import com.senior.cyber.pki.dao.type.PrivateKeyAttributeConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,6 +11,8 @@ import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.Date;
 
 @Entity
@@ -43,11 +48,13 @@ public class Certificate implements Serializable {
     @Column(name = "email_address")
     private String emailAddress;
 
-    @Column(name = "private_key")
-    private String privateKey;
+    @Convert(converter = PrivateKeyAttributeConverter.class)
+    @Column(name = "private_key_pem")
+    private PrivateKey privateKey;
 
-    @Column(name = "certificate")
-    private String certificate;
+    @Convert(converter = CertificateAttributeConverter.class)
+    @Column(name = "certificate_pem")
+    private X509Certificate certificate;
 
     @Column(name = "san")
     private String san;
@@ -74,9 +81,25 @@ public class Certificate implements Serializable {
     @JoinColumn(name = "intermediate_id", referencedColumnName = "intermediate_id")
     private Intermediate intermediate;
 
+    @ManyToOne
+    @JoinColumn(name = "issuer_certificate_id", referencedColumnName = "certificate_id")
+    private Certificate issuerCertificate;
+
+    @ManyToOne
+    @JoinColumn(name = "crl_certificate_id", referencedColumnName = "certificate_id")
+    private Certificate crlCertificate;
+
+    @ManyToOne
+    @JoinColumn(name = "ocsp_certificate_id", referencedColumnName = "certificate_id")
+    private Certificate ocspCertificate;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private CertificateStatusEnum status;
+
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private CertificateTypeEnum type;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")

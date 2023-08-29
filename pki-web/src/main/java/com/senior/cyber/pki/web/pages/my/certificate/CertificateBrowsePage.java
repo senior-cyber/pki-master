@@ -2,6 +2,8 @@ package com.senior.cyber.pki.web.pages.my.certificate;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -283,18 +285,20 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             }
 
             {
+                String text = CertificateSerializer.convert(certificate.getCertificate());
                 ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
-                certificateEntry.setSize(certificate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
+                certificateEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(certificateEntry);
-                zipArchiveOutputStream.write(certificate.getCertificate().getBytes(StandardCharsets.UTF_8));
+                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
                 zipArchiveOutputStream.closeArchiveEntry();
             }
 
-            if (certificate.getPrivateKey() != null && !"".equals(certificate.getPrivateKey())) {
+            if (certificate.getPrivateKey() != null) {
+                String text = PrivateKeySerializer.convert(certificate.getPrivateKey());
                 ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(basename + "/" + name + ".pem");
-                privateKeyEntry.setSize(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8).length);
+                privateKeyEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
-                zipArchiveOutputStream.write(certificate.getPrivateKey().getBytes(StandardCharsets.UTF_8));
+                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
                 zipArchiveOutputStream.closeArchiveEntry();
             }
 
@@ -367,7 +371,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Revoke_Action);
             }
-            String  uuid = model.get("uuid", String.class);
+            String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateRevokePage.class, parameters);
@@ -375,7 +379,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             if (applicationConfiguration.getMode() == Mode.Enterprise) {
                 Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Copy_Action);
             }
-            String  uuid = model.get("uuid", String.class);
+            String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateGeneratePage.class, parameters);

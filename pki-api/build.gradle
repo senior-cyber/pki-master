@@ -21,6 +21,7 @@ dependencies {
     implementation project(":pki-dao")
 
     implementation "com.senior.cyber.frmk:common:1.0.0"
+    implementation "com.senior.cyber.frmk:x509:1.0.0"
 
     implementation "joda-time:joda-time:${joda_time}"
     implementation "commons-validator:commons-validator:${commons_validator}"
