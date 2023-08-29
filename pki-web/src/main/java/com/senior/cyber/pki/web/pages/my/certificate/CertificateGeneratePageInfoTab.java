@@ -1,10 +1,12 @@
 package com.senior.cyber.pki.web.pages.my.certificate;
 
-
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
@@ -16,8 +18,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.frmk.common.x509.CertificateUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
@@ -35,9 +36,6 @@ import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.CertificateUtility;
-import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
-import com.senior.cyber.pki.web.utility.KeyPairUtility;
-import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.CertificateCommonNameValidator;
 import com.senior.cyber.pki.web.validator.CertificateSanValidator;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
@@ -362,11 +360,11 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             Optional<Intermediate> optionalRoot = intermediateRepository.findById(this.intermediate_value.getId());
             Intermediate intermediate = optionalRoot.orElseThrow(() -> new WicketRuntimeException(""));
 
-            KeyPair key = KeyPairUtility.generate();
+            KeyPair key = KeyUtils.generate();
 
-            X500Name subject = SubjectUtility.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
+            X500Name subject = SubjectUtils.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
 
-            PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+            PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
             LocalDate validFrom = LocalDate.fromDateFields(this.valid_from_value);
             LocalDate validUntil = LocalDate.fromDateFields(this.valid_until_value);
@@ -374,8 +372,8 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             CertificateRequestDto requestDto = new CertificateRequestDto();
             requestDto.setBasicConstraints(false);
             requestDto.setCsr(csr);
-            requestDto.setIssuerCertificate(CertificateUtils.read(intermediate.getCertificate()));
-            requestDto.setIssuerPrivateKey(PrivateKeyUtils.read(intermediate.getPrivateKey()));
+            requestDto.setIssuerCertificate(CertificateDeserializer.convert(intermediate.getCertificate()));
+            requestDto.setIssuerPrivateKey(PrivateKeyDeserializer.convert(intermediate.getPrivateKey()));
             requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
             requestDto.setSerial(serial);
 
@@ -444,8 +442,8 @@ public class CertificateGeneratePageInfoTab extends ContentPanel {
             certificate.setEmailAddress(this.email_address_value);
             certificate.setSan(this.san_value);
 
-            certificate.setCertificate(CertificateUtils.write(x509Certificate));
-            certificate.setPrivateKey(PrivateKeyUtils.write(key.getPrivate()));
+            certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
+            certificate.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
 
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());

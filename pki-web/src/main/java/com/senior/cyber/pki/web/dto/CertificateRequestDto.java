@@ -14,8 +14,8 @@ import java.util.List;
 public class CertificateRequestDto {
 
     @JsonProperty("csr")
-    @JsonSerialize(using = CertificateRequestSerializer.class)
-    @JsonDeserialize(using = CertificateRequestDeserializer.class)
+    @JsonSerialize(using = CsrSerializer.class)
+    @JsonDeserialize(using = CsrDeserializer.class)
     private PKCS10CertificationRequest csr;
 
     @JsonProperty("duration")

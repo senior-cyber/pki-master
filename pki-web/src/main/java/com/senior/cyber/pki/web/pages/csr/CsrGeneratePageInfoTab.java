@@ -2,6 +2,8 @@ package com.senior.cyber.pki.web.pages.csr;
 
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CsrSerializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
@@ -14,7 +16,8 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.frmk.common.x509.CsrUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.x509.KeyUtils;
+import com.senior.cyber.frmk.common.x509.SubjectUtils;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.web.configuration.Mode;
@@ -24,10 +27,7 @@ import com.senior.cyber.pki.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
-import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
-import com.senior.cyber.pki.web.utility.KeyPairUtility;
 import com.senior.cyber.pki.web.utility.MemoryResourceStream;
-import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.CertificateCommonNameValidator;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -249,9 +249,9 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
 
     protected void generateButtonClick() {
         try {
-            KeyPair key = KeyPairUtility.generate();
-            X500Name subject = SubjectUtility.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
-            PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+            KeyPair key = KeyUtils.generate();
+            X500Name subject = SubjectUtils.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
+            PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
@@ -259,7 +259,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
             String name = "certificate";
 
             {
-                String csrText = CsrUtils.write(csr);
+                String csrText = CsrSerializer.convert(csr);
                 ZipArchiveEntry caChainEntry = new ZipArchiveEntry(name + ".csr");
                 caChainEntry.setSize(csrText.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(caChainEntry);
@@ -268,7 +268,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
             }
 
             {
-                String privateKey = PrivateKeyUtils.write(key.getPrivate());
+                String privateKey = PrivateKeySerializer.convert(key.getPrivate());
                 ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(name + ".pem");
                 privateKeyEntry.setSize(privateKey.getBytes(StandardCharsets.UTF_8).length);
                 zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);

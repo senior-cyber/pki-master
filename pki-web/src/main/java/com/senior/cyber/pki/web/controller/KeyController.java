@@ -4,6 +4,8 @@ import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.CleartextKeysetHandle;
 import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
+import com.senior.cyber.frmk.common.jackson.PublicKeyDeserializer;
+import com.senior.cyber.frmk.common.jackson.PublicKeySerializer;
 import com.senior.cyber.frmk.common.x509.PublicKeyUtils;
 import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.web.configuration.SslConfiguration;
@@ -75,7 +77,7 @@ public class KeyController {
             keyAlias = sslConfiguration.getKeyAlias();
         }
         Certificate certificate = keyStore.getCertificate(keyAlias);
-        PublicKey publicKey = PublicKeyUtils.read(PublicKeyUtils.write(certificate.getPublicKey()));
+        PublicKey publicKey = PublicKeyDeserializer.convert(PublicKeySerializer.convert(certificate.getPublicKey()));
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keyPassword.toCharArray());
         keyPair = new KeyPair(publicKey, privateKey);
         return keyPair;
@@ -99,7 +101,7 @@ public class KeyController {
         } else {
             keyPair = lookupKeyPair();
         }
-        return ResponseEntity.ok(PublicKeyUtils.write(keyPair.getPublic()));
+        return ResponseEntity.ok(PublicKeySerializer.convert(keyPair.getPublic()));
     }
 
     @RequestMapping(path = "/{clientId}/encrypt", method = RequestMethod.POST)
@@ -117,7 +119,7 @@ public class KeyController {
         }
 
         PrivateKey privateKey = keyPair.getPrivate();
-        PublicKey clientPublicKey = PublicKeyUtils.read(crypto.decrypt(privateKey, clientPublicKeyText));
+        PublicKey clientPublicKey = PublicKeyDeserializer.convert(crypto.decrypt(privateKey, clientPublicKeyText));
         SecretKey secret = crypto.lookupKeyAgreement((ECPrivateKey) privateKey, (ECPublicKey) clientPublicKey);
 
         Optional<Key> optionalKey = keyRepository.findByClientId(clientId);
@@ -157,7 +159,7 @@ public class KeyController {
         }
 
         PrivateKey privateKey = keyPair.getPrivate();
-        PublicKey clientPublicKey = PublicKeyUtils.read(crypto.decrypt(privateKey, clientPublicKeyText));
+        PublicKey clientPublicKey = PublicKeyDeserializer.convert(crypto.decrypt(privateKey, clientPublicKeyText));
         SecretKey secret = crypto.lookupKeyAgreement((ECPrivateKey) privateKey, (ECPublicKey) clientPublicKey);
 
         Optional<Key> optionalKey = keyRepository.findByClientId(clientId);

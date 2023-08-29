@@ -1,5 +1,7 @@
 package com.senior.cyber.pki.api.controller;
 
+import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
 import com.senior.cyber.frmk.common.x509.CertificateUtils;
 import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.api.repository.CertificateRepository;
@@ -90,7 +92,7 @@ public class PkiController {
         LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Intermediate> optionalIntermediate = intermediateRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        X509Certificate certificate = CertificateUtils.read(intermediate.getCertificate());
+        X509Certificate certificate = CertificateDeserializer.convert(intermediate.getCertificate());
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline");
         headers.add("Content-Type", "application/pkix-cert");
@@ -102,7 +104,7 @@ public class PkiController {
         LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Root> optionalRoot = rootRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Root root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        X509Certificate certificate = CertificateUtils.read(root.getCertificate());
+        X509Certificate certificate = CertificateDeserializer.convert(root.getCertificate());
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline");
         headers.add("Content-Type", "application/pkix-cert");
@@ -120,8 +122,8 @@ public class PkiController {
 
         List<Intermediate> intermediates = intermediateRepository.findByRoot(root);
 
-        X509Certificate issuerCertificate = CertificateUtils.read(root.getCertificate());
-        PrivateKey issuerPrivateKey = PrivateKeyUtils.read(root.getPrivateKey());
+        X509Certificate issuerCertificate = CertificateDeserializer.convert(root.getCertificate());
+        PrivateKey issuerPrivateKey = PrivateKeyDeserializer.convert(root.getPrivateKey());
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(issuerCertificate, now.toDate());
         builder.setNextUpdate(now.plusWeeks(1).toDate());
@@ -130,7 +132,7 @@ public class PkiController {
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())).getEncoded());
 
         for (Intermediate intermediate : intermediates) {
-            X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
+            X509Certificate cert = CertificateDeserializer.convert(intermediate.getCertificate());
             if (intermediate.getStatus() == IntermediateStatusEnum.Good) {
                 try {
                     cert.checkValidity();
@@ -174,8 +176,8 @@ public class PkiController {
 
         List<Certificate> certificates = certificateRepository.findByIntermediate(intermediate);
 
-        X509Certificate issuerCertificate = CertificateUtils.read(intermediate.getCertificate());
-        PrivateKey issuerPrivateKey = PrivateKeyUtils.read(intermediate.getPrivateKey());
+        X509Certificate issuerCertificate = CertificateDeserializer.convert(intermediate.getCertificate());
+        PrivateKey issuerPrivateKey = PrivateKeyDeserializer.convert(intermediate.getPrivateKey());
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(issuerCertificate, now.toDate());
         builder.setNextUpdate(now.plusWeeks(1).toDate());
@@ -184,7 +186,7 @@ public class PkiController {
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())).getEncoded());
 
         for (Certificate certificate : certificates) {
-            X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
+            X509Certificate cert = CertificateDeserializer.convert(certificate.getCertificate());
             if (certificate.getStatus() == CertificateStatusEnum.Good) {
                 try {
                     cert.checkValidity();
@@ -222,8 +224,8 @@ public class PkiController {
         LOGGER.info("Client [{}] PathInfo [{}] UserAgent [{}]", getClientIpAddress(request), request.getPathInfo(), request.getHeader("User-Agent"));
         Optional<Root> optionalRoot = rootRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Root root = optionalRoot.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        X509Certificate issuerCertificate = CertificateUtils.read(root.getCertificate());
-        PrivateKey issuerPrivateKey = PrivateKeyUtils.read(root.getPrivateKey());
+        X509Certificate issuerCertificate = CertificateDeserializer.convert(root.getCertificate());
+        PrivateKey issuerPrivateKey = PrivateKeyDeserializer.convert(root.getPrivateKey());
 
         OCSPReq ocspReq = new OCSPReq(IOUtils.toByteArray(request.getInputStream()));
 
@@ -249,7 +251,7 @@ public class PkiController {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
                 if (intermediate.getStatus() == IntermediateStatusEnum.Good) {
-                    X509Certificate cert = CertificateUtils.read(intermediate.getCertificate());
+                    X509Certificate cert = CertificateDeserializer.convert(intermediate.getCertificate());
                     try {
                         cert.checkValidity();
                         ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);
@@ -280,9 +282,9 @@ public class PkiController {
         Optional<Intermediate> optionalIntermediate = intermediateRepository.findBySerial(Long.parseLong(FilenameUtils.getBaseName(serial)));
         Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Root root = intermediate.getRoot();
-        X509Certificate rootCertificate = CertificateUtils.read(root.getCertificate());
-        X509Certificate issuerCertificate = CertificateUtils.read(intermediate.getCertificate());
-        PrivateKey issuerPrivateKey = PrivateKeyUtils.read(intermediate.getPrivateKey());
+        X509Certificate rootCertificate = CertificateDeserializer.convert(root.getCertificate());
+        X509Certificate issuerCertificate = CertificateDeserializer.convert(intermediate.getCertificate());
+        PrivateKey issuerPrivateKey = PrivateKeyDeserializer.convert(intermediate.getPrivateKey());
 
         Date now = LocalDate.now().toDate();
 
@@ -308,7 +310,7 @@ public class PkiController {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {
                 if (certificate.getStatus() == CertificateStatusEnum.Good) {
-                    X509Certificate cert = CertificateUtils.read(certificate.getCertificate());
+                    X509Certificate cert = CertificateDeserializer.convert(certificate.getCertificate());
                     try {
                         cert.checkValidity();
                         ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);

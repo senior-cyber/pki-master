@@ -1,6 +1,8 @@
 package com.senior.cyber.pki.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
@@ -14,8 +16,10 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.frmk.common.x509.CertificateUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.x509.CsrUtils;
+import com.senior.cyber.frmk.common.x509.KeyUtils;
+import com.senior.cyber.frmk.common.x509.RootUtils;
+import com.senior.cyber.frmk.common.x509.SubjectUtils;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.RootStatusEnum;
 import com.senior.cyber.pki.web.configuration.ApplicationConfiguration;
@@ -27,9 +31,6 @@ import com.senior.cyber.pki.web.repository.IbanRepository;
 import com.senior.cyber.pki.web.repository.RootRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.CertificateUtility;
-import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
-import com.senior.cyber.pki.web.utility.KeyPairUtility;
-import com.senior.cyber.pki.web.utility.SubjectUtility;
 import com.senior.cyber.pki.web.validator.RootCommonNameValidator;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
 import org.apache.wicket.MarkupContainer;
@@ -286,11 +287,11 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyRootGenerate_Issue_Action);
         }
         try {
-            KeyPair key = KeyPairUtility.generate();
+            KeyPair key = KeyUtils.generate();
 
-            X500Name subject = SubjectUtility.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
+            X500Name subject = SubjectUtils.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
 
-            PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+            PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
             long serial = System.currentTimeMillis();
 
@@ -337,8 +338,8 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             root.setOrganizationalUnit(this.organizational_unit_value);
             root.setEmailAddress(this.email_address_value);
 
-            root.setCertificate(CertificateUtils.write(certificate));
-            root.setPrivateKey(PrivateKeyUtils.write(key.getPrivate()));
+            root.setCertificate(CertificateSerializer.convert(certificate));
+            root.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
 
             root.setValidFrom(validFrom.toDate());
             root.setValidUntil(validUntil.toDate());

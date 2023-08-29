@@ -1,8 +1,11 @@
 package com.senior.cyber.pki.web.controller;
 
 import com.google.gson.Gson;
-import com.senior.cyber.frmk.common.x509.CertificateUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
+import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
+import com.senior.cyber.frmk.common.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
@@ -120,11 +123,11 @@ public class IssueController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "validFrom is after validUntil");
         }
 
-        KeyPair key = KeyPairUtility.generate();
+        KeyPair key = KeyUtils.generate();
 
-        X500Name subject = SubjectUtility.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
+        X500Name subject = SubjectUtils.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
 
-        PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+        PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
         long serial = System.currentTimeMillis();
 
@@ -162,8 +165,8 @@ public class IssueController {
         root.setOrganizationalUnit(subjectDto.getOrganizationalUnit());
         root.setEmailAddress(subjectDto.getEmailAddress());
 
-        root.setCertificate(CertificateUtils.write(certificate));
-        root.setPrivateKey(PrivateKeyUtils.write(key.getPrivate()));
+        root.setCertificate(CertificateSerializer.convert(certificate));
+        root.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
 
         root.setValidFrom(validFrom.toDate());
         root.setValidUntil(validUntil.toDate());
@@ -236,17 +239,17 @@ public class IssueController {
 
         long serial = System.currentTimeMillis();
 
-        KeyPair key = KeyPairUtility.generate();
+        KeyPair key = KeyUtils.generate();
 
-        X500Name subject = SubjectUtility.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
+        X500Name subject = SubjectUtils.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
 
-        PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+        PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
         CertificateRequestDto requestDto = new CertificateRequestDto();
         requestDto.setBasicConstraints(true);
         requestDto.setCsr(csr);
-        requestDto.setIssuerCertificate(CertificateUtils.read(root.getCertificate()));
-        requestDto.setIssuerPrivateKey(PrivateKeyUtils.read(root.getPrivateKey()));
+        requestDto.setIssuerCertificate(CertificateDeserializer.convert(root.getCertificate()));
+        requestDto.setIssuerPrivateKey(PrivateKeyDeserializer.convert(root.getPrivateKey()));
         requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
         requestDto.setSerial(serial);
 
@@ -283,8 +286,8 @@ public class IssueController {
         intermediate.setOrganizationalUnit(subjectDto.getOrganizationalUnit());
         intermediate.setEmailAddress(subjectDto.getEmailAddress());
 
-        intermediate.setCertificate(CertificateUtils.write(certificate));
-        intermediate.setPrivateKey(PrivateKeyUtils.write(key.getPrivate()));
+        intermediate.setCertificate(CertificateSerializer.convert(certificate));
+        intermediate.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
 
         intermediate.setValidFrom(validFrom.toDate());
         intermediate.setValidUntil(validUntil.toDate());
@@ -410,17 +413,17 @@ public class IssueController {
 
         long serial = System.currentTimeMillis();
 
-        KeyPair key = KeyPairUtility.generate();
+        KeyPair key = KeyUtils.generate();
 
-        X500Name subject = SubjectUtility.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
+        X500Name subject = SubjectUtils.generate(subjectDto.getCountry(), subjectDto.getOrganization(), subjectDto.getOrganizationalUnit(), subjectDto.getCommonName(), subjectDto.getLocalityName(), subjectDto.getStateOrProvinceName(), subjectDto.getEmailAddress());
 
-        PKCS10CertificationRequest csr = CertificationSignRequestUtility.generate(key.getPrivate(), key.getPublic(), subject);
+        PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
         CertificateRequestDto requestDto = new CertificateRequestDto();
         requestDto.setBasicConstraints(false);
         requestDto.setCsr(csr);
-        requestDto.setIssuerCertificate(CertificateUtils.read(intermediate.getCertificate()));
-        requestDto.setIssuerPrivateKey(PrivateKeyUtils.read(intermediate.getPrivateKey()));
+        requestDto.setIssuerCertificate(CertificateDeserializer.convert(intermediate.getCertificate()));
+        requestDto.setIssuerPrivateKey(PrivateKeyDeserializer.convert(intermediate.getPrivateKey()));
         requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
         requestDto.setSerial(serial);
 
@@ -493,8 +496,8 @@ public class IssueController {
             certificate.setSan(StringUtils.join(subjectDto.getSubjectAltNames(), ","));
         }
 
-        certificate.setCertificate(CertificateUtils.write(x509Certificate));
-        certificate.setPrivateKey(PrivateKeyUtils.write(key.getPrivate()));
+        certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
+        certificate.setPrivateKey(PrivateKeySerializer.convert(key.getPrivate()));
 
         certificate.setValidFrom(validFrom.toDate());
         certificate.setValidUntil(validUntil.toDate());

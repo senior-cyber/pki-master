@@ -1,9 +1,12 @@
 package com.senior.cyber.pki.web.pages.csr;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CertificateDeserializer;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
+import com.senior.cyber.frmk.common.jackson.CsrDeserializer;
+import com.senior.cyber.frmk.common.jackson.PrivateKeyDeserializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
@@ -16,9 +19,6 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.FileUploadField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.frmk.common.x509.CertificateUtils;
-import com.senior.cyber.frmk.common.x509.CsrUtils;
-import com.senior.cyber.frmk.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.IntermediateStatusEnum;
@@ -33,7 +33,6 @@ import com.senior.cyber.pki.web.repository.CertificateRepository;
 import com.senior.cyber.pki.web.repository.IntermediateRepository;
 import com.senior.cyber.pki.web.repository.UserRepository;
 import com.senior.cyber.pki.web.utility.CertificateUtility;
-import com.senior.cyber.pki.web.utility.CertificationSignRequestUtility;
 import com.senior.cyber.pki.web.validator.CertificateSanValidator;
 import com.senior.cyber.pki.web.validator.CsrValidator;
 import com.senior.cyber.pki.web.validator.ValidityValidator;
@@ -51,6 +50,14 @@ import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1String;
+import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -231,7 +238,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             FileUpload csrFile = this.csr_value.get(0);
             String csrText = IOUtils.toString(csrFile.getInputStream(), StandardCharsets.UTF_8);
 
-            PKCS10CertificationRequest csr = CsrUtils.read(csrText);
+            PKCS10CertificationRequest csr = CsrDeserializer.convert(csrText);
 
             LocalDate validFrom = LocalDate.fromDateFields(this.valid_from_value);
             LocalDate validUntil = LocalDate.fromDateFields(this.valid_until_value);
@@ -239,8 +246,8 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             CertificateRequestDto requestDto = new CertificateRequestDto();
             requestDto.setBasicConstraints(false);
             requestDto.setCsr(csr);
-            requestDto.setIssuerCertificate(CertificateUtils.read(intermediate.getCertificate()));
-            requestDto.setIssuerPrivateKey(PrivateKeyUtils.read(intermediate.getPrivateKey()));
+            requestDto.setIssuerCertificate(CertificateDeserializer.convert(intermediate.getCertificate()));
+            requestDto.setIssuerPrivateKey(PrivateKeyDeserializer.convert(intermediate.getPrivateKey()));
             requestDto.setDuration(Days.daysBetween(validFrom, validUntil).getDays());
             requestDto.setSerial(serial);
 
@@ -294,7 +301,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
                 }
             }
 
-            CsrDto csrDto = CertificationSignRequestUtility.readCsr(csr);
+            CsrDto csrDto = readCsr(csr);
 
             X509Certificate x509Certificate = CertificateUtility.generate(requestDto);
 
@@ -311,7 +318,7 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
             certificate.setEmailAddress(csrDto.getEmailAddress());
             certificate.setSan(this.san_value);
 
-            certificate.setCertificate(CertificateUtils.write(x509Certificate));
+            certificate.setCertificate(CertificateSerializer.convert(x509Certificate));
 
             certificate.setValidFrom(validFrom.toDate());
             certificate.setValidUntil(validUntil.toDate());
@@ -327,6 +334,61 @@ public class CsrSubmitPageInfoTab extends ContentPanel {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+    }
+
+    public static CsrDto readCsr(PKCS10CertificationRequest csr) {
+
+        X500Name subject = csr.getSubject();
+
+        String countryCode = null;
+        String organization = null;
+        String organizationalUnit = null;
+        String commonName = null;
+        String localityName = null;
+        String stateOrProvinceName = null;
+        String emailAddress = null;
+
+        for (RDN rdn : subject.getRDNs()) {
+            AttributeTypeAndValue first = rdn.getFirst();
+            if (first != null) {
+                ASN1Encodable value = first.getValue();
+                if (value != null) {
+                    ASN1Primitive primitive = value.toASN1Primitive();
+                    if (primitive != null) {
+                        String text = null;
+                        if (primitive instanceof ASN1String asn1String) {
+                            text = asn1String.getString();
+                        }
+                        ASN1ObjectIdentifier type = first.getType();
+                        if (BCStyle.C.equals(type)) {
+                            countryCode = text;
+                        } else if (BCStyle.O.equals(type)) {
+                            organization = text;
+                        } else if (BCStyle.OU.equals(type)) {
+                            organizationalUnit = text;
+                        } else if (BCStyle.CN.equals(type)) {
+                            commonName = text;
+                        } else if (BCStyle.L.equals(type)) {
+                            localityName = text;
+                        } else if (BCStyle.ST.equals(type)) {
+                            stateOrProvinceName = text;
+                        } else if (BCStyle.EmailAddress.equals(type)) {
+                            emailAddress = text;
+                        }
+                    }
+                }
+            }
+        }
+
+        CsrDto dto = new CsrDto();
+        dto.setCountryCode(countryCode);
+        dto.setOrganization(organization);
+        dto.setOrganizationalUnit(organizationalUnit);
+        dto.setCommonName(commonName);
+        dto.setLocalityName(localityName);
+        dto.setStateOrProvinceName(stateOrProvinceName);
+        dto.setEmailAddress(emailAddress);
+        return dto;
     }
 
 }
