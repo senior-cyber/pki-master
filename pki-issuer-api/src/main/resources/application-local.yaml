@@ -1,0 +1,14 @@
+override:
+  server:
+    port: 8010
+  datasource:
+    username: root
+    password: password
+    url: jdbc:mysql://192.168.10.100:3306/pki_master
+  logging:
+    file:
+      path: /opt/apps/pki-master/
+      name: pki-issuer-api.log
+  api:
+    aia: http://localhost:7010/api
+    crl: http://localhost:7020/api

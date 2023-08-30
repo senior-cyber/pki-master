@@ -1,0 +1,50 @@
+server:
+  port: ${override.server.port}
+webui:
+  servlet:
+    load-on-startup: 1
+    path: /*
+  configuration-type: DEPLOYMENT
+  wicket-factory: com.senior.cyber.pki.root.web.factory.WicketFactory
+  pages: com.senior.cyber.pki.web.pages
+  admin-lte: ${override.webui.admin-lte}
+  csrf: false
+api:
+  crl: ${override.api.crl}
+  aia: ${override.api.aia}
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    database: mysql
+    database-platform: com.senior.cyber.pki.dao.dialect.MySQLDialect
+  mvc:
+    servlet:
+      path: /api
+      load-on-startup: 1
+  datasource:
+    username: ${override.datasource.username}
+    password: ${override.datasource.password}
+    url: ${override.datasource.url}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    locations: classpath:com/senior/cyber/pki/dao/flyway
+app:
+  mode: Individual
+  secret: 123123a
+crypto:
+  iv: Lxomdim3thxLYtOu8NmaXg==
+logging:
+  file:
+    path: ${override.logging.file.path}
+    name: ${override.logging.file.name}
+  pattern:
+    console: "%d %-5level %logger : %msg%n"
+    file: "%d %-5level [%thread] %logger : %msg%n"
+  level:
+    root: info
+    sql: info
+    web: info

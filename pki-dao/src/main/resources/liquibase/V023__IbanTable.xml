@@ -5,7 +5,7 @@
     <changeSet author="Senior Cyber" id="">
 
         <createTable tableName="tbl_iban">
-            <column autoIncrement="true" name="iban_id" type="BIGINT">
+            <column name="iban_id" type="VARCHAR(36)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
 

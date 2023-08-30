@@ -154,3 +154,28 @@ http://${IP}:${WEB-PORT}
 UID : admin
 PWD : admin
 ```
+
+```shell
+https://courses.aku.skillsnetwork.site/courses/course-v1:AKU+CCBRESTAPIEXP+2023/course/
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+GPXX0T3CEN+v1/course/
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+GPXX0TY1EN+v1/course/
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+GPXX0M6ZEN+v1/course/
+https://aku.skillsnetwork.site/courses/course-v1:AKU+CCMongodb+2023
+https://aku.skillsnetwork.site/courses/course-v1:AKU+CCgit+2023
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+GPXX09B2EN+v1/course/
+https://aku.skillsnetwork.site/courses/course-v1:AKU+CCCPT+2023
+https://aku.skillsnetwork.site/courses/course-v1:AKU+CCCPT1+2023
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+GPXX04V3EN+v1/course/
+https://courses.aku.skillsnetwork.site/courses/course-v1:IBM+CC0210EN+v1/course/
+```
+
+```shell
+Cluster -> NS -> Pod -> Containerd -> Image
+```
+
+```shell
+NodePort
+ClusterIP
+LoadBalancer
+ExternalName
+```

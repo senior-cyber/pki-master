@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
 
-import javax.xml.bind.annotation.XmlSeeAlso;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
@@ -17,7 +17,7 @@ import java.util.Map;
 public class User implements Serializable {
 
     @Id
-    @GeneratedValue
+    @UuidGenerator
     @Column(name = "user_id")
     @Setter(AccessLevel.NONE)
     private String id;

@@ -85,7 +85,7 @@ public class CertificateUtility {
         }
         builder.addExtension(Extension.subjectKeyIdentifier, subjectKeyIdentifierCritical, utils.createSubjectKeyIdentifier(subjectPublicKey));
 
-        builder.addExtension(Extension.basicConstraints, basicConstraintsCritical, new BasicConstraints(requestDto.isBasicConstraints()).getEncoded());
+        builder.addExtension(Extension.basicConstraints, basicConstraintsCritical, new BasicConstraints(requestDto.isBasicConstraints()));
 
         if (requestDto.getKeyUsage() != null && !requestDto.getKeyUsage().isEmpty()) {
             int usage = 0;
@@ -111,16 +111,16 @@ public class CertificateUtility {
                 }
             }
             if (usage != 0) {
-                builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(usage).getEncoded());
+                builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(usage));
             }
         } else {
             if (requestDto.getIssuerCertificate() == null) {
-                builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.cRLSign | KeyUsage.keyCertSign).getEncoded());
+                builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.cRLSign | KeyUsage.keyCertSign));
             } else {
                 if (requestDto.isBasicConstraints()) {
-                    builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.cRLSign | KeyUsage.keyCertSign).getEncoded());
+                    builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.cRLSign | KeyUsage.keyCertSign));
                 } else {
-                    builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment).getEncoded());
+                    builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment));
                 }
             }
         }
@@ -152,14 +152,14 @@ public class CertificateUtility {
                 }
             }
             if (!ids.isEmpty()) {
-                builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(ids.toArray(new KeyPurposeId[0])).getEncoded());
+                builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(ids.toArray(new KeyPurposeId[0])));
             }
         } else {
             if (requestDto.getIssuerCertificate() != null) {
                 if (requestDto.isBasicConstraints()) {
-                    builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}).getEncoded());
+                    builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
                 } else {
-                    builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}).getEncoded());
+                    builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}));
                 }
             }
         }
@@ -169,7 +169,7 @@ public class CertificateUtility {
                 distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, dto.getName()))), null, null));
             }
             if (!distributionPoints.isEmpty()) {
-                builder.addExtension(Extension.cRLDistributionPoints, cRLDistributionPointsCritical, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])).getEncoded());
+                builder.addExtension(Extension.cRLDistributionPoints, cRLDistributionPointsCritical, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
             }
         }
         if (requestDto.getAuthorityInfoAccess() != null && !requestDto.getAuthorityInfoAccess().isEmpty()) {
@@ -182,7 +182,7 @@ public class CertificateUtility {
                 }
             }
             if (!accessDescriptions.isEmpty()) {
-                builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])).getEncoded());
+                builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
             }
         }
         if (requestDto.getSubjectAlternativeName() != null && !requestDto.getSubjectAlternativeName().isEmpty()) {
@@ -192,7 +192,7 @@ public class CertificateUtility {
             }
             if (!generalNames.isEmpty()) {
                 GeneralNames subjectAlternativeName = new GeneralNames(generalNames.toArray(new GeneralName[0]));
-                builder.addExtension(Extension.subjectAlternativeName, subjectAlternativeNameCritical, subjectAlternativeName.getEncoded());
+                builder.addExtension(Extension.subjectAlternativeName, subjectAlternativeNameCritical, subjectAlternativeName);
             }
         }
 

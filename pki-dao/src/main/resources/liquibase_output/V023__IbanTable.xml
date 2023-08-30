@@ -2,21 +2,21 @@
     <changeSet author="Senior Cyber" id="V023__IbanTable-1">
 
         <createTable tableName="tbl_iban">
-            <column autoIncrement="true" name="iban_id" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_62" nullable="false" primaryKey="true" primaryKeyName="primary_key_12"/>
+            <column name="iban_id" type="VARCHAR(36)">
+                <constraints notNullConstraintName="notnull_key_45" nullable="false" primaryKey="true" primaryKeyName="primary_key_10"/>
             </column>
 
             <column name="country" type="VARCHAR(200)">
-                <constraints notNullConstraintName="notnull_key_63" nullable="false" unique="true" uniqueConstraintName="unique_index_15"/>
+                <constraints notNullConstraintName="notnull_key_46" nullable="false" unique="true" uniqueConstraintName="unique_index_13"/>
             </column>
             <column name="alpha2_code" type="VARCHAR(2)">
-                <constraints notNullConstraintName="notnull_key_64" nullable="false" unique="true" uniqueConstraintName="unique_index_16"/>
+                <constraints notNullConstraintName="notnull_key_47" nullable="false" unique="true" uniqueConstraintName="unique_index_14"/>
             </column>
             <column name="alpha3_code" type="VARCHAR(3)">
-                <constraints notNullConstraintName="notnull_key_65" nullable="false" unique="true" uniqueConstraintName="unique_index_17"/>
+                <constraints notNullConstraintName="notnull_key_48" nullable="false" unique="true" uniqueConstraintName="unique_index_15"/>
             </column>
             <column name="alpha_numeric" type="VARCHAR(3)">
-                <constraints notNullConstraintName="notnull_key_66" nullable="false" unique="true" uniqueConstraintName="unique_index_18"/>
+                <constraints notNullConstraintName="notnull_key_49" nullable="false" unique="true" uniqueConstraintName="unique_index_16"/>
             </column>
 
         </createTable>

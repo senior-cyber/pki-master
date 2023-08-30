@@ -41,7 +41,7 @@ public class V023__IbanTable extends LiquibaseMigration {
                 params.put("alpha2_code", alpha2Code);
                 params.put("alpha3_code", alpha3Code);
                 params.put("alpha_numeric", alphaNumeric);
-                named.update("INSERT INTO tbl_iban(country, alpha2_code, alpha3_code, alpha_numeric) VALUES(:country, :alpha2_code, :alpha3_code, :alpha_numeric)", params);
+                named.update("INSERT INTO tbl_iban(iban_id, country, alpha2_code, alpha3_code, alpha_numeric) VALUES(UUID(), :country, :alpha2_code, :alpha3_code, :alpha_numeric)", params);
             }
         }
 
