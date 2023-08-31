@@ -4,8 +4,8 @@ override:
   webui:
     admin-lte: /Volumes/code/github/ColorlibHQ/v3
   api:
-    aia: http://localhost:4080/api
-    crl: http://localhost:4080/api
+    aia: http://localhost:7010/api
+    crl: http://localhost:7020/api
   datasource:
     username: root
     password: password
@@ -13,4 +13,4 @@ override:
   logging:
     file:
       path: /opt/apps/pki-master/
-      name: pki-web.log
+      name: pki-root-web.log

@@ -2,7 +2,6 @@ package com.senior.cyber.pki.dao.entity;
 
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.type.PrivateKeyType;
 import com.senior.cyber.pki.dao.type.X509CertificateType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -11,7 +10,6 @@ import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
-import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 

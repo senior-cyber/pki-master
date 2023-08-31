@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+</head>
+<body>
+<wicket:extend>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Group</h3>
+                        </div>
+                        <form wicket:id="form">
+                            <div class="card-body">
+                                <div wicket:id="row1">
+                                    <div wicket:id="name_column">
+                                        <wicket:container wicket:id="name_container">
+                                            <div class="form-group">
+                                                <label wicket:for="name_field">Name</label>
+                                                <input type="text" wicket:id="name_field" class="form-control"/>
+                                                <span wicket:id="name_feedback"/>
+                                            </div>
+                                        </wicket:container>
+                                    </div>
+                                    <div wicket:id="role_column">
+                                        <wicket:container wicket:id="role_container">
+                                            <div class="form-group">
+                                                <label wicket:for="role_field">Role</label>
+                                                <select wicket:id="role_field" class="form-control"/>
+                                                <span wicket:id="role_feedback"/>
+                                            </div>
+                                        </wicket:container>
+                                    </div>
+                                    <div wicket:id="last_column"/>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button wicket:id="createButton" type="submit" class="btn btn-info">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card card-info">
+                        <div class="card-body p-0">
+                            <form wicket:id="group_browse_form">
+                                <table wicket:id="group_browse_table"></table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</wicket:extend>
+</body>
+
+</html>

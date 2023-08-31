@@ -3,8 +3,6 @@ package com.senior.cyber.pki.root.web.configuration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-
 @Configuration
 @ConfigurationProperties(prefix = "api", ignoreUnknownFields = true)
 public class ApiConfiguration {

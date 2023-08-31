@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.root.web.pages.my.root;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
@@ -14,6 +15,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
+import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
@@ -28,6 +30,7 @@ import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import com.senior.cyber.pki.root.web.validator.RootCommonNameValidator;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
+import com.senior.cyber.pki.service.RootService;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -281,142 +284,20 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyRootGenerate_Issue_Action);
         }
         try {
-            CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-            KeyRepository keyRepository = context.getBean(KeyRepository.class);
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
+            RootService rootService = context.getBean(RootService.class);
 
-            KeyPair x509Key = KeyUtils.generate();
-            Key rootKey = new Key();
-            rootKey.setPublicKey(x509Key.getPublic());
-            rootKey.setPrivateKey(x509Key.getPrivate());
-            rootKey.setSerial(System.currentTimeMillis());
-            rootKey.setCreatedDatetime(new Date());
-            rootKey.setUser(user);
-            keyRepository.save(rootKey);
+            RootGenerateRequest request = new RootGenerateRequest();
 
-            X500Name subject = SubjectUtils.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
+            request.setSerial(System.currentTimeMillis());
+            request.setLocality(this.locality_name_value);
+            request.setProvince(this.state_or_province_name_value);
+            request.setCountry(this.country_value.getId());
+            request.setCommonName(this.common_name_value);
+            request.setOrganization(this.organization_value);
+            request.setOrganizationalUnit(this.organizational_unit_value);
+            request.setEmailAddress(this.email_address_value);
 
-            PKCS10CertificationRequest csr = CsrUtils.generate(new KeyPair(rootKey.getPublicKey(), rootKey.getPrivateKey()), subject);
-
-            long serial = System.currentTimeMillis();
-
-            X509Certificate certificate = RootUtils.generate(new KeyPair(rootKey.getPublicKey(), rootKey.getPrivateKey()), csr, serial);
-
-            Certificate root = new Certificate();
-
-            root.setSerial(certificate.getSerialNumber().longValueExact());
-            root.setLocalityName(this.locality_name_value);
-            root.setStateOrProvinceName(this.state_or_province_name_value);
-            root.setCountryCode(this.country_value.getId());
-            root.setCommonName(this.common_name_value);
-            root.setOrganization(this.organization_value);
-            root.setOrganizationalUnit(this.organizational_unit_value);
-            root.setEmailAddress(this.email_address_value);
-
-            root.setCertificate(certificate);
-            root.setKey(rootKey);
-
-            root.setValidFrom(certificate.getNotBefore());
-            root.setValidUntil(certificate.getNotAfter());
-            root.setCreatedDatetime(new Date());
-
-            root.setStatus(CertificateStatusEnum.Good);
-
-            root.setUser(user);
-
-            certificateRepository.save(root);
-
-            // crl
-            Key crlKey = null;
-            {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                Key key = new Key();
-                key.setPrivateKey(x509.getPrivate());
-                key.setPublicKey(x509.getPublic());
-                key.setSerial(System.currentTimeMillis() + 1);
-                key.setCreatedDatetime(new Date());
-                keyRepository.save(key);
-                crlKey = key;
-            }
-            X500Name crlSubject = SubjectUtils.generate(
-                    this.country_value.getId(),
-                    this.organization_value,
-                    this.organizational_unit_value,
-                    this.common_name_value + " CRL",
-                    this.locality_name_value,
-                    this.state_or_province_name_value,
-                    this.email_address_value
-            );
-            PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-            X509Certificate crlCertificate = CrlUtils.generate(root.getCertificate(), rootKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
-            Certificate crl = new Certificate();
-            crl.setIssuerCertificate(root);
-            crl.setCountryCode(this.country_value.getId());
-            crl.setOrganization(this.organization_value);
-            crl.setOrganizationalUnit(this.organizational_unit_value);
-            crl.setCommonName(this.common_name_value + " CRL");
-            crl.setLocalityName(this.locality_name_value);
-            crl.setStateOrProvinceName(this.state_or_province_name_value);
-            crl.setEmailAddress(this.email_address_value);
-            crl.setKey(crlKey);
-            crl.setCertificate(crlCertificate);
-            crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
-            crl.setCreatedDatetime(new Date());
-            crl.setValidFrom(crlCertificate.getNotBefore());
-            crl.setValidUntil(crlCertificate.getNotAfter());
-            crl.setStatus(CertificateStatusEnum.Good);
-            crl.setType(CertificateTypeEnum.Crl);
-            crl.setUser(user);
-            certificateRepository.save(crl);
-
-            // ocsp
-            Key ocspKey = null;
-            {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                Key key = new Key();
-                key.setPrivateKey(x509.getPrivate());
-                key.setPublicKey(x509.getPublic());
-                key.setSerial(System.currentTimeMillis() + 2);
-                key.setCreatedDatetime(new Date());
-                keyRepository.save(key);
-                ocspKey = key;
-            }
-            X500Name ocspSubject = SubjectUtils.generate(
-                    this.country_value.getId(),
-                    this.organization_value,
-                    this.organizational_unit_value,
-                    this.common_name_value + " OCSP",
-                    this.locality_name_value,
-                    this.state_or_province_name_value,
-                    this.email_address_value
-            );
-            PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-            X509Certificate ocspCertificate = CrlUtils.generate(root.getCertificate(), rootKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
-            Certificate ocsp = new Certificate();
-            ocsp.setIssuerCertificate(root);
-            ocsp.setCountryCode(this.country_value.getId());
-            ocsp.setOrganization(this.organization_value);
-            ocsp.setOrganizationalUnit(this.organizational_unit_value);
-            ocsp.setCommonName(this.common_name_value + " OCSP");
-            ocsp.setLocalityName(this.locality_name_value);
-            ocsp.setStateOrProvinceName(this.state_or_province_name_value);
-            ocsp.setEmailAddress(this.email_address_value);
-            ocsp.setKey(ocspKey);
-            ocsp.setCertificate(ocspCertificate);
-            ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
-            ocsp.setCreatedDatetime(new Date());
-            ocsp.setValidFrom(ocspCertificate.getNotBefore());
-            ocsp.setValidUntil(ocspCertificate.getNotAfter());
-            ocsp.setStatus(CertificateStatusEnum.Good);
-            ocsp.setType(CertificateTypeEnum.Ocsp);
-            ocsp.setUser(user);
-            certificateRepository.save(ocsp);
-
-            root.setCrlCertificate(crl);
-            root.setOcspCertificate(ocsp);
-            certificateRepository.save(root);
+            rootService.rootGenerate(request);
 
             setResponsePage(RootBrowsePage.class);
         } catch (Throwable e) {

@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation project(":pki-dao")
     implementation project(":pki-common")
+    implementation project(":pki-service")
 
     implementation "com.senior.cyber.frmk:common:1.0.0"
     implementation "com.senior.cyber.frmk:jdbc-query:1.0.0"
@@ -38,10 +39,10 @@ dependencies {
     implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.apache.wicket:wicket-core:${wicket}"
     implementation "org.apache.wicket:wicket-extensions:${wicket}"
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-    implementation "org.springframework.boot:spring-boot-starter-json"
-    implementation "org.springframework.session:spring-session-jdbc"
+    implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot}"
+    implementation "org.springframework.boot:spring-boot-starter-json:${spring_boot}"
+    implementation "org.springframework.session:spring-session-jdbc:${spring_boot}"
 
     implementation "org.apache.httpcomponents:httpclient:${httpclient}"
     implementation "org.apache.commons:commons-compress:${commons_compress}"
@@ -58,6 +59,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-root-web"
+    archiveBaseName = "pki-issuer-web"
     archiveVersion = ""
 }

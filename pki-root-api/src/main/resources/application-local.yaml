@@ -5,10 +5,10 @@ override:
     username: root
     password: password
     url: jdbc:mysql://192.168.10.100:3306/pki_master
+  api:
+    aia: http://localhost:7010/api
+    crl: http://localhost:7020/api
   logging:
     file:
       path: /opt/apps/pki-master/
       name: pki-root-api.log
-  api:
-    aia: http://localhost:7010/api
-    crl: http://localhost:7020/api

@@ -22,7 +22,7 @@ import java.security.Security;
 
 @SpringBootApplication(
         exclude = {LiquibaseAutoConfiguration.class},
-        scanBasePackages = {"com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.root.web"}
+        scanBasePackages = {"com.senior.cyber.pki.service", "com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.root.web"}
 )
 @EnableJpaRepositories(basePackages = {"com.senior.cyber.pki.dao.repository"})
 @EntityScan("com.senior.cyber.pki.dao.entity")

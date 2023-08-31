@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.x509.CrlUtils;
 import com.senior.cyber.pki.common.x509.OcspUtils;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.util.password.PasswordEncryptor;
 import org.jasypt.util.password.StrongPasswordEncryptor;

@@ -1,0 +1,36 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+    <changeSet author="Senior Cyber" id="V021__KeyTable-1">
+
+        <createTable tableName="tbl_key">
+            <column name="key_id" type="VARCHAR(36)">
+                <constraints notNullConstraintName="notnull_key_37" nullable="false" primaryKey="true" primaryKeyName="primary_key_9"/>
+            </column>
+
+            <column name="serial" type="BIGINT">
+                <constraints notNullConstraintName="notnull_key_38" nullable="false" unique="true" uniqueConstraintName="unique_index_12"/>
+            </column>
+
+            <column name="private_key_pem" type="TEXT">
+                <constraints notNullConstraintName="notnull_key_39" nullable="false"/>
+            </column>
+            <column name="public_key_pem" type="TEXT">
+                <constraints notNullConstraintName="notnull_key_40" nullable="false"/>
+            </column>
+
+            <column name="created_datetime" type="DATETIME">
+                <constraints notNullConstraintName="notnull_key_41" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="VARCHAR(36)"/>
+
+        </createTable>
+
+        <createIndex indexName="index_6" tableName="tbl_key">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="index_7" tableName="tbl_key">
+            <column name="created_datetime"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

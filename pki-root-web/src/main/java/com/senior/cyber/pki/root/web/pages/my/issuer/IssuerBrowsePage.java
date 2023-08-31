@@ -2,6 +2,7 @@ package com.senior.cyber.pki.root.web.pages.my.issuer;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -9,11 +10,16 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateTimeConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
+import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.configuration.Mode;
 import com.senior.cyber.pki.root.web.data.MySqlDataProvider;
@@ -67,17 +73,21 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         super.onInitData();
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        List<String> types = new ArrayList<>();
+        types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
         WebSession session = getSession();
         this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
-        this.intermediate_browse_provider.setSort(Sql.column(Certificate_.createdDatetime), SortOrder.DESCENDING);
+        this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
+            // this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         }
-        this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN ('" + CertificateTypeEnum.Root.name() + "', '" + CertificateTypeEnum.Issuer.name() + "')");
+        this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
         this.intermediate_browse_provider.setCountField(Sql.column(Certificate_.id));
         this.intermediate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
+        this.intermediate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());
 
         this.intermediate_browse_column = new ArrayList<>();
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Created"), "created", Sql.column(Certificate_.createdDatetime), this.intermediate_browse_provider, new DateTimeConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.intermediate_browse_provider, new StringConvertor()));
@@ -119,9 +129,8 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        String uuid = object.get("uuid", String.class);
-        String name = StringUtils.replace(object.get("common_name", String.class), " ", "_");
-        return new ClickableCell(this::download, object, uuid + "_" + name + ".zip");
+        long serial = object.get("serial", long.class);
+        return new ClickableCell(this::download, object, serial + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -129,88 +138,88 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         } else {
             throw new WicketRuntimeException("No Permission");
         }
-//        try {
-//            String uuid = tuple.get("uuid", String.class);
-//            ApplicationContext context = WicketFactory.getApplicationContext();
-//            IntermediateRepository intermediateRepository = context.getBean(IntermediateRepository.class);
-//            Optional<Intermediate> optionalIntermediate = intermediateRepository.findById(uuid);
-//            Intermediate intermediate = optionalIntermediate.orElseThrow(() -> new WicketRuntimeException(""));
-//
-//            String name = StringUtils.replace(intermediate.getCommonName(), " ", "_");
-//
-//            String basename = uuid + "_" + name;
-//            String filename = basename + ".zip";
-//
-//            ByteArrayOutputStream data = new ByteArrayOutputStream();
-//            ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
-//
-//            {
-//
-//                String changeit = "changeit";
-//
-//                StringBuffer buffer = new StringBuffer();
-//
-//                buffer.append("# Create Trust Store JKS File").append("\n");
-//                buffer.append("====================================================================================").append("\n");
-//                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore " + name + ".jks -storepass " + changeit + " -alias " + name + " -import -file " + name + ".crt").append("\n");
-//                buffer.append("\n");
-//
-//                buffer.append("# Create Trust Store P12 File").append("\n");
-//                buffer.append("====================================================================================").append("\n");
-//                buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
-//                buffer.append("\n");
-//
-//                buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
-//                buffer.append("====================================================================================").append("\n");
-//                buffer.append("server.ssl.enabled=true").append("\n");
-//                buffer.append("server.ssl.client-auth=need").append("\n");
-//                buffer.append("server.ssl.trust-store=/your/path/to/" + name + ".p12").append("\n");
-//                buffer.append("server.ssl.trust-store-type=PKCS12").append("\n");
-//                buffer.append("server.ssl.trust-store-password=" + changeit).append("\n");
-//                buffer.append("\n");
-//
-//                buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
-//                buffer.append("====================================================================================").append("\n");
-//                buffer.append("server:").append("\n");
-//                buffer.append("  ssl:").append("\n");
-//                buffer.append("    enabled: true").append("\n");
-//                buffer.append("    client-auth: need").append("\n");
-//                buffer.append("    trust-store: /your/path/to/" + name + ".p12").append("\n");
-//                buffer.append("    trust-store-type: PKCS12").append("\n");
-//                buffer.append("    trust-store-password: " + changeit).append("\n");
-//
-//                String crt = buffer.toString();
-//                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
-//                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
-//                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
-//                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
-//                zipArchiveOutputStream.closeArchiveEntry();
-//            }
-//
-//            {
-//                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
-//                certificateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
-//                zipArchiveOutputStream.putArchiveEntry(certificateEntry);
-//                zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
-//                zipArchiveOutputStream.closeArchiveEntry();
-//            }
-//
-//            zipArchiveOutputStream.close();
-//
-//            IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
-//            getRequestCycle().scheduleRequestHandlerAfterCurrent(
-//                    new ResourceStreamRequestHandler(resourceStream) {
-//                        @Override
-//                        public void respond(IRequestCycle requestCycle) {
-//                            super.respond(requestCycle);
-//                        }
-//                    }.setFileName(filename)
-//                            .setContentDisposition(ContentDisposition.INLINE)
-//                            .setCacheDuration(Duration.ZERO));
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            long serial = tuple.get("serial", long.class);
+            ApplicationContext context = WicketFactory.getApplicationContext();
+            CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+            Optional<Certificate> optionalIntermediate = certificateRepository.findBySerial(serial);
+            Certificate intermediate = optionalIntermediate.orElseThrow(() -> new WicketRuntimeException("never happen"));
+
+            String name = StringUtils.replace(intermediate.getCommonName(), " ", "_");
+
+            String basename = serial + "";
+            String filename = basename + ".zip";
+
+            ByteArrayOutputStream data = new ByteArrayOutputStream();
+            ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
+
+            {
+
+                String changeit = "changeit";
+
+                StringBuffer buffer = new StringBuffer();
+
+                buffer.append("# Create Trust Store JKS File").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore " + name + ".jks -storepass " + changeit + " -alias " + name + " -import -file " + name + ".crt").append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Create Trust Store P12 File").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("server.ssl.enabled=true").append("\n");
+                buffer.append("server.ssl.client-auth=need").append("\n");
+                buffer.append("server.ssl.trust-store=/your/path/to/" + name + ".p12").append("\n");
+                buffer.append("server.ssl.trust-store-type=PKCS12").append("\n");
+                buffer.append("server.ssl.trust-store-password=" + changeit).append("\n");
+                buffer.append("\n");
+
+                buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
+                buffer.append("====================================================================================").append("\n");
+                buffer.append("server:").append("\n");
+                buffer.append("  ssl:").append("\n");
+                buffer.append("    enabled: true").append("\n");
+                buffer.append("    client-auth: need").append("\n");
+                buffer.append("    trust-store: /your/path/to/" + name + ".p12").append("\n");
+                buffer.append("    trust-store-type: PKCS12").append("\n");
+                buffer.append("    trust-store-password: " + changeit).append("\n");
+
+                String crt = buffer.toString();
+                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
+                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
+                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
+                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
+                zipArchiveOutputStream.closeArchiveEntry();
+            }
+
+            {
+                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
+                certificateEntry.setSize(CertificateSerializer.convert(intermediate.getCertificate()).getBytes(StandardCharsets.UTF_8).length);
+                zipArchiveOutputStream.putArchiveEntry(certificateEntry);
+                zipArchiveOutputStream.write(CertificateSerializer.convert(intermediate.getCertificate()).getBytes(StandardCharsets.UTF_8));
+                zipArchiveOutputStream.closeArchiveEntry();
+            }
+
+            zipArchiveOutputStream.close();
+
+            IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
+            getRequestCycle().scheduleRequestHandlerAfterCurrent(
+                    new ResourceStreamRequestHandler(resourceStream) {
+                        @Override
+                        public void respond(IRequestCycle requestCycle) {
+                            super.respond(requestCycle);
+                        }
+                    }.setFileName(filename)
+                            .setContentDisposition(ContentDisposition.INLINE)
+                            .setCacheDuration(Duration.ZERO));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     protected List<ActionItem> intermediate_browse_action_link(String link, Tuple model) {
@@ -225,15 +234,15 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         } else {
             actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         }
-//        if (IntermediateStatusEnum.Good.name().equals(status)) {
-//            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-//                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
-//                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-//                }
-//            } else {
-//                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-//            }
-//        }
+        if (CertificateStatusEnum.Good.name().equals(status)) {
+            if (applicationConfiguration.getMode() == Mode.Enterprise) {
+                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
+                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+                }
+            } else {
+                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
+            }
+        }
         return actions;
     }
 

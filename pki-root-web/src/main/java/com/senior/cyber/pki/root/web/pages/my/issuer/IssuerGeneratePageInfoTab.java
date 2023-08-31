@@ -14,7 +14,10 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.frmk.x509.*;
+import com.senior.cyber.frmk.x509.CsrUtils;
+import com.senior.cyber.frmk.x509.SubjectUtils;
+import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
+import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
@@ -22,13 +25,15 @@ import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.KeyRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
+import com.senior.cyber.pki.root.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.configuration.Mode;
-import com.senior.cyber.pki.root.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import com.senior.cyber.pki.root.web.validator.IntermediateCommonNameValidator;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
+import com.senior.cyber.pki.service.IssuerService;
+import com.senior.cyber.pki.service.RootService;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -58,11 +63,11 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
     protected UIRow row1;
 
-    protected UIColumn root_column;
-    protected UIContainer root_container;
-    protected Select2SingleChoice root_field;
-    protected SingleChoiceProvider<String, String> root_provider;
-    protected Option root_value;
+    protected UIColumn issuer_column;
+    protected UIContainer issuer_container;
+    protected Select2SingleChoice issuer_field;
+    protected SingleChoiceProvider<String, String> issuer_provider;
+    protected Option issuer_value;
 
     protected UIRow row2;
 
@@ -126,13 +131,13 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.root_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.id), Sql.column(Certificate_.commonName));
-        this.root_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
-        this.root_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN ('" + CertificateTypeEnum.Root.name() + "', '" + CertificateTypeEnum.Issuer.name() + "')");
+        this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
+        this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
+        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN ('" + CertificateTypeEnum.Root.name() + "', '" + CertificateTypeEnum.Issuer.name() + "')");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.root_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
+            // this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         }
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
@@ -163,7 +168,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
             this.email_address_value = certificate.getEmailAddress();
             if (certificate.getIssuerCertificate().getStatus() == CertificateStatusEnum.Good) {
-                this.root_value = new Option(String.valueOf(certificate.getIssuerCertificate().getId()), certificate.getIssuerCertificate().getCommonName());
+                this.issuer_value = new Option(String.valueOf(certificate.getIssuerCertificate().getId()), certificate.getIssuerCertificate().getCommonName());
             }
         }
 
@@ -180,14 +185,14 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         this.row1 = UIRow.newUIRow("row1", this.form);
 
-        this.root_column = this.row1.newUIColumn("root_column", Size.Twelve_12);
-        this.root_container = this.root_column.newUIContainer("root_container");
-        this.root_field = new Select2SingleChoice("root_field", new PropertyModel<>(this, "root_value"), this.root_provider);
-        this.root_field.setLabel(Model.of("Root"));
-        this.root_field.setRequired(true);
-        this.root_field.add(new ContainerFeedbackBehavior());
-        this.root_container.add(this.root_field);
-        this.root_container.newFeedback("root_feedback", this.root_field);
+        this.issuer_column = this.row1.newUIColumn("issuer_column", Size.Twelve_12);
+        this.issuer_container = this.issuer_column.newUIContainer("issuer_container");
+        this.issuer_field = new Select2SingleChoice("issuer_field", new PropertyModel<>(this, "issuer_value"), this.issuer_provider);
+        this.issuer_field.setLabel(Model.of("Root"));
+        this.issuer_field.setRequired(true);
+        this.issuer_field.add(new ContainerFeedbackBehavior());
+        this.issuer_container.add(this.issuer_field);
+        this.issuer_container.newFeedback("issuer_feedback", this.issuer_field);
 
         this.row1.lastUIColumn("last_column");
 
@@ -313,163 +318,22 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyIntermediateGenerate_Issue_Action);
         }
         try {
-            long serial = System.currentTimeMillis();
-
+            IssuerService issuerService = context.getBean(IssuerService.class);
             ApiConfiguration apiConfiguration = context.getBean(ApiConfiguration.class);
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-            KeyRepository keyRepository = context.getBean(KeyRepository.class);
 
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
+            IssuerGenerateRequest request = new IssuerGenerateRequest();
 
-            Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(serial);
-            if (optionalCertificate.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not available");
-            }
+            request.setSerial(System.currentTimeMillis());
+            request.setIssuerSerial(Long.valueOf(this.issuer_value.getId()));
+            request.setLocality(this.locality_name_value);
+            request.setProvince(this.state_or_province_name_value);
+            request.setCountry(this.country_value.getId());
+            request.setCommonName(this.common_name_value);
+            request.setOrganization(this.organization_value);
+            request.setOrganizationalUnit(this.organizational_unit_value);
+            request.setEmailAddress(this.email_address_value);
 
-            Date now = LocalDate.now().toDate();
-
-            Optional<Certificate> optionalIssuerCertificate = certificateRepository.findById(this.root_value.getId());
-            Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, this.root_value.getId() + " is not found"));
-            if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                    (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
-                    issuerCertificate.getValidFrom().before(now) ||
-                    issuerCertificate.getValidUntil().before(now)
-            ) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, this.root_value.getId() + " is not valid");
-            }
-
-            // issuing
-            KeyPair x509Key = com.senior.cyber.pki.common.x509.KeyUtils.generate();
-            Key issuingKey = new Key();
-            issuingKey.setPublicKey(x509Key.getPublic());
-            issuingKey.setPrivateKey(x509Key.getPrivate());
-            issuingKey.setSerial(System.currentTimeMillis());
-            issuingKey.setCreatedDatetime(new Date());
-            issuingKey.setUser(user);
-            keyRepository.save(issuingKey);
-
-            X500Name issuingSubject = SubjectUtils.generate(
-                    this.country_value.getId(),
-                    this.organization_value,
-                    this.organizational_unit_value,
-                    this.common_name_value,
-                    this.locality_name_value,
-                    this.state_or_province_name_value,
-                    this.email_address_value
-            );
-            PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
-            X509Certificate issuingCertificate = com.senior.cyber.pki.common.x509.IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, apiConfiguration.getCrl(), apiConfiguration.getAia(), serial);
-            Certificate issuing = new Certificate();
-            issuing.setIssuerCertificate(issuerCertificate);
-            issuing.setCountryCode(this.country_value.getId());
-            issuing.setOrganization(this.organization_value);
-            issuing.setOrganizationalUnit(this.organizational_unit_value);
-            issuing.setCommonName(this.common_name_value);
-            issuing.setLocalityName(this.locality_name_value);
-            issuing.setStateOrProvinceName(this.state_or_province_name_value);
-            issuing.setEmailAddress(this.email_address_value);
-            issuing.setKey(issuingKey);
-            issuing.setCertificate(issuingCertificate);
-            issuing.setSerial(issuingCertificate.getSerialNumber().longValueExact());
-            issuing.setCreatedDatetime(new Date());
-            issuing.setValidFrom(issuingCertificate.getNotBefore());
-            issuing.setValidUntil(issuingCertificate.getNotAfter());
-            issuing.setStatus(CertificateStatusEnum.Good);
-            issuing.setType(CertificateTypeEnum.Root);
-            issuing.setUser(user);
-            certificateRepository.save(issuing);
-
-            // crl
-            Key crlKey = null;
-            {
-                KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(com.senior.cyber.pki.common.x509.KeyFormat.RSA);
-                Key key = new Key();
-                key.setPrivateKey(x509.getPrivate());
-                key.setPublicKey(x509.getPublic());
-                key.setSerial(System.currentTimeMillis() + 1);
-                key.setCreatedDatetime(new Date());
-                keyRepository.save(key);
-                crlKey = key;
-            }
-            X500Name crlSubject = SubjectUtils.generate(
-                    this.country_value.getId(),
-                    this.organization_value,
-                    this.organizational_unit_value,
-                    this.common_name_value + " CRL",
-                    this.locality_name_value,
-                    this.state_or_province_name_value,
-                    this.email_address_value
-            );
-            PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-            X509Certificate crlCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
-            Certificate crl = new Certificate();
-            crl.setIssuerCertificate(issuing);
-            crl.setCountryCode(this.country_value.getId());
-            crl.setOrganization(this.organization_value);
-            crl.setOrganizationalUnit(this.organizational_unit_value);
-            crl.setCommonName(this.common_name_value + " CRL");
-            crl.setLocalityName(this.locality_name_value);
-            crl.setStateOrProvinceName(this.state_or_province_name_value);
-            crl.setEmailAddress(this.email_address_value);
-            crl.setKey(crlKey);
-            crl.setCertificate(crlCertificate);
-            crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
-            crl.setCreatedDatetime(new Date());
-            crl.setValidFrom(crlCertificate.getNotBefore());
-            crl.setValidUntil(crlCertificate.getNotAfter());
-            crl.setStatus(CertificateStatusEnum.Good);
-            crl.setType(CertificateTypeEnum.Crl);
-            crl.setUser(user);
-            certificateRepository.save(crl);
-
-            // ocsp
-            Key ocspKey = null;
-            {
-                KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(com.senior.cyber.pki.common.x509.KeyFormat.RSA);
-                Key key = new Key();
-                key.setPrivateKey(x509.getPrivate());
-                key.setPublicKey(x509.getPublic());
-                key.setSerial(System.currentTimeMillis() + 2);
-                key.setCreatedDatetime(new Date());
-                keyRepository.save(key);
-                ocspKey = key;
-            }
-            X500Name ocspSubject = SubjectUtils.generate(
-                    this.country_value.getId(),
-                    this.organization_value,
-                    this.organizational_unit_value,
-                    this.common_name_value + " OCSP",
-                    this.locality_name_value,
-                    this.state_or_province_name_value,
-                    this.email_address_value
-            );
-            PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-            X509Certificate ocspCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
-            Certificate ocsp = new Certificate();
-            ocsp.setIssuerCertificate(issuing);
-            ocsp.setCountryCode(this.country_value.getId());
-            ocsp.setOrganization(this.organization_value);
-            ocsp.setOrganizationalUnit(this.organizational_unit_value);
-            ocsp.setCommonName(this.common_name_value + " OCSP");
-            ocsp.setLocalityName(this.locality_name_value);
-            ocsp.setStateOrProvinceName(this.state_or_province_name_value);
-            ocsp.setEmailAddress(this.email_address_value);
-            ocsp.setKey(ocspKey);
-            ocsp.setCertificate(ocspCertificate);
-            ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
-            ocsp.setCreatedDatetime(new Date());
-            ocsp.setValidFrom(ocspCertificate.getNotBefore());
-            ocsp.setValidUntil(ocspCertificate.getNotAfter());
-            ocsp.setStatus(CertificateStatusEnum.Good);
-            ocsp.setType(CertificateTypeEnum.Ocsp);
-            ocsp.setUser(null);
-            certificateRepository.save(ocsp);
-
-            issuing.setCrlCertificate(crl);
-            issuing.setOcspCertificate(ocsp);
-            certificateRepository.save(issuing);
+            issuerService.issuerGenerate(request, apiConfiguration.getCrl(), apiConfiguration.getAia());
 
             setResponsePage(IssuerBrowsePage.class);
         } catch (Throwable e) {

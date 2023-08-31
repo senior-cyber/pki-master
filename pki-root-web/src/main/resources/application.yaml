@@ -6,7 +6,7 @@ webui:
     path: /*
   configuration-type: DEPLOYMENT
   wicket-factory: com.senior.cyber.pki.root.web.factory.WicketFactory
-  pages: com.senior.cyber.pki.web.pages
+  pages: com.senior.cyber.pki.root.web.pages
   admin-lte: ${override.webui.admin-lte}
   csrf: false
 api:
