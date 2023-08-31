@@ -2,8 +2,6 @@ package com.senior.cyber.pki.issuer.web.pages.my.certificate;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
-import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
@@ -15,23 +13,18 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
-import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.entity.Certificate_;
+import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
 import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
-import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
 import jakarta.persistence.Tuple;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
@@ -41,21 +34,12 @@ import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
-import org.apache.wicket.request.IRequestCycle;
-import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
-import org.apache.wicket.request.resource.ContentDisposition;
-import org.apache.wicket.util.resource.IResourceStream;
 import org.springframework.context.ApplicationContext;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Bookmark("/my/certificate/browse")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse})

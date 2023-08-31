@@ -2,7 +2,6 @@ package com.senior.cyber.pki.issuer.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;

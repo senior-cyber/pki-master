@@ -22,7 +22,6 @@ import org.apache.wicket.model.PropertyModel;
 import org.jasypt.util.password.PasswordEncryptor;
 import org.springframework.context.ApplicationContext;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 

@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.root.web.pages.my.root;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jpa.Sql;
 import com.senior.cyber.frmk.common.wicket.Permission;
@@ -16,13 +15,9 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
-import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.*;
-import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
-import com.senior.cyber.pki.dao.repository.KeyRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.configuration.Mode;
@@ -41,13 +36,9 @@ import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.validation.validator.EmailAddressValidator;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
-import java.security.KeyPair;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;

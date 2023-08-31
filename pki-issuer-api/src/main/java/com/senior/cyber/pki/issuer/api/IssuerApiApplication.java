@@ -26,7 +26,7 @@ public class IssuerApiApplication {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         SpringApplication.run(IssuerApiApplication.class, args);
     }
 

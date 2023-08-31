@@ -16,21 +16,15 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.FileUploadField;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.common.dto.CertificateCommonCsrRequest;
 import com.senior.cyber.pki.common.dto.CertificateTlsCsrRequest;
-import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
-import com.senior.cyber.pki.issuer.web.dto.CsrDto;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.validator.CertificateSanValidator;
@@ -39,7 +33,6 @@ import com.senior.cyber.pki.issuer.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.CertificateService;
 import org.apache.commons.io.IOUtils;
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
@@ -53,11 +46,9 @@ import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
 import java.nio.charset.StandardCharsets;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class IssueTlsPageInfoTab extends ContentPanel {
 

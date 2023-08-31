@@ -16,7 +16,6 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfigurati
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-//import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 
 import java.security.Security;
 
@@ -26,7 +25,6 @@ import java.security.Security;
 )
 @EnableJpaRepositories(basePackages = {"com.senior.cyber.pki.dao.repository"})
 @EntityScan("com.senior.cyber.pki.dao.entity")
-//@EnableJdbcHttpSession(tableName = "TBL_SESSION")
 public class RootWebApplication {
 
     static {

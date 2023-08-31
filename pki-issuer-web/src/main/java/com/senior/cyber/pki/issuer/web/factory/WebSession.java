@@ -2,7 +2,6 @@ package com.senior.cyber.pki.issuer.web.factory;
 
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.utility.RoleUtility;
 import com.senior.cyber.pki.issuer.web.utility.UserUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +16,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 public class WebSession extends AuthenticatedWebSession {
 

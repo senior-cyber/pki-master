@@ -1,13 +1,7 @@
 package com.senior.cyber.pki.issuer.web.validator;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
-import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.validation.IValidatable;
 import org.apache.wicket.validation.IValidator;
-import org.apache.wicket.validation.ValidationError;
-import org.springframework.context.ApplicationContext;
-
-import java.util.Optional;
 
 public class IntermediateCommonNameValidator implements IValidator<String> {
 
