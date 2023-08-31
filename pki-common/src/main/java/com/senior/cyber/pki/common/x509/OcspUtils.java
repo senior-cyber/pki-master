@@ -120,7 +120,11 @@ public class OcspUtils {
     }
 
     public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
-        BigInteger serial = BigInteger.valueOf(System.currentTimeMillis());
+        return generate(issuerCertificate, issuerKey, csr, System.currentTimeMillis());
+    }
+
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
+        BigInteger _serial = BigInteger.valueOf(serial);
 
         boolean basicConstraintsCritical = true;
         boolean keyUsageCritical = true;
@@ -142,7 +146,7 @@ public class OcspUtils {
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getPublicKey(csr.getSubjectPublicKeyInfo());
 
-        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
         builder.addExtension(Extension.authorityKeyIdentifier, authorityKeyIdentifierCritical, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
         builder.addExtension(Extension.subjectKeyIdentifier, subjectKeyIdentifierCritical, utils.createSubjectKeyIdentifier(subjectPublicKey));
         builder.addExtension(Extension.basicConstraints, basicConstraintsCritical, new BasicConstraints(basicConstraints));

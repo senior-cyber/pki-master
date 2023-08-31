@@ -3,7 +3,7 @@ rootProject.name = 'pki-master'
 include(
         ":pki-api-crl",
         ":pki-api-aia",
-//        ":pki-root-web",
+        ":pki-root-web",
         ":pki-root-api",
 //        ":pki-issuer-web",
         ":pki-issuer-api",
@@ -13,7 +13,7 @@ include(
 )
 project(":pki-common").projectDir = file("./pki-common")
 project(":pki-dao").projectDir = file("./pki-dao")
-//project(":pki-root-web").projectDir = file("./pki-root-web")
+project(":pki-root-web").projectDir = file("./pki-root-web")
 project(":pki-root-api").projectDir = file("./pki-root-api")
 //project(":pki-issuer-web").projectDir = file("./pki-issuer-web")
 project(":pki-issuer-api").projectDir = file("./pki-issuer-api")

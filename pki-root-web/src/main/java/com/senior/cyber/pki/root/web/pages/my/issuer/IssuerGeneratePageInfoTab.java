@@ -20,6 +20,7 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
+import com.senior.cyber.pki.dao.repository.KeyRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.configuration.Mode;
@@ -317,6 +318,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             ApiConfiguration apiConfiguration = context.getBean(ApiConfiguration.class);
             UserRepository userRepository = context.getBean(UserRepository.class);
             CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+            KeyRepository keyRepository = context.getBean(KeyRepository.class);
 
             Optional<User> optionalUser = userRepository.findById(session.getUserId());
             User user = optionalUser.orElseThrow(() -> new WicketRuntimeException("user is not found"));
@@ -339,7 +341,15 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             }
 
             // issuing
-            KeyPair issuingKey = KeyUtils.generate(KeyFormat.RSA);
+            KeyPair x509Key = com.senior.cyber.pki.common.x509.KeyUtils.generate();
+            Key issuingKey = new Key();
+            issuingKey.setPublicKey(x509Key.getPublic());
+            issuingKey.setPrivateKey(x509Key.getPrivate());
+            issuingKey.setSerial(System.currentTimeMillis());
+            issuingKey.setCreatedDatetime(new Date());
+            issuingKey.setUser(user);
+            keyRepository.save(issuingKey);
+
             X500Name issuingSubject = SubjectUtils.generate(
                     this.country_value.getId(),
                     this.organization_value,
@@ -349,8 +359,8 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
                     this.state_or_province_name_value,
                     this.email_address_value
             );
-            PKCS10CertificationRequest issuingCsr = CsrUtils.generate(issuingKey, issuingSubject);
-            X509Certificate issuingCertificate = com.senior.cyber.pki.common.x509.IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getPrivateKey(), issuingCsr, apiConfiguration.getCrl(), apiConfiguration.getAia(), serial);
+            PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
+            X509Certificate issuingCertificate = com.senior.cyber.pki.common.x509.IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, apiConfiguration.getCrl(), apiConfiguration.getAia(), serial);
             Certificate issuing = new Certificate();
             issuing.setIssuerCertificate(issuerCertificate);
             issuing.setCountryCode(this.country_value.getId());
@@ -360,9 +370,9 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             issuing.setLocalityName(this.locality_name_value);
             issuing.setStateOrProvinceName(this.state_or_province_name_value);
             issuing.setEmailAddress(this.email_address_value);
-            issuing.setPrivateKey(issuingKey.getPrivate());
+            issuing.setKey(issuingKey);
             issuing.setCertificate(issuingCertificate);
-            issuing.setSerial(serial);
+            issuing.setSerial(issuingCertificate.getSerialNumber().longValueExact());
             issuing.setCreatedDatetime(new Date());
             issuing.setValidFrom(issuingCertificate.getNotBefore());
             issuing.setValidUntil(issuingCertificate.getNotAfter());
@@ -372,7 +382,17 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             certificateRepository.save(issuing);
 
             // crl
-            KeyPair crlKey = KeyUtils.generate(KeyFormat.RSA);
+            Key crlKey = null;
+            {
+                KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(com.senior.cyber.pki.common.x509.KeyFormat.RSA);
+                Key key = new Key();
+                key.setPrivateKey(x509.getPrivate());
+                key.setPublicKey(x509.getPublic());
+                key.setSerial(System.currentTimeMillis() + 1);
+                key.setCreatedDatetime(new Date());
+                keyRepository.save(key);
+                crlKey = key;
+            }
             X500Name crlSubject = SubjectUtils.generate(
                     this.country_value.getId(),
                     this.organization_value,
@@ -382,8 +402,8 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
                     this.state_or_province_name_value,
                     this.email_address_value
             );
-            PKCS10CertificationRequest crlCsr = CsrUtils.generate(crlKey, crlSubject);
-            X509Certificate crlCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivate(), crlCsr, serial + 1);
+            PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
+            X509Certificate crlCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
             Certificate crl = new Certificate();
             crl.setIssuerCertificate(issuing);
             crl.setCountryCode(this.country_value.getId());
@@ -393,9 +413,9 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             crl.setLocalityName(this.locality_name_value);
             crl.setStateOrProvinceName(this.state_or_province_name_value);
             crl.setEmailAddress(this.email_address_value);
-            crl.setPrivateKey(crlKey.getPrivate());
+            crl.setKey(crlKey);
             crl.setCertificate(crlCertificate);
-            crl.setSerial(serial + 1);
+            crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
             crl.setCreatedDatetime(new Date());
             crl.setValidFrom(crlCertificate.getNotBefore());
             crl.setValidUntil(crlCertificate.getNotAfter());
@@ -405,7 +425,17 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             certificateRepository.save(crl);
 
             // ocsp
-            KeyPair ocspKey = KeyUtils.generate(KeyFormat.RSA);
+            Key ocspKey = null;
+            {
+                KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(com.senior.cyber.pki.common.x509.KeyFormat.RSA);
+                Key key = new Key();
+                key.setPrivateKey(x509.getPrivate());
+                key.setPublicKey(x509.getPublic());
+                key.setSerial(System.currentTimeMillis() + 2);
+                key.setCreatedDatetime(new Date());
+                keyRepository.save(key);
+                ocspKey = key;
+            }
             X500Name ocspSubject = SubjectUtils.generate(
                     this.country_value.getId(),
                     this.organization_value,
@@ -415,8 +445,8 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
                     this.state_or_province_name_value,
                     this.email_address_value
             );
-            PKCS10CertificationRequest ocspCsr = CsrUtils.generate(ocspKey, ocspSubject);
-            X509Certificate ocspCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivate(), ocspCsr, serial + 2);
+            PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
+            X509Certificate ocspCertificate = com.senior.cyber.pki.common.x509.CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
             Certificate ocsp = new Certificate();
             ocsp.setIssuerCertificate(issuing);
             ocsp.setCountryCode(this.country_value.getId());
@@ -426,9 +456,9 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             ocsp.setLocalityName(this.locality_name_value);
             ocsp.setStateOrProvinceName(this.state_or_province_name_value);
             ocsp.setEmailAddress(this.email_address_value);
-            ocsp.setPrivateKey(ocspKey.getPrivate());
+            ocsp.setKey(ocspKey);
             ocsp.setCertificate(ocspCertificate);
-            ocsp.setSerial(serial + 2);
+            ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
             ocsp.setCreatedDatetime(new Date());
             ocsp.setValidFrom(ocspCertificate.getNotBefore());
             ocsp.setValidUntil(ocspCertificate.getNotAfter());
