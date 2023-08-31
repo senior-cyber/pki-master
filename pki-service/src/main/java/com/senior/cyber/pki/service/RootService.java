@@ -7,6 +7,7 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -52,6 +53,7 @@ public class RootService {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setType(KeyTypeEnum.Plain);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
             key.setSerial(request.getKey());
@@ -95,6 +97,7 @@ public class RootService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setType(KeyTypeEnum.Plain);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
             key.setSerial(System.currentTimeMillis() + 1);
@@ -138,6 +141,7 @@ public class RootService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setType(KeyTypeEnum.Plain);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
             key.setSerial(System.currentTimeMillis() + 2);

@@ -11,9 +11,9 @@ import org.apache.wicket.authroles.authorization.strategies.role.annotations.Aut
 import java.util.ArrayList;
 import java.util.List;
 
-@Bookmark("/issuer/common")
+@Bookmark("/issuer/basic")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_CsrSubmit})
-public class IssueCommonPage extends MasterPage {
+public class IssueBasicPage extends MasterPage {
 
     protected TabbedPanel tabs;
 
@@ -22,7 +22,7 @@ public class IssueCommonPage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.info_tab = new Tab("info", "Information", IssueCommonPageInfoTab.class);
+        this.info_tab = new Tab("info", "Basic Template", IssueBasicPageInfoTab.class);
     }
 
     @Override

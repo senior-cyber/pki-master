@@ -17,6 +17,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
@@ -75,6 +76,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         WebSession session = getSession();
         this.certificate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.certificate_browse_provider.setSort("created", SortOrder.DESCENDING);
+        this.certificate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Certificate.name() + "'");
         if (applicationConfiguration.getMode() == Mode.Individual) {
             // this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = " + session.getUserId());
         }

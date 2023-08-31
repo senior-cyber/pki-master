@@ -6,6 +6,7 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.KeyRepository;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -68,6 +69,7 @@ public class CertificateService {
         converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
         Key certificateKey = new Key();
+        certificateKey.setType(KeyTypeEnum.Csr);
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
         certificateKey.setSerial(System.currentTimeMillis());
         certificateKey.setCreatedDatetime(new Date());
@@ -124,6 +126,7 @@ public class CertificateService {
         converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
         Key certificateKey = new Key();
+        certificateKey.setType(KeyTypeEnum.Csr);
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
         certificateKey.setSerial(System.currentTimeMillis());
         certificateKey.setCreatedDatetime(new Date());
@@ -186,6 +189,7 @@ public class CertificateService {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setType(KeyTypeEnum.Plain);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
             key.setSerial(request.getKey());
@@ -280,6 +284,7 @@ public class CertificateService {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setType(KeyTypeEnum.Plain);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
             key.setSerial(request.getKey());

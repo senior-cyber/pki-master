@@ -15,8 +15,12 @@
                 <constraints notNullConstraintName="notnull_key_28" nullable="false"/>
             </column>
 
-            <column name="created_datetime" type="DATETIME">
+            <column name="type" type="VARCHAR(10)">
                 <constraints notNullConstraintName="notnull_key_29" nullable="false"/>
+            </column>
+
+            <column name="created_datetime" type="DATETIME">
+                <constraints notNullConstraintName="notnull_key_30" nullable="false"/>
             </column>
 
             <column name="user_id" type="VARCHAR(36)"/>

@@ -22,7 +22,7 @@ public class IssueTlsPage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.info_tab = new Tab("info", "Information", IssueTlsPageInfoTab.class);
+        this.info_tab = new Tab("info", "Tls Template", IssueTlsPageInfoTab.class);
     }
 
     @Override

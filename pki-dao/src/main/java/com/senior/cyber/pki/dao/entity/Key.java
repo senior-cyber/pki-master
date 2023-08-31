@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.dao.entity;
 
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.type.PrivateKeyType;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
 import jakarta.persistence.*;
@@ -35,6 +36,10 @@ public class Key implements Serializable {
 
     @Column(name = "serial")
     private Long serial;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private KeyTypeEnum type;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_datetime")

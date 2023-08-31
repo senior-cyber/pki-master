@@ -68,7 +68,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         if (this.session.isSignedIn()) {
             List<SidebarMenu> pkiMenu = pkiMenu(roles);
             if (!pkiMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-key", "PKI", null, pkiMenu));
+                children.add(new SidebarMenuDropdown("fas fa-key", "PKI Chain", null, pkiMenu));
             }
         }
 
@@ -105,10 +105,10 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
     protected List<SidebarMenu> pkiMenu(Roles roles) {
         List<SidebarMenu> children = new ArrayList<>();
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyRootBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-stamp", "Root", null, RootBrowsePage.class));
+            children.add(new SidebarMenuItem("fas fa-stamp", "RootCA", null, RootBrowsePage.class));
         }
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyIntermediateBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-lock", "Issuer", null, IssuerBrowsePage.class));
+            children.add(new SidebarMenuItem("fas fa-lock", "IssuingCA", null, IssuerBrowsePage.class));
         }
         return children;
     }

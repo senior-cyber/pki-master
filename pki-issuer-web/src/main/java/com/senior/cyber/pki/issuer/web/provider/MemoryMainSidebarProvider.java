@@ -16,7 +16,7 @@ import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.LogoutPage;
 import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
 import com.senior.cyber.pki.issuer.web.pages.group.GroupBrowsePage;
-import com.senior.cyber.pki.issuer.web.pages.issue.IssueCommonPage;
+import com.senior.cyber.pki.issuer.web.pages.issue.IssueBasicPage;
 import com.senior.cyber.pki.issuer.web.pages.issue.IssueTlsPage;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.my.issuer.IssuerBrowsePage;
@@ -68,11 +68,9 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
             }
         }
 
-        if (this.session.isSignedIn()) {
-            List<SidebarMenu> pkiMenu = pkiMenu(roles);
-            if (!pkiMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-key", "PKI", null, pkiMenu));
-            }
+        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyCertificateBrowse)) {
+            children.add(new SidebarMenuItem("fas fa-lock", "IssuingCA", null, IssuerBrowsePage.class));
+            children.add(new SidebarMenuItem("fas fa-certificate", "Certificate", null, CertificateBrowsePage.class));
         }
 
         if (this.session.isSignedIn()) {
@@ -82,7 +80,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         if (this.session.isSignedIn()) {
             List<SidebarMenu> csrMenu = csrMenu(roles);
             if (!csrMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-key", "Issue", null, csrMenu));
+                children.add(new SidebarMenuDropdown("fas fa-key", "Signing Template", null, csrMenu));
             }
         }
 
@@ -116,20 +114,9 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         return children;
     }
 
-    protected List<SidebarMenu> pkiMenu(Roles roles) {
-        List<SidebarMenu> children = new ArrayList<>();
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyIntermediateBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-lock", "Issuer", null, IssuerBrowsePage.class));
-        }
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyCertificateBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-certificate", "Certificate", null, CertificateBrowsePage.class));
-        }
-        return children;
-    }
-
     protected List<SidebarMenu> csrMenu(Roles roles) {
         List<SidebarMenu> children = new ArrayList<>();
-        children.add(new SidebarMenuItem("fas fa-lock", "Common", null, IssueCommonPage.class));
+        children.add(new SidebarMenuItem("fas fa-lock", "Basic", null, IssueBasicPage.class));
         children.add(new SidebarMenuItem("fas fa-lock", "Tls", null, IssueTlsPage.class));
         return children;
     }

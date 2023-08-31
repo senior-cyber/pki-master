@@ -22,7 +22,7 @@ public class IssuerGeneratePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.info_tab = new Tab("info", "Information", IssuerGeneratePageInfoTab.class);
+        this.info_tab = new Tab("info", "IssuingCA Info", IssuerGeneratePageInfoTab.class);
     }
 
     @Override

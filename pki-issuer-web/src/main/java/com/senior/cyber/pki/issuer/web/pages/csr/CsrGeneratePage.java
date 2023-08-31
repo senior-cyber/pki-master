@@ -22,7 +22,7 @@ public class CsrGeneratePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.info_tab = new Tab("info", "Information", CsrGeneratePageInfoTab.class);
+        this.info_tab = new Tab("info", "Csr Info", CsrGeneratePageInfoTab.class);
     }
 
     @Override

@@ -22,7 +22,7 @@ public class RootGeneratePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.info_tab = new Tab("info", "Information", RootGeneratePageInfoTab.class);
+        this.info_tab = new Tab("info", "RootCA Info", RootGeneratePageInfoTab.class);
     }
 
     @Override
