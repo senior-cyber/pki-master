@@ -20,7 +20,7 @@ public abstract class Certificate_ {
     public static volatile SingularAttribute<Certificate, String> localityName;
     public static volatile SingularAttribute<Certificate, String> stateOrProvinceName;
     public static volatile SingularAttribute<Certificate, String> emailAddress;
-    public static volatile SingularAttribute<Certificate, String> privateKey;
+    public static volatile SingularAttribute<Certificate, Key> key;
     public static volatile SingularAttribute<Certificate, String> certificate;
     public static volatile SingularAttribute<Certificate, Date> createdDatetime;
     public static volatile SingularAttribute<Certificate, Date> validFrom;

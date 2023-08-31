@@ -48,9 +48,9 @@ public class Certificate implements Serializable {
     @Column(name = "email_address")
     private String emailAddress;
 
-    @Convert(converter = PrivateKeyType.class)
-    @Column(name = "private_key_pem")
-    private PrivateKey privateKey;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "key_id", referencedColumnName = "key_id")
+    private Key key;
 
     @Convert(converter = X509CertificateType.class)
     @Column(name = "certificate_pem")

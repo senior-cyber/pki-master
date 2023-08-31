@@ -3,9 +3,11 @@ package com.senior.cyber.pki.issuer.api.controller;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.KeyRepository;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -56,6 +58,9 @@ public class ApiController {
     @Autowired
     protected CertificateRepository certificateRepository;
 
+    @Autowired
+    protected KeyRepository keyRepository;
+
     @Value("${api.crl}")
     protected String crlApi;
 
@@ -85,7 +90,21 @@ public class ApiController {
         }
 
         // issuing
-        KeyPair issuingKey = KeyUtils.generate(KeyFormat.RSA);
+        Key issuingKey = null;
+        if (request.getKey() > 0) {
+            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
+            issuingKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+        } else {
+            request.setKey(System.currentTimeMillis());
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setPublicKey(x509.getPublic());
+            key.setPrivateKey(x509.getPrivate());
+            key.setSerial(request.getKey());
+            key.setCreatedDatetime(new Date());
+            keyRepository.save(key);
+            issuingKey = key;
+        }
         X500Name issuingSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -95,8 +114,8 @@ public class ApiController {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest issuingCsr = CsrUtils.generate(issuingKey, issuingSubject);
-        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getPrivateKey(), issuingCsr, crlApi, aiaApi, request.getSerial());
+        PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
+        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi, request.getSerial());
         Certificate issuing = new Certificate();
         issuing.setIssuerCertificate(issuerCertificate);
         issuing.setCountryCode(request.getCountry());
@@ -106,7 +125,7 @@ public class ApiController {
         issuing.setLocalityName(request.getLocality());
         issuing.setStateOrProvinceName(request.getProvince());
         issuing.setEmailAddress(request.getEmailAddress());
-        issuing.setPrivateKey(issuingKey.getPrivate());
+        issuing.setKey(issuingKey);
         issuing.setCertificate(issuingCertificate);
         issuing.setSerial(request.getSerial());
         issuing.setCreatedDatetime(new Date());
@@ -118,7 +137,17 @@ public class ApiController {
         certificateRepository.save(issuing);
 
         // crl
-        KeyPair crlKey = KeyUtils.generate(KeyFormat.RSA);
+        Key crlKey = null;
+        {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setPrivateKey(x509.getPrivate());
+            key.setPublicKey(x509.getPublic());
+            key.setSerial(System.currentTimeMillis() + 1);
+            key.setCreatedDatetime(new Date());
+            keyRepository.save(key);
+            crlKey = key;
+        }
         X500Name crlSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -128,8 +157,8 @@ public class ApiController {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest crlCsr = CsrUtils.generate(crlKey, crlSubject);
-        X509Certificate crlCertificate = CrlUtils.generate(issuingCertificate, issuingKey.getPrivate(), crlCsr, request.getSerial() + 1);
+        PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
+        X509Certificate crlCertificate = CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, request.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(issuing);
         crl.setCountryCode(request.getCountry());
@@ -139,9 +168,9 @@ public class ApiController {
         crl.setLocalityName(request.getLocality());
         crl.setStateOrProvinceName(request.getProvince());
         crl.setEmailAddress(request.getEmailAddress());
-        crl.setPrivateKey(crlKey.getPrivate());
+        crl.setKey(crlKey);
         crl.setCertificate(crlCertificate);
-        crl.setSerial(request.getSerial() + 1);
+        crl.setSerial(System.currentTimeMillis() + 1);
         crl.setCreatedDatetime(new Date());
         crl.setValidFrom(crlCertificate.getNotBefore());
         crl.setValidUntil(crlCertificate.getNotAfter());
@@ -151,7 +180,17 @@ public class ApiController {
         certificateRepository.save(crl);
 
         // ocsp
-        KeyPair ocspKey = KeyUtils.generate(KeyFormat.RSA);
+        Key ocspKey = null;
+        {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setPrivateKey(x509.getPrivate());
+            key.setPublicKey(x509.getPublic());
+            key.setSerial(System.currentTimeMillis() + 2);
+            key.setCreatedDatetime(new Date());
+            keyRepository.save(key);
+            ocspKey = key;
+        }
         X500Name ocspSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -161,8 +200,8 @@ public class ApiController {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest ocspCsr = CsrUtils.generate(ocspKey, ocspSubject);
-        X509Certificate ocspCertificate = CrlUtils.generate(issuingCertificate, issuingKey.getPrivate(), ocspCsr, request.getSerial() + 2);
+        PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
+        X509Certificate ocspCertificate = CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, request.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(issuing);
         ocsp.setCountryCode(request.getCountry());
@@ -172,9 +211,9 @@ public class ApiController {
         ocsp.setLocalityName(request.getLocality());
         ocsp.setStateOrProvinceName(request.getProvince());
         ocsp.setEmailAddress(request.getEmailAddress());
-        ocsp.setPrivateKey(ocspKey.getPrivate());
+        ocsp.setKey(ocspKey);
         ocsp.setCertificate(ocspCertificate);
-        ocsp.setSerial(request.getSerial() + 2);
+        ocsp.setSerial(System.currentTimeMillis() + 2);
         ocsp.setCreatedDatetime(new Date());
         ocsp.setValidFrom(ocspCertificate.getNotBefore());
         ocsp.setValidUntil(ocspCertificate.getNotAfter());
@@ -189,8 +228,7 @@ public class ApiController {
 
         IssuerGenerateResponse response = new IssuerGenerateResponse();
         response.setSerial(issuing.getSerial());
-        response.setOcspSerial(ocsp.getSerial());
-        response.setCrlSerial(crl.getSerial());
+        response.setKey(request.getKey());
 
         return ResponseEntity.ok(response);
     }
@@ -218,7 +256,21 @@ public class ApiController {
         }
 
         // certificate
-        KeyPair certificateKey = KeyUtils.generate(KeyFormat.RSA);
+        Key certificateKey = null;
+        if (request.getKey() > 0) {
+            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
+            certificateKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+        } else {
+            request.setKey(System.currentTimeMillis());
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setPublicKey(x509.getPublic());
+            key.setPrivateKey(x509.getPrivate());
+            key.setSerial(request.getKey());
+            key.setCreatedDatetime(new Date());
+            keyRepository.save(key);
+            certificateKey = key;
+        }
         X500Name certificateSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -228,8 +280,8 @@ public class ApiController {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest certificateCsr = CsrUtils.generate(certificateKey, certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getSerial());
+        PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getSerial());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -239,7 +291,7 @@ public class ApiController {
         certificate.setLocalityName(request.getLocality());
         certificate.setStateOrProvinceName(request.getProvince());
         certificate.setEmailAddress(request.getEmailAddress());
-        certificate.setPrivateKey(certificateKey.getPrivate());
+        certificate.setKey(certificateKey);
         certificate.setCertificate(certificateCertificate);
         certificate.setSerial(request.getSerial());
         certificate.setCreatedDatetime(new Date());
@@ -252,6 +304,7 @@ public class ApiController {
 
         CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
         response.setSerial(certificate.getSerial());
+        response.setKey(request.getKey());
 
         return ResponseEntity.ok(response);
     }
@@ -301,7 +354,21 @@ public class ApiController {
         }
 
         // certificate
-        KeyPair certificateKey = KeyUtils.generate(KeyFormat.RSA);
+        Key certificateKey = null;
+        if (request.getKey() > 0) {
+            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
+            certificateKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+        } else {
+            request.setKey(System.currentTimeMillis());
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setPublicKey(x509.getPublic());
+            key.setPrivateKey(x509.getPrivate());
+            key.setSerial(request.getKey());
+            key.setCreatedDatetime(new Date());
+            keyRepository.save(key);
+            certificateKey = key;
+        }
         X500Name certificateSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -311,8 +378,8 @@ public class ApiController {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest certificateCsr = CsrUtils.generate(certificateKey, certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getIp(), request.getDns(), request.getSerial());
+        PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getIp(), request.getDns(), request.getSerial());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -322,7 +389,7 @@ public class ApiController {
         certificate.setLocalityName(request.getLocality());
         certificate.setStateOrProvinceName(request.getProvince());
         certificate.setEmailAddress(request.getEmailAddress());
-        certificate.setPrivateKey(certificateKey.getPrivate());
+        certificate.setKey(certificateKey);
         certificate.setCertificate(certificateCertificate);
         certificate.setSerial(request.getSerial());
         certificate.setCreatedDatetime(new Date());

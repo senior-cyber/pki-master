@@ -14,9 +14,16 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.security.PrivateKey;
+import java.security.Security;
 
 @Converter
 public class PrivateKeyType implements AttributeConverter<PrivateKey, String> {
+
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
 
     @Override
     public String convertToDatabaseColumn(PrivateKey value) {

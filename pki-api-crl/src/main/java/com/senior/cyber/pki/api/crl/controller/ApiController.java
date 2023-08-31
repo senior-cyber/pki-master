@@ -84,7 +84,7 @@ public class ApiController {
         List<Certificate> certificates = certificateRepository.findByIssuerCertificate(issuerCertificate);
 
         X509Certificate crlCertificate = issuerCertificate.getCrlCertificate().getCertificate();
-        PrivateKey crlPrivateKey = issuerCertificate.getCrlCertificate().getPrivateKey();
+        PrivateKey crlPrivateKey = issuerCertificate.getCrlCertificate().getKey().getPrivateKey();
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(crlCertificate, now.toDate());
         builder.setNextUpdate(now.plusWeeks(1).toDate());

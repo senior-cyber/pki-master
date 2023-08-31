@@ -72,7 +72,7 @@ public class ApiController {
         Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found"));
 
         X509Certificate ocspCertificate = issuerCertificate.getOcspCertificate().getCertificate();
-        PrivateKey ocspPrivateKey = issuerCertificate.getOcspCertificate().getPrivateKey();
+        PrivateKey ocspPrivateKey = issuerCertificate.getOcspCertificate().getKey().getPrivateKey();
 
         OCSPReq ocspReq = new OCSPReq(httpRequest.getBody());
 

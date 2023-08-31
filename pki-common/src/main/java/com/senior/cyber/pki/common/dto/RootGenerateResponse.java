@@ -13,10 +13,7 @@ public class RootGenerateResponse implements Serializable {
     @JsonProperty("serial")
     private long serial;
 
-    @JsonProperty("ocspSerial")
-    private long ocspSerial;
-
-    @JsonProperty("crlSerial")
-    private long crlSerial;
+    @JsonProperty("key")
+    private long key;
 
 }
