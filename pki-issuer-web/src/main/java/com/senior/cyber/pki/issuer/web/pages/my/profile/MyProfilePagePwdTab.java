@@ -9,13 +9,9 @@ import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
-import com.senior.cyber.pki.issuer.web.repository.HSessionRepository;
-import com.senior.cyber.pki.issuer.web.repository.KeyRepository;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.validator.UserPasswordValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -146,25 +142,11 @@ public class MyProfilePagePwdTab extends ContentPanel {
         user.setPassword(passwordEncryptor.encryptPassword(this.password_value));
         userRepository.save(user);
 
-        HSessionRepository sessionRepository = context.getBean(HSessionRepository.class);
-        List<Session> sessions = sessionRepository.findByLogin(user.getLogin());
-        for (Session session : sessions) {
-            sessionRepository.delete(session);
-        }
-
         AES256TextEncryptor currentTextEncryptor = new AES256TextEncryptor();
         currentTextEncryptor.setPassword(this.current_password_value);
 
         AES256TextEncryptor newTextEncryptor = new AES256TextEncryptor();
         newTextEncryptor.setPassword(this.password_value);
-
-        KeyRepository keyRepository = context.getBean(KeyRepository.class);
-        List<Key> keys = keyRepository.findByUser(user);
-        for (Key key : keys) {
-            String clientSecret = currentTextEncryptor.decrypt(key.getClientSecret());
-            key.setClientSecret(newTextEncryptor.encrypt(clientSecret));
-            keyRepository.save(key);
-        }
 
         setResponsePage(MyProfilePage.class);
     }

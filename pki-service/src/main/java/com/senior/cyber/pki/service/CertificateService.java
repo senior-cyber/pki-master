@@ -1,9 +1,6 @@
 package com.senior.cyber.pki.service;
 
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Key;
@@ -13,7 +10,11 @@ import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.KeyRepository;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
@@ -32,6 +33,7 @@ import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -42,6 +44,119 @@ public class CertificateService {
 
     @Autowired
     protected KeyRepository keyRepository;
+
+    @Transactional(rollbackFor = Throwable.class)
+    public CertificateCommonCsrResponse certificateCommonGenerate(CertificateCommonCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
+        if (optionalCertificate.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
+        }
+
+        Date now = LocalDate.now().toDate();
+
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+        }
+
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+
+        Key certificateKey = new Key();
+        certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
+        certificateKey.setSerial(System.currentTimeMillis());
+        certificateKey.setCreatedDatetime(new Date());
+        keyRepository.save(certificateKey);
+
+        Map<ASN1ObjectIdentifier, String> subject = CsrUtils.parse(request.getCsr());
+
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, aiaApi, request.getSerial());
+        Certificate certificate = new Certificate();
+        certificate.setIssuerCertificate(issuerCertificate);
+        certificate.setCountryCode(subject.get(BCStyle.C));
+        certificate.setOrganization(subject.get(BCStyle.O));
+        certificate.setOrganizationalUnit(subject.get(BCStyle.OU));
+        certificate.setCommonName(subject.get(BCStyle.CN));
+        certificate.setLocalityName(subject.get(BCStyle.L));
+        certificate.setStateOrProvinceName(subject.get(BCStyle.ST));
+        certificate.setEmailAddress(subject.get(BCStyle.EmailAddress));
+        certificate.setKey(certificateKey);
+        certificate.setCertificate(certificateCertificate);
+        certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
+        certificate.setCreatedDatetime(new Date());
+        certificate.setValidFrom(certificateCertificate.getNotBefore());
+        certificate.setValidUntil(certificateCertificate.getNotAfter());
+        certificate.setStatus(CertificateStatusEnum.Good);
+        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setUser(null);
+        certificateRepository.save(certificate);
+
+        CertificateCommonCsrResponse response = new CertificateCommonCsrResponse();
+        response.setSerial(certificate.getSerial());
+        return response;
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public CertificateTlsCsrResponse certificateTlsGenerate(CertificateTlsCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
+        if (optionalCertificate.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
+        }
+
+        Date now = LocalDate.now().toDate();
+
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+        }
+
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+
+        Key certificateKey = new Key();
+        certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
+        certificateKey.setSerial(System.currentTimeMillis());
+        certificateKey.setCreatedDatetime(new Date());
+        keyRepository.save(certificateKey);
+
+        Map<ASN1ObjectIdentifier, String> subject = CsrUtils.parse(request.getCsr());
+
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, aiaApi, request.getIp(), request.getDns(), request.getSerial());
+        Certificate certificate = new Certificate();
+        certificate.setIssuerCertificate(issuerCertificate);
+        certificate.setCountryCode(subject.get(BCStyle.C));
+        certificate.setOrganization(subject.get(BCStyle.O));
+        certificate.setOrganizationalUnit(subject.get(BCStyle.OU));
+        certificate.setCommonName(subject.get(BCStyle.CN));
+        certificate.setLocalityName(subject.get(BCStyle.L));
+        certificate.setStateOrProvinceName(subject.get(BCStyle.ST));
+        certificate.setEmailAddress(subject.get(BCStyle.EmailAddress));
+        certificate.setKey(certificateKey);
+        certificate.setCertificate(certificateCertificate);
+//        certificate.setSan(null);
+        certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
+        certificate.setCreatedDatetime(new Date());
+        certificate.setValidFrom(certificateCertificate.getNotBefore());
+        certificate.setValidUntil(certificateCertificate.getNotAfter());
+        certificate.setStatus(CertificateStatusEnum.Good);
+        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setUser(null);
+        certificateRepository.save(certificate);
+
+        CertificateTlsCsrResponse response = new CertificateTlsCsrResponse();
+        response.setSerial(certificate.getSerial());
+        return response;
+    }
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateCommonGenerateResponse certificateCommonGenerate(CertificateCommonGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
@@ -56,7 +171,7 @@ public class CertificateService {
         Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
-                issuerCertificate.getValidFrom().before(now) ||
+                issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
@@ -128,7 +243,7 @@ public class CertificateService {
         Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
-                issuerCertificate.getValidFrom().before(now) ||
+                issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");

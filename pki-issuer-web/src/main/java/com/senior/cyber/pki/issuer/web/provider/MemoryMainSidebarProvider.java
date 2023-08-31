@@ -10,23 +10,21 @@ import com.senior.cyber.frmk.common.model.menu.sidebar.SidebarMenuItem;
 import com.senior.cyber.frmk.common.provider.IMainSidebarProvider;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.LogoutPage;
 import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
-import com.senior.cyber.pki.issuer.web.pages.csr.CsrSubmitPage;
 import com.senior.cyber.pki.issuer.web.pages.group.GroupBrowsePage;
+import com.senior.cyber.pki.issuer.web.pages.issue.IssueCommonPage;
+import com.senior.cyber.pki.issuer.web.pages.issue.IssueTlsPage;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
-import com.senior.cyber.pki.issuer.web.pages.my.intermediate.IntermediateBrowsePage;
-import com.senior.cyber.pki.issuer.web.pages.my.key.MyKeyPage;
+import com.senior.cyber.pki.issuer.web.pages.my.issuer.IssuerBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.my.profile.MyProfilePage;
-import com.senior.cyber.pki.issuer.web.pages.my.root.RootBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.role.RoleBrowsePage;
-import com.senior.cyber.pki.issuer.web.pages.session.SessionBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.user.UserExitPage;
 import com.senior.cyber.pki.issuer.web.pages.user.UserSwitchPage;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
@@ -53,7 +51,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
 
         User user = repository.findById(this.session.getUserId()).orElseThrow(() -> new RuntimeException("user not found"));
 
-        Brand brand = new Brand("PKI Master", new PackageResourceReference(IssuerWebApplication.class, "logo.png"), (Class<? extends WebPage>) WebApplication.get().getHomePage());
+        Brand brand = new Brand("IssuingCA", new PackageResourceReference(IssuerWebApplication.class, "logo.png"), (Class<? extends WebPage>) WebApplication.get().getHomePage());
         UserPanel userPanel = new UserPanel(new PackageResourceReference(IssuerWebApplication.class, "user.png"), user.getDisplayName(), MyProfilePage.class);
         List<SidebarMenu> children = new ArrayList<>();
 
@@ -71,13 +69,6 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         }
 
         if (this.session.isSignedIn()) {
-            List<SidebarMenu> administrationMenu = administrationMenu(roles);
-            if (!administrationMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-tachometer-alt", "Administration", null, administrationMenu));
-            }
-        }
-
-        if (this.session.isSignedIn()) {
             List<SidebarMenu> pkiMenu = pkiMenu(roles);
             if (!pkiMenu.isEmpty()) {
                 children.add(new SidebarMenuDropdown("fas fa-key", "PKI", null, pkiMenu));
@@ -85,9 +76,13 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         }
 
         if (this.session.isSignedIn()) {
+            children.add(new SidebarMenuItem("fas fa-stamp", "Csr", null, CsrGeneratePage.class));
+        }
+
+        if (this.session.isSignedIn()) {
             List<SidebarMenu> csrMenu = csrMenu(roles);
             if (!csrMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-key", "CSR", null, csrMenu));
+                children.add(new SidebarMenuDropdown("fas fa-key", "Issue", null, csrMenu));
             }
         }
 
@@ -121,39 +116,21 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         return children;
     }
 
-    protected List<SidebarMenu> administrationMenu(Roles roles) {
-        List<SidebarMenu> children = new ArrayList<>();
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_SessionBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-mobile-alt", "Session", null, SessionBrowsePage.class));
-        }
-        return children;
-    }
-
     protected List<SidebarMenu> pkiMenu(Roles roles) {
         List<SidebarMenu> children = new ArrayList<>();
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyRootBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-stamp", "Root", null, RootBrowsePage.class));
-        }
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyIntermediateBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-lock", "Intermediate", null, IntermediateBrowsePage.class));
+            children.add(new SidebarMenuItem("fas fa-lock", "Issuer", null, IssuerBrowsePage.class));
         }
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyCertificateBrowse)) {
             children.add(new SidebarMenuItem("fas fa-certificate", "Certificate", null, CertificateBrowsePage.class));
-        }
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyKey)) {
-            children.add(new SidebarMenuItem("fas fa-key", "Key", null, MyKeyPage.class));
         }
         return children;
     }
 
     protected List<SidebarMenu> csrMenu(Roles roles) {
         List<SidebarMenu> children = new ArrayList<>();
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_CsrGenerate)) {
-            children.add(new SidebarMenuItem("fas fa-stamp", "Generate", null, CsrGeneratePage.class));
-        }
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_CsrSubmit)) {
-            children.add(new SidebarMenuItem("fas fa-lock", "Submit", null, CsrSubmitPage.class));
-        }
+        children.add(new SidebarMenuItem("fas fa-lock", "Common", null, IssueCommonPage.class));
+        children.add(new SidebarMenuItem("fas fa-lock", "Tls", null, IssueTlsPage.class));
         return children;
     }
 

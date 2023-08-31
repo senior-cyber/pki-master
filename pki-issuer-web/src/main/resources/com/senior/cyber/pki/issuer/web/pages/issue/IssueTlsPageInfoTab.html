@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+</head>
+<body>
+<wicket:panel>
+    <form wicket:id="form">
+        <div class="card-body">
+
+            <div wicket:id="row1">
+                <div wicket:id="csr_column">
+                    <wicket:container wicket:id="csr_container">
+                        <div class="form-group">
+                            <label wicket:for="csr_field">CSR</label>
+                            <div class="custom-file">
+                                <input type="file" wicket:id="csr_field" class="custom-file-input"/>
+                                <label class="custom-file-label" wicket:for="csr_field">Choose file</label>
+                                <span wicket:id="csr_feedback"/>
+                            </div>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="last_column"/>
+            </div>
+
+            <div wicket:id="row2">
+                <div wicket:id="issuer_column">
+                    <wicket:container wicket:id="issuer_container">
+                        <div class="form-group">
+                            <label wicket:for="issuer_field">Issuer</label>
+                            <select wicket:id="issuer_field" class="form-control"></select>
+                            <span wicket:id="issuer_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="valid_from_column">
+                    <wicket:container wicket:id="valid_from_container">
+                        <div class="form-group">
+                            <label wicket:for="valid_from_field">Valid From</label>
+                            <input type="text" wicket:id="valid_from_field" class="form-control"/>
+                            <span wicket:id="valid_from_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="valid_until_column">
+                    <wicket:container wicket:id="valid_until_container">
+                        <div class="form-group">
+                            <label wicket:for="valid_until_field">Valid Until</label>
+                            <input type="text" wicket:id="valid_until_field" class="form-control"/>
+                            <span wicket:id="valid_until_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="last_column"/>
+            </div>
+            <div wicket:id="row3">
+                <div wicket:id="dns_column">
+                    <wicket:container wicket:id="dns_container">
+                        <div class="form-group">
+                            <label wicket:for="dns_field">IP</label>
+                            <textarea wicket:id="dns_field" class="form-control"></textarea>
+                            <span wicket:id="dns_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="last_column"/>
+            </div>
+            <div wicket:id="row4">
+                <div wicket:id="dns_column">
+                    <wicket:container wicket:id="dns_container">
+                        <div class="form-group">
+                            <label wicket:for="dns_field">DNS (FQDN)</label>
+                            <textarea wicket:id="dns_field" class="form-control"></textarea>
+                            <span wicket:id="dns_feedback"/>
+                        </div>
+                    </wicket:container>
+                </div>
+                <div wicket:id="last_column"/>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button wicket:id="saveButton" type="submit" class="btn btn-info">Issue</button>
+            <a wicket:id="cancelButton" class="btn btn-default float-right">Cancel</a>
+        </div>
+    </form>
+</wicket:panel>
+</body>
+
+</html>

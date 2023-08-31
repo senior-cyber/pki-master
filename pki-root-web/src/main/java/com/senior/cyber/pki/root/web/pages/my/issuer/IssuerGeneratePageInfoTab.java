@@ -34,6 +34,7 @@ import com.senior.cyber.pki.root.web.validator.IntermediateCommonNameValidator;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.RootService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -53,9 +54,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class IssuerGeneratePageInfoTab extends ContentPanel {
 
@@ -131,9 +130,12 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
+        List<String> types = new ArrayList<>();
+        types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
+        types.add("'" + CertificateTypeEnum.Root.name() + "'");
         this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
         this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
-        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN ('" + CertificateTypeEnum.Root.name() + "', '" + CertificateTypeEnum.Issuer.name() + "')");
+        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if (applicationConfiguration.getMode() == Mode.Individual) {

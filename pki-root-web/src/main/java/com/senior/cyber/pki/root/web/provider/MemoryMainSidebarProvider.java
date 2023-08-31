@@ -19,7 +19,6 @@ import com.senior.cyber.pki.root.web.pages.my.issuer.IssuerBrowsePage;
 import com.senior.cyber.pki.root.web.pages.my.profile.MyProfilePage;
 import com.senior.cyber.pki.root.web.pages.my.root.RootBrowsePage;
 import com.senior.cyber.pki.root.web.pages.role.RoleBrowsePage;
-import com.senior.cyber.pki.root.web.pages.session.SessionBrowsePage;
 import com.senior.cyber.pki.root.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.root.web.pages.user.UserExitPage;
 import com.senior.cyber.pki.root.web.pages.user.UserSwitchPage;
@@ -49,7 +48,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
 
         User user = repository.findById(this.session.getUserId()).orElseThrow(() -> new RuntimeException("user not found"));
 
-        Brand brand = new Brand("PKI Master", new PackageResourceReference(RootWebApplication.class, "logo.png"), (Class<? extends WebPage>) WebApplication.get().getHomePage());
+        Brand brand = new Brand("RootCA", new PackageResourceReference(RootWebApplication.class, "logo.png"), (Class<? extends WebPage>) WebApplication.get().getHomePage());
         UserPanel userPanel = new UserPanel(new PackageResourceReference(RootWebApplication.class, "user.png"), user.getDisplayName(), MyProfilePage.class);
         List<SidebarMenu> children = new ArrayList<>();
 
@@ -63,13 +62,6 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
             List<SidebarMenu> securityMenu = securityMenu(roles);
             if (!securityMenu.isEmpty()) {
                 children.add(new SidebarMenuDropdown("fas fas fa-lock", "Security", null, securityMenu));
-            }
-        }
-
-        if (this.session.isSignedIn()) {
-            List<SidebarMenu> administrationMenu = administrationMenu(roles);
-            if (!administrationMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-tachometer-alt", "Administration", null, administrationMenu));
             }
         }
 
@@ -106,14 +98,6 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         }
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_RoleBrowse)) {
             children.add(new SidebarMenuItem("fas fa-universal-access", "Role", null, RoleBrowsePage.class));
-        }
-        return children;
-    }
-
-    protected List<SidebarMenu> administrationMenu(Roles roles) {
-        List<SidebarMenu> children = new ArrayList<>();
-        if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_SessionBrowse)) {
-            children.add(new SidebarMenuItem("fas fa-mobile-alt", "Session", null, SessionBrowsePage.class));
         }
         return children;
     }

@@ -9,7 +9,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Group;
-import com.senior.cyber.pki.issuer.web.repository.GroupRepository;
+import com.senior.cyber.pki.dao.repository.GroupRepository;
 import com.senior.cyber.pki.issuer.web.validator.GroupNameValidator;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;

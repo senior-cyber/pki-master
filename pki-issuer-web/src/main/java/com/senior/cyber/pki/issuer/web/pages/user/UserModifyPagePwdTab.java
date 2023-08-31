@@ -8,10 +8,8 @@ import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.issuer.web.repository.HSessionRepository;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
@@ -119,12 +117,6 @@ public class UserModifyPagePwdTab extends ContentPanel {
         PasswordEncryptor passwordEncryptor = context.getBean(PasswordEncryptor.class);
         passwordEncryptor.encryptPassword(this.password_value);
         userRepository.save(user);
-
-        HSessionRepository sessionRepository = context.getBean(HSessionRepository.class);
-        List<Session> sessions = sessionRepository.findByLogin(user.getLogin());
-        for (Session session : sessions) {
-            sessionRepository.delete(session);
-        }
 
         setResponsePage(UserBrowsePage.class);
     }

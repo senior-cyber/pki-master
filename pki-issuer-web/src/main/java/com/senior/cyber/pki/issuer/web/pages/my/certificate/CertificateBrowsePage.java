@@ -11,17 +11,19 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateTimeConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
-import com.senior.cyber.pki.issuer.web.repository.CertificateRepository;
+import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
 import jakarta.persistence.Tuple;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -72,14 +74,16 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.certificate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
-        this.certificate_browse_provider.setSort(Sql.column(Certificate_.id), SortOrder.DESCENDING);
+        this.certificate_browse_provider.setSort("created", SortOrder.DESCENDING);
         if (applicationConfiguration.getMode() == Mode.Individual) {
-            this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = " + session.getUserId());
+            // this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = " + session.getUserId());
         }
         this.certificate_browse_provider.setCountField(Sql.column(Certificate_.id));
+        this.certificate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
+        this.certificate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());
 
         this.certificate_browse_column = new ArrayList<>();
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("ID"), "uuid", Sql.column(Certificate_.id), this.certificate_browse_provider, new StringConvertor()));
+        this.certificate_browse_column.add(Column.normalColumn(Model.of("Created"), "created", Sql.column(Certificate_.createdDatetime), this.certificate_browse_provider, new DateTimeConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.certificate_browse_provider, new DateConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor()));
@@ -101,9 +105,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
     @Override
     public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        String uuid = object.get("uuid", String.class);
-        String name = StringUtils.replace(object.get("common_name", String.class), " ", "_");
-        return new ClickableCell(this::download, object, uuid + "_" + name + ".zip");
+        long serial = object.get("serial", long.class);
+        return new ClickableCell(this::download, object, serial + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -112,211 +115,211 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         if (applicationConfiguration.getMode() == Mode.Enterprise) {
             Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Download_Action);
         }
-        try {
-            String uuid = tuple.get("uuid", String.class);
-
-            CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-            Optional<Certificate> optionalCertificate = certificateRepository.findById(uuid);
-            Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
-            Intermediate intermediate = certificate.getIntermediate();
-            Root root = intermediate.getRoot();
-
-            String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
-
-            String basename = uuid + "_" + name;
-            String filename = basename + ".zip";
-
-            String publicCertificate = name + ".crt";
-            // String publicKey = name + "-public.pem";
-            String privateKey = name + "-private.pem";
-            String opensshPrivateKey = name + "-openssh-private.pem";
-            String puttyPrivateKey = name + "-putty-private.ppk";
-            String caChain = name + "_ca-chain.crt";
-            String fullChain = name + "_full-chain.crt";
-            String changeit = "changeit";
-
-            String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
-            String intermediateName = StringUtils.replace("intermediate-" + intermediate.getCommonName(), " ", "_");
-
-            ByteArrayOutputStream data = new ByteArrayOutputStream();
-            ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
-
-            {
-                ZipArchiveEntry rootEntry = new ZipArchiveEntry(basename + "/" + rootName + ".crt");
-                rootEntry.setSize(root.getCertificate().getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(rootEntry);
-                zipArchiveOutputStream.write(root.getCertificate().getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(basename + "/" + intermediateName + ".crt");
-                intermediateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(intermediateEntry);
-                zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                String crt = intermediate.getCertificate() + root.getCertificate();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + caChain);
-                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
-                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                String crt = certificate.getCertificate() + intermediate.getCertificate() + root.getCertificate();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + fullChain);
-                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
-                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                StringBuffer buffer = new StringBuffer();
-                buffer.append("# Reference OpenSSL command line to create p12/pfx file").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
-                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for Apache2").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("SSLCertificateFile /your/path/to/" + publicCertificate).append("\n");
-                buffer.append("SSLCertificateKeyFile /your/path/to/" + privateKey).append("\n");
-                buffer.append("SSLCertificateChainFile /your/path/to/" + caChain).append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Create OpenSSH Key Base Authentication ~/.ssh/authorized_keys").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("cp " + privateKey + " ~/.ssh/id_ecdsa").append("\n");
-                buffer.append("chmod 600 ~/.ssh/id_ecdsa").append("\n");
-                buffer.append("ssh-keygen -y -f ~/.ssh/id_ecdsa > ~/.ssh/id_ecdsa.pub").append("\n");
-                buffer.append("ssh-keygen -p -f ~/.ssh/id_ecdsa").append("\n");
-                buffer.append("ssh-copy-id -i ~/.ssh/id_ecdsa.pub {user}@{target-ip}").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Create Putty ppk file").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("# for ubuntu").append("\n");
-                buffer.append("sudo apt-get install putty-tools").append("\n");
-                buffer.append("# for rhel/centos").append("\n");
-                buffer.append("sudo yum install putty").append("\n");
-                buffer.append("cp " + privateKey + " " + opensshPrivateKey).append("\n");
-                buffer.append("chmod 600 " + opensshPrivateKey).append("\n");
-                buffer.append("ssh-keygen -p -f " + opensshPrivateKey).append("\n");
-                buffer.append("puttygen " + opensshPrivateKey + " -o " + puttyPrivateKey).append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for GitLab").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("letsencrypt['enable'] = false").append("\n");
-                buffer.append("nginx['ssl_certificate'] = '/etc/gitlab/ssl/" + fullChain + "'").append("\n");
-                buffer.append("nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/" + privateKey + "'").append("\n");
-                buffer.append("/etc/gitlab/trusted-certs/" + rootName + ".crt").append("\n");
-                buffer.append("/etc/gitlab/trusted-certs/" + intermediateName + ".crt").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for Tomcat (Http11NioProtocol)").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11NioProtocol\" maxThreads=\"150\" SSLEnabled=\"true\">").append("\n");
-                buffer.append("    <SSLHostConfig>").append("\n");
-                buffer.append("        <Certificate certificateKeystoreFile=\"conf/" + name + ".p12\" certificateKeystorePassword=\"" + changeit + "\" type=\"EC\" />").append("\n");
-                buffer.append("    </SSLHostConfig>").append("\n");
-                buffer.append("</Connector>").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for Tomcat (Http11AprProtocol)").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11AprProtocol\" maxThreads=\"150\" SSLEnabled=\"true\" >").append("\n");
-                buffer.append("    <UpgradeProtocol className=\"org.apache.coyote.http2.Http2Protocol\" />").append("\n");
-                buffer.append("    <SSLHostConfig>").append("\n");
-                buffer.append("        <Certificate certificateKeyFile=\"conf/" + privateKey + "\" certificateFile=\"conf/" + publicCertificate + "\" certificateChainFile=\"conf/" + caChain + "\" type=\"EC\" />").append("\n");
-                buffer.append("    </SSLHostConfig>").append("\n");
-                buffer.append("</Connector>").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("server.ssl.enabled=true").append("\n");
-                buffer.append("server.ssl.key-store=/your/path/to/" + name + ".p12").append("\n");
-                buffer.append("server.ssl.key-store-type=PKCS12").append("\n");
-                buffer.append("server.ssl.key-store-password=" + changeit).append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("server:").append("\n");
-                buffer.append("  ssl:").append("\n");
-                buffer.append("    enabled: true").append("\n");
-                buffer.append("    key-store: /your/path/to/" + name + ".p12").append("\n");
-                buffer.append("    key-store-type: PKCS12").append("\n");
-                buffer.append("    key-store-password: " + changeit).append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Import/Delete JDK-11 RootCA entry").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Import/Delete JDK-8 RootCA entry").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
-                buffer.append("\n");
-
-                buffer.append("# Create RootCA Trust Store P12 File").append("\n");
-                buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
-                buffer.append("\n");
-
-                String crt = buffer.toString();
-                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
-                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
-                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            {
-                String text = CertificateSerializer.convert(certificate.getCertificate());
-                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
-                certificateEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(certificateEntry);
-                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            if (certificate.getPrivateKey() != null) {
-                String text = PrivateKeySerializer.convert(certificate.getPrivateKey());
-                ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(basename + "/" + name + ".pem");
-                privateKeyEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
-                zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
-                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
-                zipArchiveOutputStream.closeArchiveEntry();
-            }
-
-            zipArchiveOutputStream.close();
-
-            IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
-            getRequestCycle().scheduleRequestHandlerAfterCurrent(
-                    new ResourceStreamRequestHandler(resourceStream) {
-                        @Override
-                        public void respond(IRequestCycle requestCycle) {
-                            super.respond(requestCycle);
-                        }
-                    }.setFileName(filename)
-                            .setContentDisposition(ContentDisposition.INLINE)
-                            .setCacheDuration(Duration.ZERO));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            long serial = tuple.get("serial", long.class);
+//
+//            CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+//            Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(serial);
+//            Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
+//            Intermediate intermediate = certificate.getIntermediate();
+//            Root root = intermediate.getRoot();
+//
+//            String name = StringUtils.replace(certificate.getCommonName(), " ", "_");
+//
+//            String basename = uuid + "_" + name;
+//            String filename = basename + ".zip";
+//
+//            String publicCertificate = name + ".crt";
+//            // String publicKey = name + "-public.pem";
+//            String privateKey = name + "-private.pem";
+//            String opensshPrivateKey = name + "-openssh-private.pem";
+//            String puttyPrivateKey = name + "-putty-private.ppk";
+//            String caChain = name + "_ca-chain.crt";
+//            String fullChain = name + "_full-chain.crt";
+//            String changeit = "changeit";
+//
+//            String rootName = StringUtils.replace("root-" + root.getCommonName(), " ", "_");
+//            String intermediateName = StringUtils.replace("intermediate-" + intermediate.getCommonName(), " ", "_");
+//
+//            ByteArrayOutputStream data = new ByteArrayOutputStream();
+//            ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
+//
+//            {
+//                ZipArchiveEntry rootEntry = new ZipArchiveEntry(basename + "/" + rootName + ".crt");
+//                rootEntry.setSize(root.getCertificate().getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(rootEntry);
+//                zipArchiveOutputStream.write(root.getCertificate().getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            {
+//                ZipArchiveEntry intermediateEntry = new ZipArchiveEntry(basename + "/" + intermediateName + ".crt");
+//                intermediateEntry.setSize(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(intermediateEntry);
+//                zipArchiveOutputStream.write(intermediate.getCertificate().getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            {
+//                String crt = intermediate.getCertificate() + root.getCertificate();
+//                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + caChain);
+//                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
+//                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            {
+//                String crt = certificate.getCertificate() + intermediate.getCertificate() + root.getCertificate();
+//                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + fullChain);
+//                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
+//                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            {
+//                StringBuffer buffer = new StringBuffer();
+//                buffer.append("# Reference OpenSSL command line to create p12/pfx file").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+//                buffer.append("openssl pkcs12 -inkey " + privateKey + " -in " + fullChain + " -export -out " + name + ".pfx -passout pass:" + changeit).append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for Apache2").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("SSLCertificateFile /your/path/to/" + publicCertificate).append("\n");
+//                buffer.append("SSLCertificateKeyFile /your/path/to/" + privateKey).append("\n");
+//                buffer.append("SSLCertificateChainFile /your/path/to/" + caChain).append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Create OpenSSH Key Base Authentication ~/.ssh/authorized_keys").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("cp " + privateKey + " ~/.ssh/id_ecdsa").append("\n");
+//                buffer.append("chmod 600 ~/.ssh/id_ecdsa").append("\n");
+//                buffer.append("ssh-keygen -y -f ~/.ssh/id_ecdsa > ~/.ssh/id_ecdsa.pub").append("\n");
+//                buffer.append("ssh-keygen -p -f ~/.ssh/id_ecdsa").append("\n");
+//                buffer.append("ssh-copy-id -i ~/.ssh/id_ecdsa.pub {user}@{target-ip}").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Create Putty ppk file").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("# for ubuntu").append("\n");
+//                buffer.append("sudo apt-get install putty-tools").append("\n");
+//                buffer.append("# for rhel/centos").append("\n");
+//                buffer.append("sudo yum install putty").append("\n");
+//                buffer.append("cp " + privateKey + " " + opensshPrivateKey).append("\n");
+//                buffer.append("chmod 600 " + opensshPrivateKey).append("\n");
+//                buffer.append("ssh-keygen -p -f " + opensshPrivateKey).append("\n");
+//                buffer.append("puttygen " + opensshPrivateKey + " -o " + puttyPrivateKey).append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for GitLab").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("letsencrypt['enable'] = false").append("\n");
+//                buffer.append("nginx['ssl_certificate'] = '/etc/gitlab/ssl/" + fullChain + "'").append("\n");
+//                buffer.append("nginx['ssl_certificate_key'] = '/etc/gitlab/ssl/" + privateKey + "'").append("\n");
+//                buffer.append("/etc/gitlab/trusted-certs/" + rootName + ".crt").append("\n");
+//                buffer.append("/etc/gitlab/trusted-certs/" + intermediateName + ".crt").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for Tomcat (Http11NioProtocol)").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11NioProtocol\" maxThreads=\"150\" SSLEnabled=\"true\">").append("\n");
+//                buffer.append("    <SSLHostConfig>").append("\n");
+//                buffer.append("        <Certificate certificateKeystoreFile=\"conf/" + name + ".p12\" certificateKeystorePassword=\"" + changeit + "\" type=\"EC\" />").append("\n");
+//                buffer.append("    </SSLHostConfig>").append("\n");
+//                buffer.append("</Connector>").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for Tomcat (Http11AprProtocol)").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("<Connector port=\"8443\" protocol=\"org.apache.coyote.http11.Http11AprProtocol\" maxThreads=\"150\" SSLEnabled=\"true\" >").append("\n");
+//                buffer.append("    <UpgradeProtocol className=\"org.apache.coyote.http2.Http2Protocol\" />").append("\n");
+//                buffer.append("    <SSLHostConfig>").append("\n");
+//                buffer.append("        <Certificate certificateKeyFile=\"conf/" + privateKey + "\" certificateFile=\"conf/" + publicCertificate + "\" certificateChainFile=\"conf/" + caChain + "\" type=\"EC\" />").append("\n");
+//                buffer.append("    </SSLHostConfig>").append("\n");
+//                buffer.append("</Connector>").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("server.ssl.enabled=true").append("\n");
+//                buffer.append("server.ssl.key-store=/your/path/to/" + name + ".p12").append("\n");
+//                buffer.append("server.ssl.key-store-type=PKCS12").append("\n");
+//                buffer.append("server.ssl.key-store-password=" + changeit).append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Installation Instructions for SpringBoot (yaml)").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("server:").append("\n");
+//                buffer.append("  ssl:").append("\n");
+//                buffer.append("    enabled: true").append("\n");
+//                buffer.append("    key-store: /your/path/to/" + name + ".p12").append("\n");
+//                buffer.append("    key-store-type: PKCS12").append("\n");
+//                buffer.append("    key-store-password: " + changeit).append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Import/Delete JDK-11 RootCA entry").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("JAVA_HOME=/your/path/to/jdk11").append("\n");
+//                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit").append("\n");
+//                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Import/Delete JDK-8 RootCA entry").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("JAVA_HOME=/your/path/to/jdk8").append("\n");
+//                buffer.append("$JAVA_HOME/bin/keytool -delete -noprompt -alias " + rootName + " -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit").append("\n");
+//                buffer.append("$JAVA_HOME/bin/keytool -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass " + changeit + " -alias " + rootName + " -import -file " + rootName + ".crt").append("\n");
+//                buffer.append("\n");
+//
+//                buffer.append("# Create RootCA Trust Store P12 File").append("\n");
+//                buffer.append("====================================================================================").append("\n");
+//                buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
+//                buffer.append("\n");
+//
+//                String crt = buffer.toString();
+//                ZipArchiveEntry caChainEntry = new ZipArchiveEntry(basename + "/" + "README.txt");
+//                caChainEntry.setSize(crt.getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(caChainEntry);
+//                zipArchiveOutputStream.write(crt.getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            {
+//                String text = CertificateSerializer.convert(certificate.getCertificate());
+//                ZipArchiveEntry certificateEntry = new ZipArchiveEntry(basename + "/" + name + ".crt");
+//                certificateEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(certificateEntry);
+//                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            if (certificate.getPrivateKey() != null) {
+//                String text = PrivateKeySerializer.convert(certificate.getPrivateKey());
+//                ZipArchiveEntry privateKeyEntry = new ZipArchiveEntry(basename + "/" + name + ".pem");
+//                privateKeyEntry.setSize(text.getBytes(StandardCharsets.UTF_8).length);
+//                zipArchiveOutputStream.putArchiveEntry(privateKeyEntry);
+//                zipArchiveOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
+//                zipArchiveOutputStream.closeArchiveEntry();
+//            }
+//
+//            zipArchiveOutputStream.close();
+//
+//            IResourceStream resourceStream = new MemoryResourceStream("application/zip", data.toByteArray());
+//            getRequestCycle().scheduleRequestHandlerAfterCurrent(
+//                    new ResourceStreamRequestHandler(resourceStream) {
+//                        @Override
+//                        public void respond(IRequestCycle requestCycle) {
+//                            super.respond(requestCycle);
+//                        }
+//                    }.setFileName(filename)
+//                            .setContentDisposition(ContentDisposition.INLINE)
+//                            .setCacheDuration(Duration.ZERO));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
@@ -327,7 +330,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_table = new DataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
         this.certificate_browse_form.add(this.certificate_browse_table);
 
-        this.createButton = new BookmarkablePageLink<>("createButton", CertificateGeneratePage.class);
+        this.createButton = new BookmarkablePageLink<>("createButton", CsrGeneratePage.class);
         body.add(this.createButton);
 
         ApplicationContext context = WicketFactory.getApplicationContext();
@@ -382,7 +385,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
             String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
-            setResponsePage(CertificateGeneratePage.class, parameters);
+            setResponsePage(CsrGeneratePage.class, parameters);
         }
     }
 

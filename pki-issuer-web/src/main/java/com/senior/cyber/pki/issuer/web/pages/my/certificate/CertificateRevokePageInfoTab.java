@@ -15,11 +15,11 @@ import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
-import com.senior.cyber.pki.issuer.web.repository.CertificateRepository;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -141,7 +141,8 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         this.country_value = certificate.getCountryCode();
         this.email_address_value = certificate.getEmailAddress();
         this.san_value = certificate.getSan();
-        this.issuer_value = certificate.getIntermediate().getCommonName();
+        // TODO :
+//        this.issuer_value = certificate.getIntermediate().getCommonName();
 
         this.date_value = LocalDate.now().toDate();
         this.reason_value = "cessationOfOperation";

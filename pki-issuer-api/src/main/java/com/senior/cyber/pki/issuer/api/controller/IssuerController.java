@@ -45,6 +45,9 @@ public class IssuerController {
     @Autowired
     protected IssuerService issuerService;
 
+    @Autowired
+    protected CertificateRepository certificateRepository;
+
     @Value("${api.crl}")
     protected String crlApi;
 
@@ -55,6 +58,19 @@ public class IssuerController {
     @RequestMapping(path = "/issuer/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IssuerGenerateResponse> issuerGenerate(RequestEntity<IssuerGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
         IssuerGenerateRequest request = httpRequest.getBody();
+
+        Date now = LocalDate.now().toDate();
+
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+        }
+
         IssuerGenerateResponse response = issuerService.issuerGenerate(request, crlApi, aiaApi);
         return ResponseEntity.ok(response);
     }

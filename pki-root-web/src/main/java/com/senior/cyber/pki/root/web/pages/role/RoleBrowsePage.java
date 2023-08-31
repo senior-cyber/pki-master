@@ -44,8 +44,9 @@ public class RoleBrowsePage extends MasterPage {
         this.role_browse_provider.setSort(Sql.column(Role_.id), SortOrder.ASCENDING);
         this.role_browse_provider.setCountField(Sql.column(Role_.id));
 
+        this.role_browse_provider.selectNormalColumn("id", Sql.column(Role_.id), new StringConvertor());
+
         this.role_browse_column = new ArrayList<>();
-        this.role_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Role_.id), this.role_browse_provider, new StringConvertor()));
         this.role_browse_column.add(Column.normalColumn(Model.of("Name"), "name", Sql.column(Role_.name), this.role_browse_provider, new StringConvertor()));
         this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", Sql.column(Role_.description), this.role_browse_provider, new StringConvertor()));
         this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Role_.enabled), this.role_browse_provider, new BooleanConvertor()));

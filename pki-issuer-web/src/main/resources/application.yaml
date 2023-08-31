@@ -5,14 +5,13 @@ webui:
     load-on-startup: 1
     path: /*
   configuration-type: DEPLOYMENT
-  wicket-factory: com.senior.cyber.pki.web.factory.WicketFactory
-  pages: com.senior.cyber.pki.web.pages
+  wicket-factory: com.senior.cyber.pki.issuer.web.factory.WicketFactory
+  pages: com.senior.cyber.pki.issuer.web.pages
   admin-lte: ${override.webui.admin-lte}
   csrf: false
-pki:
-  api:
-    address:
-      - ${override.pki.api.address-1}
+api:
+  crl: ${override.api.crl}
+  aia: ${override.api.aia}
 spring:
   jpa:
     hibernate:

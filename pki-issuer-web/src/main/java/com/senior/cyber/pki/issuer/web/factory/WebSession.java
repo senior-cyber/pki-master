@@ -1,10 +1,8 @@
 package com.senior.cyber.pki.issuer.web.factory;
 
 import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.issuer.web.repository.HSessionRepository;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.utility.RoleUtility;
 import com.senior.cyber.pki.issuer.web.utility.UserUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,25 +35,6 @@ public class WebSession extends AuthenticatedWebSession {
         super(request);
         HttpServletRequest req = (HttpServletRequest) request.getContainerRequest();
         this.sessionId = req.getSession(true).getId();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        HSessionRepository HSessionRepository = context.getBean(HSessionRepository.class);
-
-        Optional<Session> optionalSession = HSessionRepository.findBySessionId(this.sessionId);
-        Session session = optionalSession.orElse(null);
-        if (session != null && session.getLogin() != null && !"".equals(session.getLogin())) {
-            Optional<User> optionalUser = userRepository.findByLogin(session.getLogin());
-            User user = optionalUser.orElse(null);
-            if (user != null) {
-                this.queue = new LinkedList<>();
-                this.userId = user.getId();
-                List<String> roles = RoleUtility.lookupRole(named, user.getId());
-                this.roles = new Roles();
-                this.roles.addAll(roles);
-                signIn(true);
-            }
-        }
     }
 
     @Override
@@ -74,7 +53,6 @@ public class WebSession extends AuthenticatedWebSession {
         }
 
         NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
-        HSessionRepository hSessionRepository = context.getBean(HSessionRepository.class);
         TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
 
         this.queue = new LinkedList<>();
@@ -84,12 +62,6 @@ public class WebSession extends AuthenticatedWebSession {
         this.userId = user.getId();
         this.pwd = textEncryptor.encrypt(password);
 
-        Optional<Session> optionalSession = hSessionRepository.findBySessionId(this.sessionId);
-        Session session = optionalSession.orElse(null);
-        if (session != null) {
-            session.setLogin(user.getLogin());
-            hSessionRepository.save(session);
-        }
         return true;
     }
 

@@ -9,10 +9,8 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.BooleanConvertor;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
 import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.entity.User_;
-import com.senior.cyber.pki.dao.repository.HSessionRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.root.web.pages.MasterPage;
@@ -99,11 +97,6 @@ public class UserBrowsePage extends MasterPage {
             User user = userOptional.orElseThrow();
             user.setEnabled(false);
             userRepository.save(user);
-
-            HSessionRepository sessionRepository = context.getBean(HSessionRepository.class);
-            List<Session> sessions = sessionRepository.findByLogin(user.getLogin());
-            sessionRepository.deleteAll(sessions);
-
             target.add(this.user_browse_table);
         } else if ("Enable".equals(link)) {
             Optional<User> userOptional = userRepository.findById(uuid);

@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.issuer.web.pages.csr;
 
-
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CsrSerializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
@@ -19,14 +18,14 @@ import com.senior.cyber.frmk.x509.CsrUtils;
 import com.senior.cyber.frmk.x509.KeyUtils;
 import com.senior.cyber.frmk.x509.SubjectUtils;
 import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.IbanRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
-import com.senior.cyber.pki.issuer.web.repository.CertificateRepository;
-import com.senior.cyber.pki.issuer.web.repository.IbanRepository;
-import com.senior.cyber.pki.issuer.web.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
 import com.senior.cyber.pki.issuer.web.validator.CertificateCommonNameValidator;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -256,7 +255,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(data);
 
-            String name = "certificate";
+            String name = "csr";
 
             {
                 String csrText = CsrSerializer.convert(csr);

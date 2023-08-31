@@ -20,11 +20,11 @@ import com.senior.cyber.pki.dao.entity.Group;
 import com.senior.cyber.pki.dao.entity.Group_;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.Role_;
+import com.senior.cyber.pki.dao.repository.GroupRepository;
+import com.senior.cyber.pki.dao.repository.RoleRepository;
 import com.senior.cyber.pki.issuer.web.data.MultipleChoiceProvider;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
-import com.senior.cyber.pki.issuer.web.repository.GroupRepository;
-import com.senior.cyber.pki.issuer.web.repository.RoleRepository;
 import com.senior.cyber.pki.issuer.web.validator.GroupNameValidator;
 import jakarta.persistence.Tuple;
 import org.apache.wicket.MarkupContainer;
@@ -78,8 +78,9 @@ public class GroupBrowsePage extends MasterPage {
         this.group_browse_provider.setSort("id", SortOrder.DESCENDING);
         this.group_browse_provider.setCountField(Sql.column(Group_.id));
 
+        this.group_browse_provider.selectNormalColumn("id", Sql.column(Group_.id), new StringConvertor());
+
         this.group_browse_column = new ArrayList<>();
-        this.group_browse_column.add(Column.normalColumn(Model.of("ID"), "id", Sql.column(Group_.id), this.group_browse_provider, new StringConvertor()));
         this.group_browse_column.add(Column.normalColumn(Model.of("Name"), "name", Sql.column(Group_.name), this.group_browse_provider, new StringConvertor()));
         this.group_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Group_.enabled), this.group_browse_provider, new BooleanConvertor()));
         this.group_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::group_browse_action_link, this::group_browse_action_click));

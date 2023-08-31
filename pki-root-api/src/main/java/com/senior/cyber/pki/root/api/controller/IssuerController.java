@@ -45,6 +45,9 @@ public class IssuerController {
     @Autowired
     protected IssuerService issuerService;
 
+    @Autowired
+    protected CertificateRepository certificateRepository;
+
     @Value("${api.crl}")
     protected String crlApi;
 

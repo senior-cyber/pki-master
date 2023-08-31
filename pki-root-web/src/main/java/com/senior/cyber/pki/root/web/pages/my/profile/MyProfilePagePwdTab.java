@@ -9,9 +9,7 @@ import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
-import com.senior.cyber.pki.dao.entity.Session;
 import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.repository.HSessionRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import com.senior.cyber.pki.root.web.validator.UserPasswordValidator;
@@ -143,10 +141,6 @@ public class MyProfilePagePwdTab extends ContentPanel {
 
         user.setPassword(passwordEncryptor.encryptPassword(this.password_value));
         userRepository.save(user);
-
-        HSessionRepository sessionRepository = context.getBean(HSessionRepository.class);
-        List<Session> sessions = sessionRepository.findByLogin(user.getLogin());
-        sessionRepository.deleteAll(sessions);
 
         AES256TextEncryptor currentTextEncryptor = new AES256TextEncryptor();
         currentTextEncryptor.setPassword(this.current_password_value);

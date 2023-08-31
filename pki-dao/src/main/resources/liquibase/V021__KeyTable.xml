@@ -13,9 +13,7 @@
                 <constraints unique="true" nullable="false"/>
             </column>
 
-            <column name="private_key_pem" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
+            <column name="private_key_pem" type="TEXT"/>
             <column name="public_key_pem" type="TEXT">
                 <constraints nullable="false"/>
             </column>
