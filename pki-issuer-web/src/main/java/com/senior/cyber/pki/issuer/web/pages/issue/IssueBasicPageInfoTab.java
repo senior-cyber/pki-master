@@ -19,11 +19,12 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.pki.common.dto.CertificateCommonCsrRequest;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
@@ -47,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class IssueBasicPageInfoTab extends ContentPanel {
 
@@ -90,11 +92,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
         this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
         this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
         this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Issuer.name() + "'");
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-//            this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = " + session.getUserId());
-        }
+        this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
 
         LocalDate now = LocalDate.now();
 
@@ -160,15 +158,6 @@ public class IssueBasicPageInfoTab extends ContentPanel {
         };
 
         this.form.add(this.saveButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-            } else {
-                this.saveButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
         this.form.add(this.cancelButton);
@@ -177,12 +166,12 @@ public class IssueBasicPageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyCertificateGenerate_Issue_Action);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        WebSession session = (WebSession) getWebSession();
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
         try {
             long serial = System.currentTimeMillis();
 
@@ -198,7 +187,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
             request.setSerial(serial);
             request.setIssuerSerial(Long.valueOf(this.issuer_value.getId()));
 
-            certificateService.certificateCommonGenerate(request, apiConfiguration.getCrl(), apiConfiguration.getAia());
+            certificateService.certificateCommonGenerate(user, request, apiConfiguration.getCrl(), apiConfiguration.getAia());
 
             setResponsePage(CertificateBrowsePage.class);
         } catch (Throwable e) {

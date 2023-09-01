@@ -4,7 +4,9 @@ import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.service.CertificateService;
+import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,17 +38,22 @@ public class CertificateController {
     @Value("${api.aia}")
     protected String aiaApi;
 
+    @Autowired
+    protected UserService userService;
+
     @RequestMapping(path = "/certificate/common/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateCommonGenerateRequest request = httpRequest.getBody();
-        CertificateCommonGenerateResponse response = certificateService.certificateCommonGenerate(request, crlApi, aiaApi);
+        CertificateCommonGenerateResponse response = certificateService.certificateCommonGenerate(user, request, crlApi, aiaApi);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
-        CertificateTlsGenerateResponse response = certificateService.certificateTlsGenerate(request, crlApi, aiaApi);
+        CertificateTlsGenerateResponse response = certificateService.certificateTlsGenerate(user, request, crlApi, aiaApi);
         return ResponseEntity.ok(response);
     }
 

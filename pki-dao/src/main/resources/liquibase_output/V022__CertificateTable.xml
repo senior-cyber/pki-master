@@ -3,11 +3,11 @@
 
         <createTable tableName="tbl_certificate">
             <column name="certificate_id" type="VARCHAR(36)">
-                <constraints notNullConstraintName="notnull_key_31" nullable="false" primaryKey="true" primaryKeyName="primary_key_9"/>
+                <constraints notNullConstraintName="notnull_key_32" nullable="false" primaryKey="true" primaryKeyName="primary_key_9"/>
             </column>
 
             <column name="serial" type="BIGINT">
-                <constraints notNullConstraintName="notnull_key_32" nullable="false" unique="true" uniqueConstraintName="unique_index_12"/>
+                <constraints notNullConstraintName="notnull_key_33" nullable="false" unique="true" uniqueConstraintName="unique_index_12"/>
             </column>
 
             <column name="common_name" type="VARCHAR(200)"/>
@@ -21,34 +21,36 @@
             <column name="email_address" type="VARCHAR(200)"/>
 
             <column name="key_id" type="VARCHAR(36)">
-                <constraints notNullConstraintName="notnull_key_33" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_34" nullable="false"/>
             </column>
             <column name="certificate_pem" type="TEXT">
-                <constraints notNullConstraintName="notnull_key_34" nullable="false"/>
+                <constraints notNullConstraintName="notnull_key_35" nullable="false"/>
             </column>
             <column name="san" type="TEXT"/>
             <column name="revoked_date" type="DATE"/>
             <column name="revoked_reason" type="VARCHAR(30)"/>
 
             <column name="valid_from" type="DATE">
-                <constraints notNullConstraintName="notnull_key_35" nullable="false"/>
-            </column>
-            <column name="valid_until" type="DATE">
                 <constraints notNullConstraintName="notnull_key_36" nullable="false"/>
             </column>
-            <column name="created_datetime" type="DATETIME">
+            <column name="valid_until" type="DATE">
                 <constraints notNullConstraintName="notnull_key_37" nullable="false"/>
             </column>
-
-            <column name="status" type="VARCHAR(10)">
+            <column name="created_datetime" type="DATETIME">
                 <constraints notNullConstraintName="notnull_key_38" nullable="false"/>
             </column>
 
-            <column name="type" type="VARCHAR(20)">
+            <column name="status" type="VARCHAR(10)">
                 <constraints notNullConstraintName="notnull_key_39" nullable="false"/>
             </column>
 
-            <column name="user_id" type="VARCHAR(36)"/>
+            <column name="type" type="VARCHAR(20)">
+                <constraints notNullConstraintName="notnull_key_40" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints notNullConstraintName="notnull_key_41" nullable="false"/>
+            </column>
 
             <column name="issuer_certificate_id" type="VARCHAR(36)"/>
             <column name="crl_certificate_id" type="VARCHAR(36)"/>

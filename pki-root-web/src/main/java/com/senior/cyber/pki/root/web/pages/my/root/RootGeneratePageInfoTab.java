@@ -20,10 +20,8 @@ import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.root.web.configuration.Mode;
 import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
-import com.senior.cyber.pki.root.web.validator.RootCommonNameValidator;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.RootService;
 import org.apache.wicket.MarkupContainer;
@@ -116,17 +114,11 @@ public class RootGeneratePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
 
-        Optional<Certificate> optionalRoot = null;
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalRoot = certificateRepository.findByIdAndUser(uuid, user);
-        } else {
-            optionalRoot = certificateRepository.findById(uuid);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalRoot = certificateRepository.findByIdAndUser(uuid, user);
         Certificate root = optionalRoot.orElse(null);
 
         if (root != null) {
@@ -161,7 +153,6 @@ public class RootGeneratePageInfoTab extends ContentPanel {
         this.common_name_field.setLabel(Model.of("Common Name"));
         this.common_name_field.setRequired(true);
         this.common_name_field.add(new ContainerFeedbackBehavior());
-        this.common_name_field.add(new RootCommonNameValidator());
         this.common_name_container.add(this.common_name_field);
         this.common_name_container.newFeedback("common_name_feedback", this.common_name_field);
 
@@ -251,15 +242,6 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootGenerate_Issue_Action)) {
-            } else {
-                this.saveButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", RootBrowsePage.class);
         this.form.add(this.cancelButton);
@@ -268,12 +250,12 @@ public class RootGeneratePageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyRootGenerate_Issue_Action);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        WebSession session = (WebSession) getWebSession();
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
         try {
             RootService rootService = context.getBean(RootService.class);
 
@@ -288,7 +270,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             request.setOrganizationalUnit(this.organizational_unit_value);
             request.setEmailAddress(this.email_address_value);
 
-            rootService.rootGenerate(request);
+            rootService.rootGenerate(user, request);
 
             setResponsePage(RootBrowsePage.class);
         } catch (Throwable e) {

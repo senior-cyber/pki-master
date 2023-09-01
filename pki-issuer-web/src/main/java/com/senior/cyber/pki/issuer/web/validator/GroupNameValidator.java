@@ -24,7 +24,7 @@ public class GroupNameValidator implements IValidator<String> {
     @Override
     public void validate(IValidatable<String> validatable) {
         String name = validatable.getValue();
-        if (name != null && !"".equals(name)) {
+        if (name != null && !name.isEmpty()) {
             ApplicationContext context = WicketFactory.getApplicationContext();
             GroupRepository groupRepository = context.getBean(GroupRepository.class);
             Optional<Group> optionalGroup = groupRepository.findByName(name);

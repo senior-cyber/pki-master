@@ -5,6 +5,7 @@ import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Key;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
@@ -38,7 +39,7 @@ public class RootService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
         Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
         if (optionalCertificate.isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
@@ -58,6 +59,7 @@ public class RootService {
             key.setPrivateKey(x509.getPrivate());
             key.setSerial(request.getKey());
             key.setCreatedDatetime(new Date());
+            key.setUser(user);
             keyRepository.save(key);
             rootKey = key;
         }
@@ -89,7 +91,7 @@ public class RootService {
         root.setValidUntil(rootCertificate.getNotAfter());
         root.setStatus(CertificateStatusEnum.Good);
         root.setType(CertificateTypeEnum.Root);
-        root.setUser(null);
+        root.setUser(user);
         certificateRepository.save(root);
 
         // crl
@@ -102,6 +104,7 @@ public class RootService {
             key.setPublicKey(x509.getPublic());
             key.setSerial(System.currentTimeMillis() + 1);
             key.setCreatedDatetime(new Date());
+            key.setUser(user);
             keyRepository.save(key);
             crlKey = key;
         }
@@ -133,7 +136,7 @@ public class RootService {
         crl.setValidUntil(crlCertificate.getNotAfter());
         crl.setStatus(CertificateStatusEnum.Good);
         crl.setType(CertificateTypeEnum.Crl);
-        crl.setUser(null);
+        crl.setUser(user);
         certificateRepository.save(crl);
 
         // ocsp
@@ -146,6 +149,7 @@ public class RootService {
             key.setPublicKey(x509.getPublic());
             key.setSerial(System.currentTimeMillis() + 2);
             key.setCreatedDatetime(new Date());
+            key.setUser(user);
             keyRepository.save(key);
             ocspKey = key;
         }
@@ -177,7 +181,7 @@ public class RootService {
         ocsp.setValidUntil(ocspCertificate.getNotAfter());
         ocsp.setStatus(CertificateStatusEnum.Good);
         ocsp.setType(CertificateTypeEnum.Ocsp);
-        ocsp.setUser(null);
+        ocsp.setUser(user);
         certificateRepository.save(ocsp);
 
         root.setCrlCertificate(crl);

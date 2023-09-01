@@ -2,8 +2,10 @@ package com.senior.cyber.pki.root.api.controller;
 
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.service.IssuerService;
+import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +40,14 @@ public class IssuerController {
     @Value("${api.aia}")
     protected String aiaApi;
 
+    @Autowired
+    protected UserService userService;
+
     @RequestMapping(path = "/issuer/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IssuerGenerateResponse> issuerGenerate(RequestEntity<IssuerGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         IssuerGenerateRequest request = httpRequest.getBody();
-        IssuerGenerateResponse response = issuerService.issuerGenerate(request, crlApi, aiaApi);
+        IssuerGenerateResponse response = issuerService.issuerGenerate(user, request, crlApi, aiaApi);
         return ResponseEntity.ok(response);
     }
 

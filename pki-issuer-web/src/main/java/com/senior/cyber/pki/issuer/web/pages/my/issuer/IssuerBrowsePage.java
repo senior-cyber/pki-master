@@ -21,7 +21,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
@@ -78,9 +77,7 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         WebSession session = getSession();
         this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            // this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
-        }
+        this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
         this.intermediate_browse_provider.setCountField(Sql.column(Certificate_.id));
         this.intermediate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
@@ -91,20 +88,8 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.intermediate_browse_provider, new StringConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.intermediate_browse_provider, new DateConvertor()));
         this.intermediate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.intermediate_browse_provider, new StringConvertor()));
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Download_Action)) {
-                this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.intermediate_browse_provider, new StringConvertor(), this));
-            }
-        } else {
-            this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.intermediate_browse_provider, new StringConvertor(), this));
-        }
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
-                this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
-            }
-        } else {
-            this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
-        }
+        this.intermediate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.intermediate_browse_provider, new StringConvertor(), this));
+        this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));
     }
 
     @Override
@@ -117,14 +102,6 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
 
         this.createButton = new BookmarkablePageLink<>("createButton", IssuerGeneratePage.class);
         body.add(this.createButton);
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_IssueNewIntermediate_Action)) {
-            } else {
-                this.createButton.setVisible(false);
-            }
-        }
     }
 
     @Override
@@ -227,40 +204,20 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         String status = model.get("status", String.class);
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Copy_Action)) {
-                actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
-            }
-        } else {
-            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
-        }
+        actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         if (CertificateStatusEnum.Good.name().equals(status)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyIntermediateBrowse_Revoke_Action)) {
-                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-                }
-            } else {
-                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-            }
+            actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
         }
         return actions;
     }
 
     protected void intermediate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Revoke_Action);
-            }
             String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(IssuerRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse_Copy_Action);
-            }
             String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);

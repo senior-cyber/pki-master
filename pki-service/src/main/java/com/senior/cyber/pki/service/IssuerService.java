@@ -5,6 +5,7 @@ import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Key;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
@@ -39,7 +40,7 @@ public class IssuerService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public IssuerGenerateResponse issuerGenerate(IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
         Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
         if (optionalCertificate.isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
@@ -66,6 +67,7 @@ public class IssuerService {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setUser(user);
             key.setType(KeyTypeEnum.Plain);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
@@ -102,7 +104,7 @@ public class IssuerService {
         issuing.setValidUntil(issuingCertificate.getNotAfter());
         issuing.setStatus(CertificateStatusEnum.Good);
         issuing.setType(CertificateTypeEnum.Issuer);
-        issuing.setUser(null);
+        issuing.setUser(user);
         certificateRepository.save(issuing);
 
         // crl
@@ -111,6 +113,7 @@ public class IssuerService {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setType(KeyTypeEnum.Plain);
+            key.setUser(user);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
             key.setSerial(System.currentTimeMillis() + 1);
@@ -146,7 +149,7 @@ public class IssuerService {
         crl.setValidUntil(crlCertificate.getNotAfter());
         crl.setStatus(CertificateStatusEnum.Good);
         crl.setType(CertificateTypeEnum.Crl);
-        crl.setUser(null);
+        crl.setUser(user);
         certificateRepository.save(crl);
 
         // ocsp
@@ -154,6 +157,7 @@ public class IssuerService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
+            key.setUser(user);
             key.setType(KeyTypeEnum.Plain);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
@@ -190,7 +194,7 @@ public class IssuerService {
         ocsp.setValidUntil(ocspCertificate.getNotAfter());
         ocsp.setStatus(CertificateStatusEnum.Good);
         ocsp.setType(CertificateTypeEnum.Ocsp);
-        ocsp.setUser(null);
+        ocsp.setUser(user);
         certificateRepository.save(ocsp);
 
         issuing.setCrlCertificate(crl);

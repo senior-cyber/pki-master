@@ -15,7 +15,7 @@ public class UserEmailAddressValidator implements IValidator<String> {
     @Override
     public void validate(IValidatable<String> validatable) {
         String emailAddress = validatable.getValue();
-        if (emailAddress != null && !"".equals(emailAddress)) {
+        if (emailAddress != null && !emailAddress.isEmpty()) {
             ApplicationContext context = WicketFactory.getApplicationContext();
             UserRepository userRepository = context.getBean(UserRepository.class);
             Optional<User> optionalUser = userRepository.findByEmailAddress(emailAddress);

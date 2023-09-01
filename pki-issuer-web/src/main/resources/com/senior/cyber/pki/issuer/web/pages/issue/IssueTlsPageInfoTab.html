@@ -61,7 +61,7 @@
                     <wicket:container wicket:id="ip_container">
                         <div class="form-group">
                             <label wicket:for="ip_field">IP</label>
-                            <textarea wicket:id="ip_field" class="form-control"></textarea>
+                            <input type="text" wicket:id="ip_field" class="form-control">
                             <span wicket:id="ip_feedback"/>
                         </div>
                     </wicket:container>
@@ -72,8 +72,8 @@
                 <div wicket:id="dns_column">
                     <wicket:container wicket:id="dns_container">
                         <div class="form-group">
-                            <label wicket:for="dns_field">DNS (FQDN)</label>
-                            <textarea wicket:id="dns_field" class="form-control"></textarea>
+                            <label wicket:for="dns_field">FQDN</label>
+                            <input type="text" wicket:id="dns_field" class="form-control">
                             <span wicket:id="dns_feedback"/>
                         </div>
                     </wicket:container>

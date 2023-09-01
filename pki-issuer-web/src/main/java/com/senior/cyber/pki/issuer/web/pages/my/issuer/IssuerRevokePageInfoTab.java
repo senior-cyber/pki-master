@@ -18,7 +18,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -119,16 +118,11 @@ public class IssuerRevokePageInfoTab extends ContentPanel {
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
         UserRepository userRepository = context.getBean(UserRepository.class);
 
-        Optional<Certificate> optionalCertificate = null;
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
-        } else {
-            optionalCertificate = certificateRepository.findById(this.uuid);
-        }
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
         Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
+
         this.common_name_value = certificate.getCommonName();
         this.organization_value = certificate.getOrganization();
         this.organizational_unit_value = certificate.getOrganizationalUnit();
@@ -260,27 +254,13 @@ public class IssuerRevokePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.revokeButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateRevoke_Revoke_Action)) {
-            } else {
-                this.revokeButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", IssuerBrowsePage.class);
         this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyIntermediateRevoke_Revoke_Action);
-        }
 
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 
@@ -292,6 +272,7 @@ public class IssuerRevokePageInfoTab extends ContentPanel {
         issuerCertificate.setStatus(CertificateStatusEnum.Revoked);
         certificateRepository.save(issuerCertificate);
 
+        // TODO:
 //        List<Certificate> certificates = certificateRepository.findByIntermediateAndStatus(issuerCertificate, CertificateStatusEnum.Good);
 //        for (Certificate certificate : certificates) {
 //            certificate.setRevokedDate(this.date_value);

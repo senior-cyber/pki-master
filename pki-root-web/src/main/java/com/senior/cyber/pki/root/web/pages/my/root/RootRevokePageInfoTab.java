@@ -17,7 +17,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.root.web.configuration.Mode;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -109,16 +108,10 @@ public class RootRevokePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 
-        Optional<Certificate> optionalRoot = null;
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalRoot = certificateRepository.findByIdAndUser(this.uuid, user);
-        } else {
-            optionalRoot = certificateRepository.findById(this.uuid);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalRoot = certificateRepository.findByIdAndUser(this.uuid, user);
         Certificate root = optionalRoot.orElseThrow(() -> new WicketRuntimeException("certificate is not found"));
         this.common_name_value = root.getCommonName();
         this.organization_value = root.getOrganization();
@@ -241,27 +234,13 @@ public class RootRevokePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.revokeButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyRootRevoke_Revoke_Action)) {
-            } else {
-                this.revokeButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", RootBrowsePage.class);
         this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyRootRevoke_Revoke_Action);
-        }
 
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 

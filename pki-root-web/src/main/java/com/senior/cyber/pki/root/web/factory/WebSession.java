@@ -5,6 +5,7 @@ import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.root.web.utility.RoleUtility;
 import com.senior.cyber.pki.root.web.utility.UserUtility;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.request.Request;
@@ -19,14 +20,14 @@ import java.util.List;
 
 public class WebSession extends AuthenticatedWebSession {
 
+    @Getter
     protected String userId;
-
-    protected String pwd;
 
     protected List<String> queue;
 
     protected Roles roles;
 
+    @Getter
     protected String sessionId;
 
     public WebSession(Request request) {
@@ -51,20 +52,14 @@ public class WebSession extends AuthenticatedWebSession {
         }
 
         NamedParameterJdbcTemplate named = context.getBean(NamedParameterJdbcTemplate.class);
-        TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
 
         this.queue = new LinkedList<>();
         List<String> roles = RoleUtility.lookupRole(named, user.getId());
         this.roles = new Roles();
         this.roles.addAll(roles);
         this.userId = user.getId();
-        this.pwd = textEncryptor.encrypt(password);
 
         return true;
-    }
-
-    public String getUserId() {
-        return userId;
     }
 
     public void switchUser(String userId) {
@@ -114,16 +109,6 @@ public class WebSession extends AuthenticatedWebSession {
 
     public List<String> getQueue() {
         return Collections.unmodifiableList(queue);
-    }
-
-    public String getPwd() {
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
-        try {
-            return textEncryptor.decrypt(this.pwd);
-        } catch (EncryptionOperationNotPossibleException e) {
-            return null;
-        }
     }
 
 }

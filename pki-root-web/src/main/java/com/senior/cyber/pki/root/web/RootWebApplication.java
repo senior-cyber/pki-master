@@ -42,21 +42,4 @@ public class RootWebApplication {
         return WicketFactory.getApplicationContext();
     }
 
-    @Bean
-    public PasswordEncryptor createPasswordEncryptor() {
-        return new StrongPasswordEncryptor();
-    }
-
-    @Bean
-    public Crypto createCrypto() {
-        return new Crypto();
-    }
-
-    @Bean
-    public TextEncryptor createTextEncryptor() {
-        AES256TextEncryptor encryptor = new AES256TextEncryptor();
-        encryptor.setPassword(RandomStringUtils.randomAlphanumeric(50));
-        return encryptor;
-    }
-
 }

@@ -9,6 +9,7 @@ include(
         ":pki-issuer-api",
         ":pki-issuer-web",
         ":pki-client-cli",
+        ":pki-client-web",
         ":pki-common",
         ":pki-dao"
 )
@@ -22,3 +23,4 @@ project(":pki-issuer-web").projectDir = file("./pki-issuer-web")
 project(":pki-api-crl").projectDir = file("./pki-api-crl")
 project(":pki-api-aia").projectDir = file("./pki-api-aia")
 project(":pki-client-cli").projectDir = file("./pki-client-cli")
+project(":pki-client-web").projectDir = file("./pki-client-web")

@@ -18,7 +18,6 @@ import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
@@ -61,9 +60,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.certificate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.certificate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Certificate.name() + "'");
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            // this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = " + session.getUserId());
-        }
+        this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.certificate_browse_provider.setCountField(Sql.column(Certificate_.id));
         this.certificate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
         this.certificate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());
@@ -73,20 +70,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.certificate_browse_provider, new StringConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.certificate_browse_provider, new DateConvertor()));
         this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor()));
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Download_Action)) {
-                this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor(), this));
-            }
-        } else {
-            this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor(), this));
-        }
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
-                this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
-            }
-        } else {
-            this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
-        }
+        this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor(), this));
+        this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
     }
 
     @Override
@@ -98,9 +83,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     protected void download(Tuple tuple, Link<Void> link) {
         ApplicationContext context = WicketFactory.getApplicationContext();
         ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Download_Action);
-        }
+
 //        try {
 //            long serial = tuple.get("serial", long.class);
 //
@@ -318,56 +301,25 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
         this.createButton = new BookmarkablePageLink<>("createButton", CsrGeneratePage.class);
         body.add(this.createButton);
-
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_IssueNewCertificate_Action)) {
-            } else {
-                this.createButton.setVisible(false);
-            }
-        }
     }
 
     protected List<ActionItem> certificate_browse_action_link(String link, Tuple model) {
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         List<ActionItem> actions = new ArrayList<>(0);
         String status = model.get("status", String.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Copy_Action)) {
-                actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
-            }
-        } else {
-            actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
-        }
+        actions.add(new ActionItem("Copy", Model.of("Copy"), ItemCss.SUCCESS));
         if (CertificateStatusEnum.Good.name().equals(status)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                if (getSession().getRoles().hasRole(Role.NAME_ROOT) || getSession().getRoles().hasRole(Role.NAME_Page_MyCertificateBrowse_Revoke_Action)) {
-                    actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-                }
-            } else {
-                actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
-            }
+            actions.add(new ActionItem("Revoke", Model.of("Revoke"), ItemCss.DANGER));
         }
         return actions;
     }
 
     protected void certificate_browse_action_click(String link, Tuple model, AjaxRequestTarget target) {
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         if ("Revoke".equals(link)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Revoke_Action);
-            }
             String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);
             setResponsePage(CertificateRevokePage.class, parameters);
         } else if ("Copy".equals(link)) {
-            if (applicationConfiguration.getMode() == Mode.Enterprise) {
-                Permission.tryAccess(getSession(), Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse_Copy_Action);
-            }
             String uuid = model.get("uuid", String.class);
             PageParameters parameters = new PageParameters();
             parameters.add("uuid", uuid);

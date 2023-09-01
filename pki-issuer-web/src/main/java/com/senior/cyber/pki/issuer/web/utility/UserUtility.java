@@ -56,7 +56,6 @@ public class UserUtility {
         }
 
         PasswordEncryptor passwordEncryptor = context.getBean(PasswordEncryptor.class);
-        TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
 
         try {
             if (!passwordEncryptor.checkPassword(password, user.getPassword())) {

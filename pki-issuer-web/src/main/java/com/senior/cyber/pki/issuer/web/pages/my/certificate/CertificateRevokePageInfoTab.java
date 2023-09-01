@@ -18,7 +18,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -122,17 +121,12 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 
-        Optional<Certificate> optionalCertificate = null;
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
-        } else {
-            optionalCertificate = certificateRepository.findById(this.uuid);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(this.uuid, user);
         Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
+
         this.common_name_value = certificate.getCommonName();
         this.organization_value = certificate.getOrganization();
         this.organizational_unit_value = certificate.getOrganizationalUnit();
@@ -141,8 +135,8 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         this.country_value = certificate.getCountryCode();
         this.email_address_value = certificate.getEmailAddress();
         this.san_value = certificate.getSan();
-        // TODO :
-//        this.issuer_value = certificate.getIntermediate().getCommonName();
+        TODO:
+        this.issuer_value = certificate.getIssuerCertificate().getCommonName();
 
         this.date_value = LocalDate.now().toDate();
         this.reason_value = "cessationOfOperation";
@@ -280,27 +274,13 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         };
 
         this.form.add(this.revokeButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateRevoke_Revoke_Action)) {
-            } else {
-                this.revokeButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
         this.form.add(this.cancelButton);
     }
 
     protected void revokeButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyCertificateRevoke_Revoke_Action);
-        }
 
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
 

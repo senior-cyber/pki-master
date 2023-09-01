@@ -3,20 +3,20 @@
 
         <createTable tableName="tbl_iban">
             <column name="iban_id" type="VARCHAR(36)">
-                <constraints notNullConstraintName="notnull_key_40" nullable="false" primaryKey="true" primaryKeyName="primary_key_10"/>
+                <constraints notNullConstraintName="notnull_key_42" nullable="false" primaryKey="true" primaryKeyName="primary_key_10"/>
             </column>
 
             <column name="country" type="VARCHAR(200)">
-                <constraints notNullConstraintName="notnull_key_41" nullable="false" unique="true" uniqueConstraintName="unique_index_13"/>
+                <constraints notNullConstraintName="notnull_key_43" nullable="false" unique="true" uniqueConstraintName="unique_index_13"/>
             </column>
             <column name="alpha2_code" type="VARCHAR(2)">
-                <constraints notNullConstraintName="notnull_key_42" nullable="false" unique="true" uniqueConstraintName="unique_index_14"/>
+                <constraints notNullConstraintName="notnull_key_44" nullable="false" unique="true" uniqueConstraintName="unique_index_14"/>
             </column>
             <column name="alpha3_code" type="VARCHAR(3)">
-                <constraints notNullConstraintName="notnull_key_43" nullable="false" unique="true" uniqueConstraintName="unique_index_15"/>
+                <constraints notNullConstraintName="notnull_key_45" nullable="false" unique="true" uniqueConstraintName="unique_index_15"/>
             </column>
             <column name="alpha_numeric" type="VARCHAR(3)">
-                <constraints notNullConstraintName="notnull_key_44" nullable="false" unique="true" uniqueConstraintName="unique_index_16"/>
+                <constraints notNullConstraintName="notnull_key_46" nullable="false" unique="true" uniqueConstraintName="unique_index_16"/>
             </column>
 
         </createTable>

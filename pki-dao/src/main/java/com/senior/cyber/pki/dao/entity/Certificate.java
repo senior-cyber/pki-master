@@ -46,7 +46,7 @@ public class Certificate implements Serializable {
     @Column(name = "email_address")
     private String emailAddress;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "key_id", referencedColumnName = "key_id")
     private Key key;
 
@@ -79,15 +79,15 @@ public class Certificate implements Serializable {
     @Column(name = "revoked_reason")
     private String revokedReason;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "issuer_certificate_id", referencedColumnName = "certificate_id")
     private Certificate issuerCertificate;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "crl_certificate_id", referencedColumnName = "certificate_id")
     private Certificate crlCertificate;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ocsp_certificate_id", referencedColumnName = "certificate_id")
     private Certificate ocspCertificate;
 
@@ -99,7 +99,7 @@ public class Certificate implements Serializable {
     @Enumerated(EnumType.STRING)
     private CertificateTypeEnum type;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
 

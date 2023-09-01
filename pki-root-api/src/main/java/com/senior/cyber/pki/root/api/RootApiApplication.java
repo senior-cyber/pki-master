@@ -30,9 +30,4 @@ public class RootApiApplication {
         SpringApplication.run(RootApiApplication.class, args);
     }
 
-    @Bean
-    public PasswordEncryptor createPasswordEncryptor() {
-        return new StrongPasswordEncryptor();
-    }
-
 }

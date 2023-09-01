@@ -7,7 +7,6 @@ import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.password.PasswordEncryptor;
-import org.jasypt.util.text.TextEncryptor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,7 +55,6 @@ public class UserUtility {
         }
 
         PasswordEncryptor passwordEncryptor = context.getBean(PasswordEncryptor.class);
-        TextEncryptor textEncryptor = context.getBean(TextEncryptor.class);
 
         try {
             if (!passwordEncryptor.checkPassword(password, user.getPassword())) {

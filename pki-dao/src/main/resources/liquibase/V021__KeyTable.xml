@@ -26,7 +26,9 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="user_id" type="VARCHAR(36)"/>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
 
         </createTable>
 

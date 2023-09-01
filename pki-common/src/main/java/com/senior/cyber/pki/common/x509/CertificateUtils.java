@@ -152,6 +152,9 @@ public class CertificateUtils {
             builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
         }
 
+        List<String> ips = new ArrayList<>();
+        List<String> dnses = new ArrayList<>();
+
         if (
                 (ip != null && !ip.isEmpty()) || (dns != null && dns.isEmpty())
         ) {
@@ -160,7 +163,10 @@ public class CertificateUtils {
                 InetAddressValidator validator = InetAddressValidator.getInstance();
                 for (String p : ip) {
                     if (validator.isValid(p)) {
-                        generalNames.add(new GeneralName(GeneralName.iPAddress, p));
+                        if (!ips.contains(p)) {
+                            generalNames.add(new GeneralName(GeneralName.iPAddress, p));
+                            ips.add(p);
+                        }
                     }
                 }
             }
@@ -168,7 +174,10 @@ public class CertificateUtils {
                 DomainValidator validator = DomainValidator.getInstance(true);
                 for (String p : dns) {
                     if (validator.isValid(p)) {
-                        generalNames.add(new GeneralName(GeneralName.dNSName, p));
+                        if (!dnses.contains(p)) {
+                            generalNames.add(new GeneralName(GeneralName.dNSName, p));
+                            dnses.add(p);
+                        }
                     }
                 }
             }

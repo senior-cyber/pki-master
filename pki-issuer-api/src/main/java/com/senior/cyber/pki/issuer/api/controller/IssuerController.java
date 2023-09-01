@@ -3,10 +3,12 @@ package com.senior.cyber.pki.issuer.api.controller;
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
 import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.service.IssuerService;
+import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -47,9 +49,13 @@ public class IssuerController {
     @Value("${api.aia}")
     protected String aiaApi;
 
+    @Autowired
+    protected UserService userService;
+
     @Transactional(rollbackFor = Throwable.class)
     @RequestMapping(path = "/issuer/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IssuerGenerateResponse> issuerGenerate(RequestEntity<IssuerGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         IssuerGenerateRequest request = httpRequest.getBody();
 
         Date now = LocalDate.now().toDate();
@@ -64,7 +70,7 @@ public class IssuerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
         }
 
-        IssuerGenerateResponse response = issuerService.issuerGenerate(request, crlApi, aiaApi);
+        IssuerGenerateResponse response = issuerService.issuerGenerate(user, request, crlApi, aiaApi);
         return ResponseEntity.ok(response);
     }
 

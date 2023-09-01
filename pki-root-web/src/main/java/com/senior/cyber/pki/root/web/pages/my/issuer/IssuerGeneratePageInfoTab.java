@@ -23,10 +23,8 @@ import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.root.web.configuration.Mode;
 import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
-import com.senior.cyber.pki.root.web.validator.IntermediateCommonNameValidator;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.IssuerService;
 import org.apache.commons.lang3.StringUtils;
@@ -125,26 +123,19 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
         this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
         this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            // this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
-        }
+        this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+
+        ApplicationContext context = WicketFactory.getApplicationContext();
 
         String uuid = getPage().getPageParameters().get("uuid").toString();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
-        Optional<Certificate> optionalCertificate = null;
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
-        } else {
-            optionalCertificate = certificateRepository.findById(uuid);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
         Certificate certificate = optionalCertificate.orElse(null);
 
         if (certificate != null) {
@@ -194,7 +185,6 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         this.common_name_field = new TextField<>("common_name_field", new PropertyModel<>(this, "common_name_value"));
         this.common_name_field.setLabel(Model.of("Common Name"));
         this.common_name_field.setRequired(true);
-        this.common_name_field.add(new IntermediateCommonNameValidator());
         this.common_name_field.add(new ContainerFeedbackBehavior());
         this.common_name_container.add(this.common_name_field);
         this.common_name_container.newFeedback("common_name_feedback", this.common_name_field);
@@ -285,15 +275,6 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.saveButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyIntermediateGenerate_Issue_Action)) {
-            } else {
-                this.saveButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", IssuerBrowsePage.class);
         this.form.add(this.cancelButton);
@@ -302,12 +283,12 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
     }
 
     protected void saveButtonClick() {
-        WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            Permission.tryAccess(session, Role.NAME_ROOT, Role.NAME_Page_MyIntermediateGenerate_Issue_Action);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        WebSession session = (WebSession) getWebSession();
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
         try {
             IssuerService issuerService = context.getBean(IssuerService.class);
             ApiConfiguration apiConfiguration = context.getBean(ApiConfiguration.class);
@@ -324,7 +305,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             request.setOrganizationalUnit(this.organizational_unit_value);
             request.setEmailAddress(this.email_address_value);
 
-            issuerService.issuerGenerate(request, apiConfiguration.getCrl(), apiConfiguration.getAia());
+            issuerService.issuerGenerate(user, request, apiConfiguration.getCrl(), apiConfiguration.getAia());
 
             setResponsePage(IssuerBrowsePage.class);
         } catch (Throwable e) {

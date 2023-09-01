@@ -13,6 +13,4 @@ public class ApplicationConfiguration {
 
     private String secret;
 
-    private Mode mode;
-
 }

@@ -22,12 +22,10 @@ import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.Mode;
 import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
-import com.senior.cyber.pki.issuer.web.validator.CertificateCommonNameValidator;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.wicket.MarkupContainer;
@@ -114,21 +112,15 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
 
         String uuid = getPage().getPageParameters().get("uuid").toString();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
         IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
-        Optional<Certificate> optionalCertificate = null;
-        if (applicationConfiguration.getMode() == Mode.Individual) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
-            Optional<User> optionalUser = userRepository.findById(session.getUserId());
-            User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-            optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
-        } else {
-            optionalCertificate = certificateRepository.findById(uuid);
-        }
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
+        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
         Certificate certificate = optionalCertificate.orElse(null);
 
         if (certificate != null) {
@@ -157,7 +149,6 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
         this.common_name_field = new TextField<>("common_name_field", new PropertyModel<>(this, "common_name_value"));
         this.common_name_field.setLabel(Model.of("Common Name"));
         this.common_name_field.setRequired(true);
-        this.common_name_field.add(new CertificateCommonNameValidator());
         this.common_name_field.add(new ContainerFeedbackBehavior());
         this.common_name_container.add(this.common_name_field);
         this.common_name_container.newFeedback("common_name_feedback", this.common_name_field);
@@ -232,15 +223,6 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
             }
         };
         this.form.add(this.generateButton);
-        WebSession session = (WebSession) getSession();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-        if (applicationConfiguration.getMode() == Mode.Enterprise) {
-            if (session.getRoles().hasRole(Role.NAME_ROOT) || session.getRoles().hasRole(Role.NAME_Page_MyCertificateGenerate_Issue_Action)) {
-            } else {
-                this.generateButton.setVisible(false);
-            }
-        }
 
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", CertificateBrowsePage.class);
         this.form.add(this.cancelButton);

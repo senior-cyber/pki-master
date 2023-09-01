@@ -15,7 +15,7 @@ public class UserLoginValidator implements IValidator<String> {
     @Override
     public void validate(IValidatable<String> validatable) {
         String login = validatable.getValue();
-        if (login != null && !"".equals(login)) {
+        if (login != null && !login.isEmpty()) {
             ApplicationContext context = WicketFactory.getApplicationContext();
             UserRepository userRepository = context.getBean(UserRepository.class);
             Optional<User> optionalUser = userRepository.findByLogin(login);

@@ -51,7 +51,9 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="user_id" type="VARCHAR(36)"/>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
 
             <column name="issuer_certificate_id" type="VARCHAR(36)"/>
             <column name="crl_certificate_id" type="VARCHAR(36)"/>
