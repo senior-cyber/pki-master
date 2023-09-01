@@ -72,8 +72,6 @@ public class RootBrowsePage extends MasterPage implements IHtmlTranslator<Tuple>
         super.onInitData();
         List<String> types = new ArrayList<>();
         types.add("'" + CertificateTypeEnum.Root.name() + "'");
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.root_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.root_browse_provider.setSort("created", SortOrder.DESCENDING);

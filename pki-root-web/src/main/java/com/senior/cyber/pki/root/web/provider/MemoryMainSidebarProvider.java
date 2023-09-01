@@ -18,6 +18,7 @@ import com.senior.cyber.pki.root.web.pages.group.GroupBrowsePage;
 import com.senior.cyber.pki.root.web.pages.my.issuer.IssuerBrowsePage;
 import com.senior.cyber.pki.root.web.pages.my.profile.MyProfilePage;
 import com.senior.cyber.pki.root.web.pages.my.root.RootBrowsePage;
+import com.senior.cyber.pki.root.web.pages.my.x509.X509HierarchyPage;
 import com.senior.cyber.pki.root.web.pages.role.RoleBrowsePage;
 import com.senior.cyber.pki.root.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.root.web.pages.user.UserExitPage;
@@ -68,6 +69,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         if (this.session.isSignedIn()) {
             List<SidebarMenu> pkiMenu = pkiMenu(roles);
             if (!pkiMenu.isEmpty()) {
+                children.add(new SidebarMenuItem("fas fa-key", "x509", null, X509HierarchyPage.class));
                 children.add(new SidebarMenuDropdown("fas fa-key", "PKI Chain", null, pkiMenu));
             }
         }

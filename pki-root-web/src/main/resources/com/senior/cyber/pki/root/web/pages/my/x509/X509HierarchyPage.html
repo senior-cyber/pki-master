@@ -13,16 +13,12 @@
                 <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
                     <div class="card card-info">
                         <div class="card-footer">
-                            <a wicket:id="createButtonIssuingCa" class="btn btn-info">Issue New IssuingCA</a>
-                            <a wicket:id="createButtonCertificateBasic" class="btn btn-info">Issue New Basic Certificate</a>
-                            <a wicket:id="createButtonCertificateTls" class="btn btn-info">Issue New Tls Certificate</a>
+                            <a wicket:id="createButton" class="btn btn-info">Issue New RootCA</a>
                         </div>
                     </div>
                     <div class="card card-info">
                         <div class="card-body p-0">
-                            <form wicket:id="intermediate_browse_form">
-                                <table wicket:id="intermediate_browse_table"></table>
-                            </form>
+                            <div wicket:id="x509_tree"></div>
                         </div>
                     </div>
                 </div>

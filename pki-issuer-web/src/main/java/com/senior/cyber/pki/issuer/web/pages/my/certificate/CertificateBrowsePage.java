@@ -49,13 +49,9 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
     protected List<IColumn<Tuple, String>> certificate_browse_column;
     protected AbstractDataTable<Tuple, String> certificate_browse_table;
 
-    protected BookmarkablePageLink<Void> createButton;
-
     @Override
     protected void onInitData() {
         super.onInitData();
-        ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
         WebSession session = getSession();
         this.certificate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.certificate_browse_provider.setSort("created", SortOrder.DESCENDING);
@@ -298,9 +294,6 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
         this.certificate_browse_table = new DataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
         this.certificate_browse_form.add(this.certificate_browse_table);
-
-        this.createButton = new BookmarkablePageLink<>("createButton", CsrGeneratePage.class);
-        body.add(this.createButton);
     }
 
     protected List<ActionItem> certificate_browse_action_link(String link, Tuple model) {

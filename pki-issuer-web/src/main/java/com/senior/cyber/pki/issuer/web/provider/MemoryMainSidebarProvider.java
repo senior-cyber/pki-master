@@ -21,6 +21,7 @@ import com.senior.cyber.pki.issuer.web.pages.issue.IssueTlsPage;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.my.issuer.IssuerBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.my.profile.MyProfilePage;
+import com.senior.cyber.pki.issuer.web.pages.my.x509.X509HierarchyPage;
 import com.senior.cyber.pki.issuer.web.pages.role.RoleBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.user.UserBrowsePage;
 import com.senior.cyber.pki.issuer.web.pages.user.UserExitPage;
@@ -69,6 +70,7 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
         }
 
         if (roles.hasRole(Role.NAME_ROOT) || roles.hasRole(Role.NAME_Page_MyCertificateBrowse)) {
+            children.add(new SidebarMenuItem("fas fa-lock", "x509", null, X509HierarchyPage.class));
             children.add(new SidebarMenuItem("fas fa-lock", "IssuingCA", null, IssuerBrowsePage.class));
             children.add(new SidebarMenuItem("fas fa-certificate", "Certificate", null, CertificateBrowsePage.class));
         }
@@ -77,12 +79,12 @@ public class MemoryMainSidebarProvider implements IMainSidebarProvider {
             children.add(new SidebarMenuItem("fas fa-stamp", "Csr", null, CsrGeneratePage.class));
         }
 
-        if (this.session.isSignedIn()) {
-            List<SidebarMenu> csrMenu = csrMenu(roles);
-            if (!csrMenu.isEmpty()) {
-                children.add(new SidebarMenuDropdown("fas fa-key", "Signing Template", null, csrMenu));
-            }
-        }
+//        if (this.session.isSignedIn()) {
+//            List<SidebarMenu> csrMenu = csrMenu(roles);
+//            if (!csrMenu.isEmpty()) {
+//                children.add(new SidebarMenuDropdown("fas fa-key", "Signing Template", null, csrMenu));
+//            }
+//        }
 
         if (roles.hasRole(Role.NAME_Page_UserExit)) {
             children.add(new SidebarMenuItem("fas fa-door-open", "Exit", null, UserExitPage.class));

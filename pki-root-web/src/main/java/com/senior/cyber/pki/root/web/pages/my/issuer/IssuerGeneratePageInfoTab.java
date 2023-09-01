@@ -37,6 +37,7 @@ import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.validation.validator.EmailAddressValidator;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
@@ -44,6 +45,8 @@ import org.springframework.context.ApplicationContext;
 import java.util.*;
 
 public class IssuerGeneratePageInfoTab extends ContentPanel {
+
+    protected Certificate issuerCertificate;
 
     protected Form<Void> form;
 
@@ -117,6 +120,18 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
+        PageParameters parameters = getPage().getPageParameters();
+        long serial = parameters.get("serial").toLong(0L);
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerialAndUser(serial, user);
+        this.issuerCertificate = optionalIssuerCertificate.orElse(null);
+
         List<String> types = new ArrayList<>();
         types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
         types.add("'" + CertificateTypeEnum.Root.name() + "'");
@@ -126,32 +141,9 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
-        ApplicationContext context = WicketFactory.getApplicationContext();
 
-        String uuid = getPage().getPageParameters().get("uuid").toString();
-        CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-        IbanRepository ibanRepository = context.getBean(IbanRepository.class);
-
-        UserRepository userRepository = context.getBean(UserRepository.class);
-        Optional<User> optionalUser = userRepository.findById(session.getUserId());
-        User user = optionalUser.orElseThrow(() -> new WicketRuntimeException(""));
-        Optional<Certificate> optionalCertificate = certificateRepository.findByIdAndUser(uuid, user);
-        Certificate certificate = optionalCertificate.orElse(null);
-
-        if (certificate != null) {
-            Optional<Iban> optionalIban = ibanRepository.findByAlpha2Code(certificate.getCountryCode());
-            Iban iban = optionalIban.orElseThrow(() -> new WicketRuntimeException(""));
-
-            this.common_name_value = certificate.getCommonName();
-            this.organization_value = certificate.getOrganization();
-            this.organizational_unit_value = certificate.getOrganizationalUnit();
-            this.locality_name_value = certificate.getLocalityName();
-            this.state_or_province_name_value = certificate.getStateOrProvinceName();
-            this.country_value = new Option(iban.getAlpha2Code(), iban.getCountry());
-            this.email_address_value = certificate.getEmailAddress();
-            if (certificate.getIssuerCertificate().getStatus() == CertificateStatusEnum.Good) {
-                this.issuer_value = new Option(String.valueOf(certificate.getIssuerCertificate().getId()), certificate.getIssuerCertificate().getCommonName());
-            }
+        if (this.issuerCertificate != null) {
+            this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
         }
 
         LocalDate now = LocalDate.now();
@@ -175,6 +167,9 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         this.issuer_field.add(new ContainerFeedbackBehavior());
         this.issuer_container.add(this.issuer_field);
         this.issuer_container.newFeedback("issuer_feedback", this.issuer_field);
+        if (this.issuerCertificate != null) {
+            this.issuer_field.setEnabled(false);
+        }
 
         this.row1.lastUIColumn("last_column");
 

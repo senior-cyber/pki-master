@@ -17,13 +17,18 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
+import com.senior.cyber.pki.issuer.web.pages.issue.IssueBasicPage;
+import com.senior.cyber.pki.issuer.web.pages.issue.IssueTlsPage;
+import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
 import jakarta.persistence.Tuple;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -60,21 +65,38 @@ import java.util.Optional;
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse})
 public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tuple> {
 
+    protected Certificate issuerCertificate;
+
     protected FilterForm<Map<String, Expression<?>>> intermediate_browse_form;
     protected MySqlDataProvider intermediate_browse_provider;
     protected List<IColumn<Tuple, String>> intermediate_browse_column;
     protected AbstractDataTable<Tuple, String> intermediate_browse_table;
 
-    protected BookmarkablePageLink<Void> createButton;
+    protected BookmarkablePageLink<Void> createButtonIssuingCa;
+
+    protected BookmarkablePageLink<Void> createButtonCertificateBasic;
+
+    protected BookmarkablePageLink<Void> createButtonCertificateTls;
 
     @Override
     protected void onInitData() {
         super.onInitData();
+        WebSession session = getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
+        PageParameters parameters = getPage().getPageParameters();
+        long serial = parameters.get("serial").toLong(0L);
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerialAndUser(serial, user);
+        this.issuerCertificate = optionalIssuerCertificate.orElse(null);
+
         List<String> types = new ArrayList<>();
         types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
-        WebSession session = getSession();
+
         this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
@@ -100,8 +122,19 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         this.intermediate_browse_table = new DataTable<>("intermediate_browse_table", this.intermediate_browse_column, this.intermediate_browse_provider, 20);
         this.intermediate_browse_form.add(this.intermediate_browse_table);
 
-        this.createButton = new BookmarkablePageLink<>("createButton", IssuerGeneratePage.class);
-        body.add(this.createButton);
+        PageParameters parameters = new PageParameters();
+        if (issuerCertificate != null) {
+            parameters.add("serial", issuerCertificate.getSerial());
+        }
+
+        this.createButtonIssuingCa = new BookmarkablePageLink<>("createButtonIssuingCa", IssuerGeneratePage.class, parameters);
+        body.add(this.createButtonIssuingCa);
+
+        this.createButtonCertificateBasic = new BookmarkablePageLink<>("createButtonCertificateBasic", IssueBasicPage.class, parameters);
+        body.add(this.createButtonCertificateBasic);
+
+        this.createButtonCertificateTls = new BookmarkablePageLink<>("createButtonCertificateTls", IssueTlsPage.class, parameters);
+        body.add(this.createButtonCertificateTls);
     }
 
     @Override

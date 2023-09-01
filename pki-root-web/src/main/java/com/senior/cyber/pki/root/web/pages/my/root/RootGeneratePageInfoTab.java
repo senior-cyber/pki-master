@@ -22,6 +22,7 @@ import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
+import com.senior.cyber.pki.root.web.pages.my.x509.X509HierarchyPage;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.RootService;
 import org.apache.wicket.MarkupContainer;
@@ -272,7 +273,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
 
             rootService.rootGenerate(user, request);
 
-            setResponsePage(RootBrowsePage.class);
+            setResponsePage(X509HierarchyPage.class);
         } catch (Throwable e) {
             e.printStackTrace();
         }

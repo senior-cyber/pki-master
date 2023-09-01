@@ -17,11 +17,13 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.common.dto.CertificateCommonCsrRequest;
+import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
@@ -40,6 +42,7 @@ import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
@@ -51,6 +54,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public class IssueBasicPageInfoTab extends ContentPanel {
+
+    protected Certificate issuerCertificate;
 
     protected Form<Void> form;
 
@@ -89,6 +94,22 @@ public class IssueBasicPageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
+        ApplicationContext context = WicketFactory.getApplicationContext();
+        CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
+        PageParameters parameters = getPage().getPageParameters();
+        long serial = parameters.get("serial").toLong(0L);
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerialAndUser(serial, user);
+        this.issuerCertificate = optionalIssuerCertificate.orElse(null);
+
+        if (this.issuerCertificate != null) {
+            this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
+        }
+
         this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
         this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
         this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Issuer.name() + "'");
@@ -129,6 +150,9 @@ public class IssueBasicPageInfoTab extends ContentPanel {
         this.issuer_field.add(new ContainerFeedbackBehavior());
         this.issuer_container.add(this.issuer_field);
         this.issuer_container.newFeedback("issuer_feedback", this.issuer_field);
+        if (this.issuerCertificate != null) {
+            this.issuer_field.setEnabled(false);
+        }
 
         this.valid_from_column = this.row2.newUIColumn("valid_from_column", Size.Four_4);
         this.valid_from_container = this.valid_from_column.newUIContainer("valid_from_container");
