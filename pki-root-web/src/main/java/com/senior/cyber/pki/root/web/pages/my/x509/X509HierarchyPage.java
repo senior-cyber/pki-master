@@ -53,12 +53,12 @@ public class X509HierarchyPage extends MasterPage {
         long id = model.getObject().getSerial();
         PageParameters parameters = new PageParameters();
         parameters.add("serial", id);
-        BookmarkablePageLink<Void> link = new BookmarkablePageLink<>(s, IssuerGeneratePage.class, parameters);
+        BookmarkablePageLink<Void> link = new BookmarkablePageLink<>(s, IssuerBrowsePage.class, parameters);
         return link;
     }
 
     protected Component dataNewLabel(String s, IModel<Certificate> model) {
-        return new Label(s, model.getObject().getCommonName());
+        return new Label(s, model.getObject().getCommonName() + "(" + model.getObject().getSerial() + ")");
     }
 
 }

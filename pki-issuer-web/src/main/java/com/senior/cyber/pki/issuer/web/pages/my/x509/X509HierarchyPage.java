@@ -49,7 +49,7 @@ public class X509HierarchyPage extends MasterPage {
     }
 
     protected Component dataNewLabel(String s, IModel<Certificate> model) {
-        return new Label(s, model.getObject().getCommonName());
+        return new Label(s, model.getObject().getCommonName() + "(" + model.getObject().getSerial() + ")");
     }
 
 }

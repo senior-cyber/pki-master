@@ -101,6 +101,10 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
         this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
+        if (issuerCertificate != null) {
+            this.intermediate_browse_provider.applyWhere("issuerCertificate", Sql.column(Certificate_.issuerCertificate) + " = '" + issuerCertificate.getId()+ "'");
+        }
+
         this.intermediate_browse_provider.setCountField(Sql.column(Certificate_.id));
         this.intermediate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
         this.intermediate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());

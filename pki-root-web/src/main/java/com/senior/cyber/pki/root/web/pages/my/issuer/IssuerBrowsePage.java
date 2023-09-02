@@ -17,9 +17,11 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Role;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
@@ -60,6 +62,8 @@ import java.util.Optional;
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyIntermediateBrowse})
 public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tuple> {
 
+    protected Certificate issuerCertificate;
+
     protected FilterForm<Map<String, Expression<?>>> intermediate_browse_form;
     protected MySqlDataProvider intermediate_browse_provider;
     protected List<IColumn<Tuple, String>> intermediate_browse_column;
@@ -70,15 +74,29 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
     @Override
     protected void onInitData() {
         super.onInitData();
+        WebSession session = getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
+        CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+
+        UserRepository userRepository = context.getBean(UserRepository.class);
+        Optional<User> optionalUser = userRepository.findById(session.getUserId());
+        User user = optionalUser.orElseThrow();
+
+        PageParameters parameters = getPage().getPageParameters();
+        long serial = parameters.get("serial").toLong(0L);
+        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerialAndUser(serial, user);
+        this.issuerCertificate = optionalIssuerCertificate.orElse(null);
+
         List<String> types = new ArrayList<>();
         types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
-        WebSession session = getSession();
         this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
         this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
+        if (issuerCertificate != null) {
+            this.intermediate_browse_provider.applyWhere("issuerCertificate", Sql.column(Certificate_.issuerCertificate) + " = '" + issuerCertificate.getId() + "'");
+        }
+
         this.intermediate_browse_provider.setCountField(Sql.column(Certificate_.id));
         this.intermediate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
         this.intermediate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());
