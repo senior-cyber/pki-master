@@ -1,13 +1,13 @@
 override:
   server:
-    port: 8020
+    port: 8031
   datasource:
     username: root
     password: password
     url: jdbc:mysql://192.168.10.100:3306/pki_master
   api:
-    aia: http://localhost:7010/api
-    crl: http://localhost:7020/api
+    aia: http://localhost:7011/api
+    crl: http://localhost:7012/api
   logging:
     file:
       path: /opt/apps/pki-master/

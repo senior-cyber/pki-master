@@ -1,11 +1,11 @@
 override:
   server:
-    port: 5081
+    port: 8022
   webui:
     admin-lte: /Volumes/code/github/ColorlibHQ/v3
   api:
-    aia: http://localhost:7010/api
-    crl: http://localhost:7020/api
+    aia: http://localhost:7011/api
+    crl: http://localhost:7012/api
   datasource:
     username: root
     password: password

@@ -1,6 +1,6 @@
 override:
   server:
-    port: 7020
+    port: 7012
   datasource:
     username: root
     password: password

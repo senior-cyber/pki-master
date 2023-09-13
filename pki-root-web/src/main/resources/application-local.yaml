@@ -1,6 +1,6 @@
 override:
   server:
-    port: 5080
+    port: 8032
   webui:
     admin-lte: /Volumes/code/github/ColorlibHQ/v3
   api:
