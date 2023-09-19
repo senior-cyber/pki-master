@@ -330,7 +330,7 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
                 buffer.append("# Create RootCA Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -nokeys -in " + rootName + ".crt -export -out " + rootName + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -importcert -storetype PKCS12 -keystore " + rootName + ".p12 -storepass changeit -alias " + rootName + " -file " + rootName + ".crt -noprompt").append("\n");;
                 buffer.append("\n");
 
                 String crt = buffer.toString();
