@@ -4,7 +4,6 @@ import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
@@ -22,7 +21,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.root.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import com.senior.cyber.pki.root.web.pages.MasterPage;
@@ -161,7 +159,7 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
 
                 buffer.append("# Create Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -importcert -storetype PKCS12 -keystore " + name + ".p12 -storepass changeit -alias " + name + " -file " + name + ".crt -noprompt").append("\n");
                 buffer.append("\n");
 
                 buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");

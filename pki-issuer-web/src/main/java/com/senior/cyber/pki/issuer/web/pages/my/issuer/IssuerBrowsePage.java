@@ -180,7 +180,7 @@ public class IssuerBrowsePage extends MasterPage implements IHtmlTranslator<Tupl
 
                 buffer.append("# Create Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("openssl pkcs12 -nokeys -in " + name + ".crt -export -out " + name + ".p12 -passout pass:" + changeit).append("\n");
+                buffer.append("$JAVA_HOME/bin/keytool -importcert -storetype PKCS12 -keystore " + name + ".p12 -storepass changeit -alias " + name + " -file " + name + ".crt -noprompt").append("\n");
                 buffer.append("\n");
 
                 buffer.append("# Installation Instructions for SpringBoot (property)").append("\n");
