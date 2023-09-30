@@ -65,4 +65,11 @@ cp pki-api-aia/build/libs/pki-api-aia.jar /opt/apps/pki-master/pki-api-aia
 
 mkdir -p /opt/apps/pki-master/pki-api-crl
 cp pki-api-crl/build/libs/pki-api-crl.jar /opt/apps/pki-master/pki-api-crl
+
+sudo service pki-root-web start
+sudo service pki-root-api start
+sudo service pki-issuer-web start
+sudo service pki-issuer-api start
+sudo service pki-api-aia start
+sudo service pki-api-crl start
 ```

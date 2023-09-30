@@ -42,9 +42,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot}"
     implementation "org.springframework.boot:spring-boot-starter-json:${spring_boot}"
-    // implementation "org.springframework.session:spring-session-jdbc:${spring_boot}"
 
-    implementation "org.apache.httpcomponents:httpclient:${httpclient}"
     implementation "org.apache.commons:commons-compress:${commons_compress}"
 
     implementation "com.google.guava:guava:${guava}"
