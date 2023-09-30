@@ -172,7 +172,7 @@ public class UserModifyPageDeniedRoleTab extends ContentPanel {
         body.add(this.role_browse_form);
 
         this.role_browse_table = new DefaultDataTable<>("role_browse_table", this.role_browse_column, this.role_browse_provider, 20);
-        this.role_browse_table.addTopToolbar(new FilterToolbar(this.role_browse_table, this.role_browse_form));
+        this.role_browse_table.addTopToolbar(new FilterToolbar<>(this.role_browse_table, this.role_browse_form));
         this.role_browse_form.add(this.role_browse_table);
     }
 

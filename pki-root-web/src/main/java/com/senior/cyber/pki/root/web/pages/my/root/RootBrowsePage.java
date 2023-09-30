@@ -5,6 +5,7 @@ import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
@@ -186,7 +187,7 @@ public class RootBrowsePage extends MasterPage {
         this.root_browse_form = new FilterForm("root_browse_form", this.root_browse_provider);
         body.add(this.root_browse_form);
 
-        this.root_browse_table = new DataTable<>("root_browse_table", this.root_browse_column, this.root_browse_provider, 20);
+        this.root_browse_table = new DefaultDataTable<>("root_browse_table", this.root_browse_column, this.root_browse_provider, 20);
         this.root_browse_table.addTopToolbar(new FilterToolbar<>(this.root_browse_table, this.root_browse_form));
         this.root_browse_form.add(this.root_browse_table);
 

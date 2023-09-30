@@ -5,10 +5,7 @@ import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
@@ -162,6 +159,7 @@ public class GroupModifyPageMemberTab extends ContentPanel {
         body.add(this.user_browse_form);
 
         this.user_browse_table = new DefaultDataTable<>("user_browse_table", this.user_browse_column, this.user_browse_provider, 20);
+        this.user_browse_table.addTopToolbar(new FilterToolbar<>(this.user_browse_table, this.user_browse_form));
         this.user_browse_form.add(this.user_browse_table);
     }
 

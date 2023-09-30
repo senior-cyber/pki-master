@@ -41,6 +41,13 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 make build
 
+sudo service pki-root-web stop
+sudo service pki-root-api stop
+sudo service pki-issuer-web stop
+sudo service pki-issuer-api stop
+sudo service pki-api-aia stop
+sudo service pki-api-crl stop
+
 mkdir -p /opt/apps/pki-master/pki-root-web
 cp pki-root-web/build/libs/pki-root-web.jar /opt/apps/pki-master/pki-root-web
 

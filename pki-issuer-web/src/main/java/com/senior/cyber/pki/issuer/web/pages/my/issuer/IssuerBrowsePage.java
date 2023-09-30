@@ -85,11 +85,11 @@ public class IssuerBrowsePage extends MasterPage {
         this.issuerCertificate = optionalIssuerCertificate.orElse(null);
 
         List<String> types = new ArrayList<>();
-        types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
+        types.add(CertificateTypeEnum.Issuer.name());
         this.intermediate_browse_provider = new MySqlDataProvider(Sql.table(Certificate_.class));
         this.intermediate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.intermediate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = :user", Map.of("user", session.getUserId()));
-        this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " = :type", Map.of("type", types));
+        this.intermediate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (:type)", Map.of("type", types));
         if (issuerCertificate != null) {
             this.intermediate_browse_provider.applyWhere("issuerCertificate", Sql.column(Certificate_.issuerCertificate) + " = :issuerCertificate", Map.of("issuerCertificate", issuerCertificate.getId()));
         }

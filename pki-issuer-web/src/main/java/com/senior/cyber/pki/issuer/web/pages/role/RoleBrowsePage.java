@@ -4,11 +4,9 @@ import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.functional.DeserializerFunction;
 import com.senior.cyber.frmk.common.wicket.functional.FilterFunction;
@@ -39,7 +37,7 @@ public class RoleBrowsePage extends MasterPage {
     protected FilterForm role_browse_form;
     protected MySqlDataProvider role_browse_provider;
     protected List<IColumn<Tuple, ? extends Serializable>> role_browse_column;
-    protected DataTable<Tuple, ? extends Serializable> role_browse_table;
+    protected DataTable<Tuple, Serializable> role_browse_table;
 
     @Override
     protected void onInitData() {
@@ -106,8 +104,8 @@ public class RoleBrowsePage extends MasterPage {
         this.role_browse_form = new FilterForm("role_browse_form", this.role_browse_provider);
         body.add(this.role_browse_form);
 
-        this.role_browse_table = new DataTable<>("role_browse_table", this.role_browse_column,
-                this.role_browse_provider, 20);
+        this.role_browse_table = new DefaultDataTable<>("role_browse_table", this.role_browse_column, this.role_browse_provider, 20);
+        this.role_browse_table.addTopToolbar(new FilterToolbar<>(this.role_browse_table, this.role_browse_form));
         this.role_browse_form.add(this.role_browse_table);
     }
 

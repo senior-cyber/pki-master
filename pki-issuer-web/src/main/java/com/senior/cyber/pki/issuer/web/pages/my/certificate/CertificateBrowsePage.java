@@ -9,10 +9,7 @@ import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.functional.DeserializerFunction;
 import com.senior.cyber.frmk.common.wicket.functional.FilterFunction;
@@ -458,6 +455,7 @@ public class CertificateBrowsePage extends MasterPage {
         body.add(this.certificate_browse_form);
 
         this.certificate_browse_table = new DefaultDataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
+        this.certificate_browse_table.addTopToolbar(new FilterToolbar<>(this.certificate_browse_table, this.certificate_browse_form));
         this.certificate_browse_form.add(this.certificate_browse_table);
     }
 

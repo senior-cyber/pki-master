@@ -3,11 +3,9 @@ package com.senior.cyber.pki.root.web.pages.user;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
@@ -71,8 +69,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
     protected List<IColumn<Tuple, ? extends Serializable>> role_browse_column;
     protected DataTable<Tuple, Serializable> role_browse_table;
 
-    public UserModifyPageGrantedRoleTab(String id, String name, TabbedPanel<Tab> containerPanel,
-                                        Map<String, Object> data) {
+    public UserModifyPageGrantedRoleTab(String id, String name, TabbedPanel<Tab> containerPanel, Map<String, Object> data) {
         super(id, name, containerPanel, data);
     }
 
@@ -151,8 +148,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
 
         this.role_column = this.row1.newUIColumn("role_column", Size.Six_6);
         this.role_container = this.role_column.newUIContainer("role_container");
-        this.role_field = new Select2SingleChoice("role_field", new PropertyModel<>(this, "role_value"),
-                this.role_provider);
+        this.role_field = new Select2SingleChoice("role_field", new PropertyModel<>(this, "role_value"), this.role_provider);
         this.role_field.setLabel(Model.of("Role"));
         this.role_field.setRequired(true);
         this.role_field.add(new ContainerFeedbackBehavior());
@@ -175,8 +171,8 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
         this.role_browse_form = new FilterForm("role_browse_form", this.role_browse_provider);
         body.add(this.role_browse_form);
 
-        this.role_browse_table = new DataTable<>("role_browse_table", this.role_browse_column,
-                this.role_browse_provider, 20);
+        this.role_browse_table = new DefaultDataTable<>("role_browse_table", this.role_browse_column, this.role_browse_provider, 20);
+        this.role_browse_table.addTopToolbar(new FilterToolbar<>(this.role_browse_table, this.role_browse_form));
         this.role_browse_form.add(this.role_browse_table);
     }
 
