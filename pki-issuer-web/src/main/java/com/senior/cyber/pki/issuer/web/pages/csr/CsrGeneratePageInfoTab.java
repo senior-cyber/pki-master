@@ -3,8 +3,7 @@ package com.senior.cyber.pki.issuer.web.pages.csr;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CsrSerializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -17,12 +16,14 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.frmk.x509.CsrUtils;
 import com.senior.cyber.frmk.x509.KeyUtils;
 import com.senior.cyber.frmk.x509.SubjectUtils;
-import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.Iban;
+import com.senior.cyber.pki.dao.entity.Iban_;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
@@ -89,7 +90,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
     protected UIColumn country_column;
     protected UIContainer country_container;
     protected Select2SingleChoice country_field;
-    protected SingleChoiceProvider<String, String> country_provider;
+    protected Select2ChoiceProvider country_provider;
     protected Option country_value;
 
     protected UIRow row3;
@@ -109,7 +110,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+        this.country_provider = new Select2ChoiceProvider(Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
         ApplicationContext context = WicketFactory.getApplicationContext();
 

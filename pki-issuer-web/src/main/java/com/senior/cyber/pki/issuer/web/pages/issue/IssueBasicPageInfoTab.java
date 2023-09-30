@@ -2,9 +2,7 @@ package com.senior.cyber.pki.issuer.web.pages.issue;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CsrDeserializer;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.Permission;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -19,15 +17,13 @@ import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBe
 import com.senior.cyber.pki.common.dto.CertificateCommonCsrRequest;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
-import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
-import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.validator.CsrValidator;
@@ -71,7 +67,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
     protected UIColumn issuer_column;
     protected UIContainer issuer_container;
     protected Select2SingleChoice issuer_field;
-    protected SingleChoiceProvider<String, String> issuer_provider;
+    protected Select2ChoiceProvider issuer_provider;
     protected Option issuer_value;
 
     protected UIColumn valid_from_column;
@@ -110,7 +106,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
             this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
         }
 
-        this.issuer_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
+        this.issuer_provider = new Select2ChoiceProvider(Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
         this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
         this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Issuer.name() + "'");
         this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");

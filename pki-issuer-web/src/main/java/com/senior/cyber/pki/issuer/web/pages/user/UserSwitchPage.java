@@ -1,8 +1,7 @@
 package com.senior.cyber.pki.issuer.web.pages.user;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
@@ -12,7 +11,7 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2Singl
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Role;
 import com.senior.cyber.pki.dao.entity.User_;
-import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -32,7 +31,7 @@ public class UserSwitchPage extends MasterPage {
     protected UIColumn user_column;
     protected UIContainer user_container;
     protected Select2SingleChoice user_field;
-    protected SingleChoiceProvider<String, String> user_provider;
+    protected Select2ChoiceProvider user_provider;
     protected Option user_value;
 
     protected Button switchButton;
@@ -40,10 +39,7 @@ public class UserSwitchPage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.user_provider = new SingleChoiceProvider<>(
-                String.class, new StringConvertor(),
-                String.class, new StringConvertor(),
-                Sql.table(User_.class), Sql.column(User_.id), Sql.column(User_.displayName));
+        this.user_provider = new Select2ChoiceProvider(Sql.table(User_.class), Sql.column(User_.id), Sql.column(User_.displayName));
         this.user_provider.applyWhere("NOT", Sql.column(User_.id) + " NOT IN (" + getSession().getUserId() + ")");
     }
 

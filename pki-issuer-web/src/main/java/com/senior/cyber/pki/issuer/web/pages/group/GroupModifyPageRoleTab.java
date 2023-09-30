@@ -1,14 +1,20 @@
 package com.senior.cyber.pki.issuer.web.pages.group;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.BooleanConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
+import com.senior.cyber.frmk.common.wicket.functional.DeserializerFunction;
+import com.senior.cyber.frmk.common.wicket.functional.FilterFunction;
+import com.senior.cyber.frmk.common.wicket.functional.SerializerFunction;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
@@ -20,7 +26,7 @@ import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.repository.GroupRepository;
 import com.senior.cyber.pki.dao.repository.RoleRepository;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.issuer.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
@@ -28,11 +34,10 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.Form;
@@ -42,6 +47,7 @@ import org.apache.wicket.model.PropertyModel;
 import org.hibernate.jpa.QueryHints;
 import org.springframework.context.ApplicationContext;
 
+import java.io.Serializable;
 import java.util.*;
 
 public class GroupModifyPageRoleTab extends ContentPanel {
@@ -55,16 +61,16 @@ public class GroupModifyPageRoleTab extends ContentPanel {
     protected UIColumn role_column;
     protected UIContainer role_container;
     protected Select2SingleChoice role_field;
-    protected SingleChoiceProvider<String, String> role_provider;
+    protected Select2ChoiceProvider role_provider;
     protected Option role_value;
 
     protected Button grantButton;
     protected BookmarkablePageLink<Void> cancelButton;
 
-    protected FilterForm<Map<String, Expression<?>>> role_browse_form;
+    protected FilterForm role_browse_form;
     protected MySqlDataProvider role_browse_provider;
-    protected List<IColumn<Tuple, String>> role_browse_column;
-    protected AbstractDataTable<Tuple, String> role_browse_table;
+    protected List<IColumn<Tuple, ? extends Serializable>> role_browse_column;
+    protected DataTable<Tuple, Serializable> role_browse_table;
 
     public GroupModifyPageRoleTab(String id, String name, TabbedPanel<Tab> containerPanel, Map<String, Object> data) {
         super(id, name, containerPanel, data);
@@ -75,20 +81,64 @@ public class GroupModifyPageRoleTab extends ContentPanel {
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
         String not_in = "SELECT " + Sql.column(GroupRole_.roleId) + " FROM " + Sql.table(GroupRole_.class) + " WHERE " + Sql.column(GroupRole_.groupId) + " = " + this.uuid;
-        this.role_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+        this.role_provider = new Select2ChoiceProvider(Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
         this.role_provider.applyWhere("GroupRole", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
 
         this.role_browse_provider = new MySqlDataProvider(Sql.table(Role_.class));
         this.role_browse_provider.applyJoin("GroupRole", "INNER JOIN " + Sql.table(GroupRole_.class) + " ON " + Sql.column(GroupRole_.roleId) + " = " + Sql.column(Role_.id));
         this.role_browse_provider.applyWhere("Group", Sql.column(GroupRole_.groupId) + " = " + this.uuid);
         this.role_browse_provider.setSort("role", SortOrder.ASCENDING);
-        this.role_browse_provider.setCountField(Sql.column(GroupRole_.id));
-        this.role_browse_provider.selectNormalColumn("uuid", Sql.column(GroupRole_.id), new StringConvertor());
+        this.role_browse_provider.applyCount(Sql.column(GroupRole_.id));
+        this.role_browse_provider.applySelect(String.class, "uuid", Sql.column(GroupRole_.id));
 
         this.role_browse_column = new ArrayList<>();
-        this.role_browse_column.add(Column.normalColumn(Model.of("Role"), "role", Sql.column(Role_.name), this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Description"), "description", Sql.column(Role_.description), this.role_browse_provider, new StringConvertor()));
-        this.role_browse_column.add(Column.normalColumn(Model.of("Enabled"), "enabled", Sql.column(Role_.enabled), this.role_browse_provider, new BooleanConvertor()));
+        {
+            String label = "Role";
+            String key = "role";
+            String sql = Sql.column(Role_.name);
+            SerializerFunction<String> serializer = (value) -> value;
+            DeserializerFunction<String> deserializer = (value) -> value;
+            FilterFunction<String> filter = (count, alias, params, filterText) -> {
+                String v = StringUtils.trimToEmpty(deserializer.apply(filterText));
+                if (!v.isEmpty()) {
+                    params.put(key, v + "%");
+                    return List.of(AbstractJdbcDataProvider.WHERE + sql + " LIKE :" + key);
+                } else {
+                    return null;
+                }
+            };
+            this.role_browse_column.add(this.role_browse_provider.filteredColumn(String.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Description";
+            String key = "description";
+            String sql = Sql.column(Role_.description);
+            SerializerFunction<String> serializer = (value) -> value;
+            DeserializerFunction<String> deserializer = (value) -> value;
+            FilterFunction<String> filter = (count, alias, params, filterText) -> {
+                String v = StringUtils.trimToEmpty(deserializer.apply(filterText));
+                if (!v.isEmpty()) {
+                    params.put(key, v + "%");
+                    return List.of(AbstractJdbcDataProvider.WHERE + sql + " LIKE :" + key);
+                } else {
+                    return null;
+                }
+            };
+            this.role_browse_column.add(this.role_browse_provider.filteredColumn(String.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Enabled";
+            String key = "enabled";
+            String sql = Sql.column(Role_.enabled);
+            SerializerFunction<Boolean> serializer = (value) -> {
+                if (value == null || !value) {
+                    return "No";
+                } else {
+                    return "Yes";
+                }
+            };
+            this.role_browse_column.add(this.role_browse_provider.column(Boolean.class, Model.of(label), key, sql, serializer));
+        }
         this.role_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::role_browse_action_link, this::role_browse_action_click));
     }
 
@@ -121,10 +171,10 @@ public class GroupModifyPageRoleTab extends ContentPanel {
         this.cancelButton = new BookmarkablePageLink<>("cancelButton", GroupBrowsePage.class);
         this.form.add(this.cancelButton);
 
-        this.role_browse_form = new FilterForm<>("role_browse_form", this.role_browse_provider);
+        this.role_browse_form = new FilterForm("role_browse_form", this.role_browse_provider);
         body.add(this.role_browse_form);
 
-        this.role_browse_table = new DataTable<>("role_browse_table", this.role_browse_column, this.role_browse_provider, 20);
+        this.role_browse_table = new DefaultDataTable<>("role_browse_table", this.role_browse_column, this.role_browse_provider, 20);
         this.role_browse_form.add(this.role_browse_table);
     }
 

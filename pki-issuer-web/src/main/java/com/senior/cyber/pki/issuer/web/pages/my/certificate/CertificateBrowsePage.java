@@ -4,17 +4,20 @@ import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.Permission;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.AbstractDataTable;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.cell.ClickableCell;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.*;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.DateTimeConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.LongConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.translator.IHtmlTranslator;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionFilteredColumn;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ActionItem;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.ItemCss;
+import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
+import com.senior.cyber.frmk.common.wicket.functional.DeserializerFunction;
+import com.senior.cyber.frmk.common.wicket.functional.FilterFunction;
+import com.senior.cyber.frmk.common.wicket.functional.HtmlSerializerFunction;
+import com.senior.cyber.frmk.common.wicket.functional.SerializerFunction;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.Key;
@@ -33,15 +36,14 @@ import jakarta.persistence.Tuple;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
-import org.apache.wicket.extensions.markup.html.repeater.data.table.filter.FilterForm;
-import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.link.Link;
-import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestCycle;
 import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
@@ -52,21 +54,23 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Bookmark("/my/certificate/browse")
 @AuthorizeInstantiation({Role.NAME_ROOT, Role.NAME_Page_MyCertificateBrowse})
-public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator<Tuple> {
+public class CertificateBrowsePage extends MasterPage {
 
-    protected FilterForm<Map<String, Expression<?>>> certificate_browse_form;
+    protected FilterForm certificate_browse_form;
     protected MySqlDataProvider certificate_browse_provider;
-    protected List<IColumn<Tuple, String>> certificate_browse_column;
-    protected AbstractDataTable<Tuple, String> certificate_browse_table;
+    protected List<IColumn<Tuple, ? extends Serializable>> certificate_browse_column;
+    protected DataTable<Tuple, Serializable> certificate_browse_table;
 
     @Override
     protected void onInitData() {
@@ -76,23 +80,112 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
         this.certificate_browse_provider.setSort("created", SortOrder.DESCENDING);
         this.certificate_browse_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Certificate.name() + "'");
         this.certificate_browse_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
-        this.certificate_browse_provider.setCountField(Sql.column(Certificate_.id));
-        this.certificate_browse_provider.selectNormalColumn("uuid", Sql.column(Certificate_.id), new StringConvertor());
-        this.certificate_browse_provider.selectNormalColumn("serial", Sql.column(Certificate_.serial), new LongConvertor());
+        this.certificate_browse_provider.applyCount(Sql.column(Certificate_.id));
+        this.certificate_browse_provider.applySelect(String.class, "uuid", Sql.column(Certificate_.id));
+        this.certificate_browse_provider.applySelect(Long.class, "serial", Sql.column(Certificate_.serial));
 
         this.certificate_browse_column = new ArrayList<>();
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Created"), "created", Sql.column(Certificate_.createdDatetime), this.certificate_browse_provider, new DateTimeConvertor()));
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Name"), "common_name", Sql.column(Certificate_.commonName), this.certificate_browse_provider, new StringConvertor()));
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Valid Until"), "valid_until", Sql.column(Certificate_.validUntil), this.certificate_browse_provider, new DateConvertor()));
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Status"), "status", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor()));
-        this.certificate_browse_column.add(Column.normalColumn(Model.of("Download"), "download", Sql.column(Certificate_.status), this.certificate_browse_provider, new StringConvertor(), this));
+        {
+            String label = "Created";
+            String key = "created";
+            String sql = Sql.column(Certificate_.createdDatetime);
+            SerializerFunction<Date> serializer = (Date value) -> {
+                if (value == null) {
+                    return "";
+                } else {
+                    return DateFormatUtils.format(value, "dd/MM/yyyy");
+                }
+            };
+            DeserializerFunction<Date> deserializer = (String value) -> {
+                if (value == null || value.isEmpty()) {
+                    return null;
+                } else {
+                    try {
+                        return DateUtils.parseDate(value, "dd/MM/yyyy");
+                    } catch (ParseException e) {
+                        throw new WicketRuntimeException(e);
+                    }
+                }
+            };
+            FilterFunction<Date> filter = (count, alias, params, filterText) -> {
+                params.put(key, deserializer.apply(filterText));
+                return List.of(AbstractJdbcDataProvider.WHERE + sql + " = :" + key);
+            };
+            this.certificate_browse_column.add(this.certificate_browse_provider.filteredColumn(Date.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Name";
+            String key = "common_name";
+            String sql = Sql.column(Certificate_.commonName);
+            SerializerFunction<String> serializer = (value) -> value;
+            DeserializerFunction<String> deserializer = (value) -> value;
+            FilterFunction<String> filter = (count, alias, params, filterText) -> {
+                String v = StringUtils.trimToEmpty(deserializer.apply(filterText));
+                if (!v.isEmpty()) {
+                    params.put(key, v + "%");
+                    return List.of(AbstractJdbcDataProvider.WHERE + sql + " LIKE :" + key);
+                } else {
+                    return null;
+                }
+            };
+            this.certificate_browse_column.add(this.certificate_browse_provider.filteredColumn(String.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Valid Until";
+            String key = "valid_until";
+            String sql = Sql.column(Certificate_.validUntil);
+            SerializerFunction<Date> serializer = (Date value) -> {
+                if (value == null) {
+                    return "";
+                } else {
+                    return DateFormatUtils.format(value, "dd/MM/yyyy");
+                }
+            };
+            DeserializerFunction<Date> deserializer = (String value) -> {
+                if (value == null || value.isEmpty()) {
+                    return null;
+                } else {
+                    try {
+                        return DateUtils.parseDate(value, "dd/MM/yyyy");
+                    } catch (ParseException e) {
+                        throw new WicketRuntimeException(e);
+                    }
+                }
+            };
+            FilterFunction<Date> filter = (count, alias, params, filterText) -> {
+                params.put(key, deserializer.apply(filterText));
+                return List.of(AbstractJdbcDataProvider.WHERE + sql + " = :" + key);
+            };
+            this.certificate_browse_column.add(this.certificate_browse_provider.filteredColumn(Date.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Status";
+            String key = "status";
+            String sql = Sql.column(Certificate_.status);
+            SerializerFunction<String> serializer = (value) -> value;
+            DeserializerFunction<String> deserializer = (value) -> value;
+            FilterFunction<String> filter = (count, alias, params, filterText) -> {
+                String v = StringUtils.trimToEmpty(deserializer.apply(filterText));
+                if (!v.isEmpty()) {
+                    params.put(key, v + "%");
+                    return List.of(AbstractJdbcDataProvider.WHERE + sql + " LIKE :" + key);
+                } else {
+                    return null;
+                }
+            };
+            this.certificate_browse_column.add(this.certificate_browse_provider.filteredColumn(String.class, Model.of(label), key, sql, serializer, filter, deserializer));
+        }
+        {
+            String label = "Download";
+            String key = "download";
+            String sql = Sql.column(Certificate_.serial);
+            SerializerFunction<Long> serializer = String::valueOf;
+            HtmlSerializerFunction<Long> htmlFunction = (tuple, value) -> {
+                return new ClickableCell(this::download, tuple, value + ".zip");
+            };
+            this.certificate_browse_column.add(this.certificate_browse_provider.column(Long.class, Model.of(label), key, sql, serializer, htmlFunction));
+        }
         this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
-    }
-
-    @Override
-    public ItemPanel htmlColumn(String key, IModel<String> display, Tuple object) {
-        long serial = object.get("serial", long.class);
-        return new ClickableCell(this::download, object, serial + ".zip");
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
@@ -330,7 +423,8 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
                 buffer.append("# Create RootCA Trust Store P12 File").append("\n");
                 buffer.append("====================================================================================").append("\n");
-                buffer.append("$JAVA_HOME/bin/keytool -importcert -storetype PKCS12 -keystore " + rootName + ".p12 -storepass changeit -alias " + rootName + " -file " + rootName + ".crt -noprompt").append("\n");;
+                buffer.append("$JAVA_HOME/bin/keytool -importcert -storetype PKCS12 -keystore " + rootName + ".p12 -storepass changeit -alias " + rootName + " -file " + rootName + ".crt -noprompt").append("\n");
+                ;
                 buffer.append("\n");
 
                 String crt = buffer.toString();
@@ -360,10 +454,10 @@ public class CertificateBrowsePage extends MasterPage implements IHtmlTranslator
 
     @Override
     protected void onInitHtml(MarkupContainer body) {
-        this.certificate_browse_form = new FilterForm<>("certificate_browse_form", this.certificate_browse_provider);
+        this.certificate_browse_form = new FilterForm("certificate_browse_form", this.certificate_browse_provider);
         body.add(this.certificate_browse_form);
 
-        this.certificate_browse_table = new DataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
+        this.certificate_browse_table = new DefaultDataTable<>("certificate_browse_table", this.certificate_browse_column, this.certificate_browse_provider, 20);
         this.certificate_browse_form.add(this.certificate_browse_table);
     }
 

@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.issuer.web.utility;
 
-import com.senior.cyber.frmk.common.jpa.Sql;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.pki.dao.entity.*;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
