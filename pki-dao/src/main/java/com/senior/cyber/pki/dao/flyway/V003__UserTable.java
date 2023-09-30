@@ -1,13 +1,13 @@
 package com.senior.cyber.pki.dao.flyway;
 
 import com.senior.cyber.frmk.jdbc.query.InsertQuery;
-import com.senior.cyber.frmk.jdbc.query.Param;
 import com.senior.cyber.pki.dao.LiquibaseMigration;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class V003__UserTable extends LiquibaseMigration {
@@ -27,13 +27,13 @@ public class V003__UserTable extends LiquibaseMigration {
 
         InsertQuery insertQuery = null;
         insertQuery = new InsertQuery("tbl_user");
-        insertQuery.addValue("user_id", ":user_id", new Param("user_id", UUID.randomUUID().toString()));
-        insertQuery.addValue("display_name", ":display_name", new Param("display_name", "Senior Cyber"));
-        insertQuery.addValue("enabled", ":enabled", new Param("enabled", true));
-        insertQuery.addValue("login", ":login", new Param("login", "admin"));
-        insertQuery.addValue("pwd", ":pwd", new Param("pwd", passwordEncryptor.encryptPassword("admin")));
-        insertQuery.addValue("email_address", ":email_address", new Param("email_address", ADMIN_EMAIL));
-        insertQuery.addValue("last_seen", ":last_seen", new Param("last_seen", new Date()));
+        insertQuery.addValue("user_id", ":user_id", Map.of("user_id", UUID.randomUUID().toString()));
+        insertQuery.addValue("display_name", ":display_name", Map.of("display_name", "Senior Cyber"));
+        insertQuery.addValue("enabled", ":enabled", Map.of("enabled", true));
+        insertQuery.addValue("login", ":login", Map.of("login", "admin"));
+        insertQuery.addValue("pwd", ":pwd", Map.of("pwd", passwordEncryptor.encryptPassword("admin")));
+        insertQuery.addValue("email_address", ":email_address", Map.of("email_address", ADMIN_EMAIL));
+        insertQuery.addValue("last_seen", ":last_seen", Map.of("last_seen", new Date()));
         named.update(insertQuery.toSQL(), insertQuery.toParam());
     }
 
