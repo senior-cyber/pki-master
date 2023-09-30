@@ -9,7 +9,7 @@ override:
   datasource:
     username: root
     password: password
-    url: jdbc:mysql://192.168.10.100:3306/pki_master
+    url: jdbc:mysql://localhost:3306/pki_master
   logging:
     file:
       path: /opt/apps/pki-master/

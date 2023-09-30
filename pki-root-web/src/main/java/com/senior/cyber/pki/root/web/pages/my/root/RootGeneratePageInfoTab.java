@@ -1,9 +1,7 @@
 package com.senior.cyber.pki.root.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.WicketFactory;
-import com.senior.cyber.frmk.common.jpa.Sql;
-import com.senior.cyber.frmk.common.wicket.Permission;
-import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.filter.convertor.StringConvertor;
+import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -15,12 +13,14 @@ import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
 import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
-import com.senior.cyber.pki.dao.entity.*;
+import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.Iban;
+import com.senior.cyber.pki.dao.entity.Iban_;
+import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.root.web.configuration.ApplicationConfiguration;
-import com.senior.cyber.pki.root.web.data.SingleChoiceProvider;
+import com.senior.cyber.pki.root.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.root.web.factory.WebSession;
 import com.senior.cyber.pki.root.web.pages.my.x509.X509HierarchyPage;
 import com.senior.cyber.pki.root.web.validator.ValidityValidator;
@@ -78,7 +78,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
     protected UIColumn country_column;
     protected UIContainer country_container;
     protected Select2SingleChoice country_field;
-    protected SingleChoiceProvider<String, String> country_provider;
+    protected Select2ChoiceProvider country_provider;
     protected Option country_value;
 
     protected UIRow row3;
@@ -107,7 +107,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
-        this.country_provider = new SingleChoiceProvider<>(String.class, new StringConvertor(), String.class, new StringConvertor(), Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+        this.country_provider = new Select2ChoiceProvider(Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
         WebSession session = (WebSession) getSession();
 
