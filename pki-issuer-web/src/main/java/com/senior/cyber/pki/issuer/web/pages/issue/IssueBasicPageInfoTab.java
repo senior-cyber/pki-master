@@ -1,41 +1,37 @@
 package com.senior.cyber.pki.issuer.web.pages.issue;
 
 import com.senior.cyber.frmk.common.jackson.CsrDeserializer;
-import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.FileUploadField;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.common.dto.CertificateCommonCsrRequest;
 import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Certificate_;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.validator.CsrValidator;
 import com.senior.cyber.pki.issuer.web.validator.ValidityValidator;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import com.senior.cyber.pki.service.CertificateService;
 import org.apache.commons.io.IOUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
+import org.apache.wicket.markup.html.form.upload.FileUploadField;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -45,10 +41,7 @@ import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class IssueBasicPageInfoTab extends ContentPanel {
 
@@ -67,18 +60,18 @@ public class IssueBasicPageInfoTab extends ContentPanel {
 
     protected UIColumn issuer_column;
     protected UIContainer issuer_container;
-    protected Select2SingleChoice issuer_field;
-    protected Select2ChoiceProvider issuer_provider;
+    protected DropDownChoice<Option> issuer_field;
+    protected List<Option> issuer_provider;
     protected Option issuer_value;
 
     protected UIColumn valid_from_column;
     protected UIContainer valid_from_container;
-    protected DateTextField valid_from_field;
+    protected TextField<String> valid_from_field;
     protected Date valid_from_value;
 
     protected UIColumn valid_until_column;
     protected UIContainer valid_until_container;
-    protected DateTextField valid_until_field;
+    protected TextField<String> valid_until_field;
     protected Date valid_until_value;
 
     protected Button saveButton;
@@ -107,10 +100,10 @@ public class IssueBasicPageInfoTab extends ContentPanel {
             this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
         }
 
-        this.issuer_provider = new Select2ChoiceProvider(Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
-        this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
-        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " = '" + CertificateTypeEnum.Issuer.name() + "'");
-        this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
+        this.issuer_provider = new ArrayList<>();
+        for (Certificate certificate : certificateRepository.findByUserAndStatusAndType(user, CertificateStatusEnum.Good, CertificateTypeEnum.Issuer)) {
+            this.issuer_provider.add(new Option(String.valueOf(certificate.getSerial()), certificate.getCommonName()));
+        }
 
         LocalDate now = LocalDate.now();
 
@@ -141,7 +134,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
 
         this.issuer_column = this.row2.newUIColumn("issuer_column", Size.Four_4);
         this.issuer_container = this.issuer_column.newUIContainer("issuer_container");
-        this.issuer_field = new Select2SingleChoice("issuer_field", new PropertyModel<>(this, "issuer_value"), this.issuer_provider);
+        this.issuer_field = new DropDownChoice<>("issuer_field", new PropertyModel<>(this, "issuer_value"), this.issuer_provider);
         this.issuer_field.setLabel(Model.of("Issuer"));
         this.issuer_field.setRequired(true);
         this.issuer_field.add(new ContainerFeedbackBehavior());
@@ -153,7 +146,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
 
         this.valid_from_column = this.row2.newUIColumn("valid_from_column", Size.Four_4);
         this.valid_from_container = this.valid_from_column.newUIContainer("valid_from_container");
-        this.valid_from_field = new DateTextField("valid_from_field", new PropertyModel<>(this, "valid_from_value"));
+        this.valid_from_field = new TextField<>("valid_from_field", new PropertyModel<>(this, "valid_from_value"));
         this.valid_from_field.setRequired(true);
         this.valid_from_field.setLabel(Model.of("Valid From"));
         this.valid_from_field.add(new ContainerFeedbackBehavior());
@@ -162,7 +155,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
 
         this.valid_until_column = this.row2.newUIColumn("valid_until_column", Size.Four_4);
         this.valid_until_container = this.valid_until_column.newUIContainer("valid_until_container");
-        this.valid_until_field = new DateTextField("valid_until_field", new PropertyModel<>(this, "valid_until_value"));
+        this.valid_until_field = new TextField<>("valid_until_field", new PropertyModel<>(this, "valid_until_value"));
         this.valid_until_field.setRequired(true);
         this.valid_until_field.setLabel(Model.of("Valid Until"));
         this.valid_until_field.add(new ContainerFeedbackBehavior());
@@ -206,7 +199,7 @@ public class IssueBasicPageInfoTab extends ContentPanel {
             CertificateCommonCsrRequest request = new CertificateCommonCsrRequest();
             request.setCsr(csr);
             request.setSerial(serial);
-            request.setIssuerSerial(Long.valueOf(this.issuer_value.getId()));
+            request.setIssuerSerial(Long.valueOf(this.issuer_value.getIdValue()));
 
             certificateService.certificateCommonGenerate(user, request, apiConfiguration.getCrl(), apiConfiguration.getAia());
 

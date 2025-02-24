@@ -9,8 +9,6 @@ import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.frmk.x509.CsrUtils;
 import com.senior.cyber.frmk.x509.KeyUtils;
@@ -22,18 +20,18 @@ import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.pages.my.certificate.CertificateBrowsePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
@@ -52,6 +50,8 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -90,8 +90,8 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
 
     protected UIColumn country_column;
     protected UIContainer country_container;
-    protected Select2SingleChoice country_field;
-    protected Select2ChoiceProvider country_provider;
+    protected DropDownChoice<Option> country_field;
+    protected List<Option> country_provider;
     protected Option country_value;
 
     protected UIRow row3;
@@ -111,13 +111,17 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
     @Override
     protected void onInitData() {
         WebSession session = (WebSession) getSession();
-        this.country_provider = new Select2ChoiceProvider(Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+        ApplicationContext applicationContext = WicketFactory.getApplicationContext();
+        IbanRepository ibanRepository = applicationContext.getBean(IbanRepository.class);
+        this.country_provider = new ArrayList<>();
+        for (Iban iban : ibanRepository.findAll()) {
+            this.country_provider.add(new Option(iban.getAlpha2Code(), iban.getCountry()));
+        }
 
         ApplicationContext context = WicketFactory.getApplicationContext();
 
         String uuid = getPage().getPageParameters().get("uuid").toString();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
-        IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
         UserRepository userRepository = context.getBean(UserRepository.class);
         Optional<User> optionalUser = userRepository.findById(session.getUserId());
@@ -196,7 +200,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
 
         this.country_column = this.row2.newUIColumn("country_column", Size.Four_4);
         this.country_container = this.country_column.newUIContainer("country_container");
-        this.country_field = new Select2SingleChoice("country_field", new PropertyModel<>(this, "country_value"), this.country_provider);
+        this.country_field = new DropDownChoice<>("country_field", new PropertyModel<>(this, "country_value"), this.country_provider);
         this.country_field.setLabel(Model.of("Country"));
         this.country_field.setRequired(true);
         this.country_field.add(new ContainerFeedbackBehavior());
@@ -233,7 +237,7 @@ public class CsrGeneratePageInfoTab extends ContentPanel {
     protected void generateButtonClick() {
         try {
             KeyPair key = KeyUtils.generate();
-            X500Name subject = SubjectUtils.generate(this.country_value.getId(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
+            X500Name subject = SubjectUtils.generate(this.country_value.getIdValue(), this.organization_value, this.organizational_unit_value, this.common_name_value, this.locality_name_value, this.state_or_province_name_value, this.email_address_value);
             PKCS10CertificationRequest csr = CsrUtils.generate(key, subject);
 
             ByteArrayOutputStream data = new ByteArrayOutputStream();

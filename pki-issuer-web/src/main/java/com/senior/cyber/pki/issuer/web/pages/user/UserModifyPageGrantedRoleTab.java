@@ -15,16 +15,13 @@ import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.repository.RoleRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
@@ -38,6 +35,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
@@ -58,8 +56,8 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
 
     protected UIColumn role_column;
     protected UIContainer role_container;
-    protected Select2SingleChoice role_field;
-    protected Select2ChoiceProvider role_provider;
+    protected DropDownChoice<Option> role_field;
+    protected List<Option> role_provider;
     protected Option role_value;
 
     protected Button grantButton;
@@ -76,11 +74,17 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
+        ApplicationContext applicationContext = WicketFactory.getApplicationContext();
+        RoleRepository roleRepository = applicationContext.getBean(RoleRepository.class);
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        String not_in = "SELECT " + Sql.column(UserRole_.roleId) + " FROM " + Sql.table(UserRole_.class) + " WHERE " + Sql.column(UserRole_.userId) + " = " + this.uuid;
-        this.role_provider = new Select2ChoiceProvider(Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
-        this.role_provider.applyWhere("UserRole", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
+//        String not_in = "SELECT " + Sql.column(UserRole_.roleId) + " FROM " + Sql.table(UserRole_.class) + " WHERE " + Sql.column(UserRole_.userId) + " = " + this.uuid;
+//        this.role_provider = new Select2ChoiceProvider(Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+//        this.role_provider.applyWhere("UserRole", Sql.column(Role_.id) + " NOT IN (" + not_in + ")");
+        this.role_provider = new ArrayList<>();
+        for (Role role : roleRepository.findAll()) {
+            this.role_provider.add(new Option(role.getId(), role.getName()));
+        }
 
         this.role_browse_provider = new MySqlDataProvider(Sql.table(Role_.class));
         this.role_browse_provider.applyJoin("UserRole", "INNER JOIN " + Sql.table(UserRole_.class) + " ON " + Sql.column(UserRole_.roleId) + " = " + Sql.column(Role_.id));
@@ -149,7 +153,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
 
         this.role_column = this.row1.newUIColumn("role_column", Size.Six_6);
         this.role_container = this.role_column.newUIContainer("role_container");
-        this.role_field = new Select2SingleChoice("role_field", new PropertyModel<>(this, "role_value"), this.role_provider);
+        this.role_field = new DropDownChoice<>("role_field", new PropertyModel<>(this, "role_value"), this.role_provider);
         this.role_field.setLabel(Model.of("Role"));
         this.role_field.setRequired(true);
         this.role_field.add(new ContainerFeedbackBehavior());
@@ -226,7 +230,7 @@ public class UserModifyPageGrantedRoleTab extends ContentPanel {
         query.setHint(QueryHints.HINT_LOADGRAPH, graph);
         User user = query.getSingleResult();
 
-        Role role = roleRepository.findById(this.role_value.getId()).orElseThrow();
+        Role role = roleRepository.findById(this.role_value.getIdValue()).orElseThrow();
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Map<String, Role> roles = new HashMap<>();
             roles.put(UUID.randomUUID().toString(), role);

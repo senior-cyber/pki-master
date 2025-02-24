@@ -14,21 +14,17 @@ import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2MultipleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Group;
 import com.senior.cyber.pki.dao.entity.Group_;
 import com.senior.cyber.pki.dao.entity.Role;
-import com.senior.cyber.pki.dao.entity.Role_;
 import com.senior.cyber.pki.dao.repository.GroupRepository;
 import com.senior.cyber.pki.dao.repository.RoleRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
 import com.senior.cyber.pki.issuer.web.validator.GroupNameValidator;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import jakarta.persistence.Tuple;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.wicket.MarkupContainer;
@@ -36,6 +32,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.model.Model;
@@ -61,9 +58,9 @@ public class GroupBrowsePage extends MasterPage {
 
     protected UIColumn role_column;
     protected UIContainer role_container;
-    protected Select2MultipleChoice role_field;
-    protected Select2ChoiceProvider role_provider;
-    protected List<Option> role_value;
+    protected DropDownChoice<Option> role_field;
+    protected List<Option> role_provider;
+    protected Option role_value;
 
     protected Button createButton;
 
@@ -75,7 +72,12 @@ public class GroupBrowsePage extends MasterPage {
     @Override
     protected void onInitData() {
         super.onInitData();
-        this.role_provider = new Select2ChoiceProvider(Sql.table(Role_.class), Sql.column(Role_.id), Sql.column(Role_.name));
+        ApplicationContext applicationContext = WicketFactory.getApplicationContext();
+        RoleRepository roleRepository = applicationContext.getBean(RoleRepository.class);
+        this.role_provider = new ArrayList<>();
+        for (Role role : roleRepository.findAll()) {
+            this.role_provider.add(new Option(role.getId(), role.getName()));
+        }
 
         this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
         this.group_browse_provider.setSort("id", SortOrder.DESCENDING);
@@ -136,7 +138,7 @@ public class GroupBrowsePage extends MasterPage {
 
         this.role_column = this.row1.newUIColumn("role_column", Size.Six_6);
         this.role_container = this.role_column.newUIContainer("role_container");
-        this.role_field = new Select2MultipleChoice("role_field", new PropertyModel<>(this, "role_value"), this.role_provider);
+        this.role_field = new DropDownChoice<>("role_field", new PropertyModel<>(this, "role_value"), this.role_provider);
         this.role_field.setLabel(Model.of("Role"));
         this.role_field.add(new ContainerFeedbackBehavior());
         this.role_container.add(this.role_field);
@@ -208,10 +210,8 @@ public class GroupBrowsePage extends MasterPage {
         group.setRoles(roles);
 
         if (this.role_value != null) {
-            for (Option option : this.role_value) {
-                Optional<Role> roleOptional = roleRepository.findById(option.getId());
-                roles.put(UUID.randomUUID().toString(), roleOptional.orElseThrow());
-            }
+            Optional<Role> roleOptional = roleRepository.findById(role_value.getIdValue());
+            roles.put(UUID.randomUUID().toString(), roleOptional.orElseThrow());
         }
         groupRepository.save(group);
         setResponsePage(GroupBrowsePage.class);

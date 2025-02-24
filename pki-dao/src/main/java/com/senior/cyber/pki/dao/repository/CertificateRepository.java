@@ -7,6 +7,7 @@ import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,10 @@ public interface CertificateRepository extends JpaRepository<Certificate, String
     Optional<Certificate> findBySerial(long serial);
 
     Optional<Certificate> findBySerialAndUser(long serial, User user);
+
+    List<Certificate> findByUserAndStatusAndTypeIn(User user, CertificateStatusEnum status, Collection<CertificateTypeEnum> types);
+
+    List<Certificate> findByUserAndStatusAndType(User user, CertificateStatusEnum status, CertificateTypeEnum type);
 
     List<Certificate> findByIssuerCertificate(Certificate issuerCertificate);
 

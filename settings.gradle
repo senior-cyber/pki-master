@@ -5,7 +5,7 @@ include(
         ":pki-api-crl",
         ":pki-api-aia",
         ":pki-root-api",
-        ":pki-root-web",
+//        ":pki-root-web",
         ":pki-issuer-api",
         ":pki-issuer-web",
         ":pki-client-cli",
@@ -17,7 +17,7 @@ project(":pki-service").projectDir = file("./pki-service")
 project(":pki-common").projectDir = file("./pki-common")
 project(":pki-dao").projectDir = file("./pki-dao")
 project(":pki-root-api").projectDir = file("./pki-root-api")
-project(":pki-root-web").projectDir = file("./pki-root-web")
+//project(":pki-root-web").projectDir = file("./pki-root-web")
 project(":pki-issuer-api").projectDir = file("./pki-issuer-api")
 project(":pki-issuer-web").projectDir = file("./pki-issuer-web")
 project(":pki-api-crl").projectDir = file("./pki-api-crl")

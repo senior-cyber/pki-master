@@ -1,22 +1,20 @@
 package com.senior.cyber.pki.issuer.web.pages.my.certificate;
 
-
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.Certificate;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
@@ -27,7 +25,8 @@ import org.apache.wicket.model.PropertyModel;
 import org.joda.time.LocalDate;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,8 +46,8 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
 
     protected UIColumn date_column;
     protected UIContainer date_container;
-    protected DateTextField date_field;
-    protected Date date_value;
+    protected TextField<String> date_field;
+    protected String date_value;
 
     protected UIColumn reason_column;
     protected UIContainer reason_container;
@@ -136,7 +135,7 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         TODO:
         this.issuer_value = certificate.getIssuerCertificate().getCommonName();
 
-        this.date_value = LocalDate.now().toDate();
+        this.date_value = DateFormatUtils.format(LocalDate.now().toDate(), "dd/MM/yyyy");
         this.reason_value = "cessationOfOperation";
     }
 
@@ -158,7 +157,7 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
 
         this.date_column = this.row1.newUIColumn("date_column", Size.Four_4);
         this.date_container = this.date_column.newUIContainer("date_container");
-        this.date_field = new DateTextField("date_field", new PropertyModel<>(this, "date_value"));
+        this.date_field = new TextField<>("date_field", new PropertyModel<>(this, "date_value"));
         this.date_field.setLabel(Model.of("Date"));
         this.date_field.setRequired(true);
         this.date_field.add(new ContainerFeedbackBehavior());
@@ -285,7 +284,12 @@ public class CertificateRevokePageInfoTab extends ContentPanel {
         Optional<Certificate> optionalCertificate = certificateRepository.findById(this.uuid);
         Certificate certificate = optionalCertificate.orElseThrow(() -> new WicketRuntimeException(""));
 
-        certificate.setRevokedDate(this.date_value);
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            certificate.setRevokedDate(dateFormat.parse(this.date_value));
+        } catch (ParseException e) {
+            throw new WicketRuntimeException(e);
+        }
         certificate.setRevokedReason(this.reason_value);
 
         certificate.setStatus(CertificateStatusEnum.Revoked);

@@ -7,29 +7,26 @@ import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.DateTextField;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Certificate_;
-import com.senior.cyber.pki.dao.entity.Iban_;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.IbanRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.validator.ValidityValidator;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import com.senior.cyber.pki.service.IssuerService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
@@ -52,8 +49,8 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
     protected UIColumn issuer_column;
     protected UIContainer issuer_container;
-    protected Select2SingleChoice issuer_field;
-    protected Select2ChoiceProvider issuer_provider;
+    protected DropDownChoice<Option> issuer_field;
+    protected List<Option> issuer_provider;
     protected Option issuer_value;
 
     protected UIRow row2;
@@ -87,21 +84,21 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
     protected UIColumn country_column;
     protected UIContainer country_container;
-    protected Select2SingleChoice country_field;
-    protected Select2ChoiceProvider country_provider;
+    protected DropDownChoice<Option> country_field;
+    protected List<Option> country_provider;
     protected Option country_value;
 
     protected UIRow row4;
 
     protected UIColumn valid_from_column;
     protected UIContainer valid_from_container;
-    protected DateTextField valid_from_field;
-    protected Date valid_from_value;
+    protected TextField<String> valid_from_field;
+    protected String valid_from_value;
 
     protected UIColumn valid_until_column;
     protected UIContainer valid_until_container;
-    protected DateTextField valid_until_field;
-    protected Date valid_until_value;
+    protected TextField<String> valid_until_field;
+    protected String valid_until_value;
 
     protected UIColumn email_address_column;
     protected UIContainer email_address_container;
@@ -120,6 +117,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         WebSession session = (WebSession) getSession();
         ApplicationContext context = WicketFactory.getApplicationContext();
         CertificateRepository certificateRepository = context.getBean(CertificateRepository.class);
+        IbanRepository ibanRepository = context.getBean(IbanRepository.class);
 
         UserRepository userRepository = context.getBean(UserRepository.class);
         Optional<User> optionalUser = userRepository.findById(session.getUserId());
@@ -130,15 +128,23 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
         Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerialAndUser(serial, user);
         this.issuerCertificate = optionalIssuerCertificate.orElse(null);
 
-        List<String> types = new ArrayList<>();
-        types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
-        types.add("'" + CertificateTypeEnum.Root.name() + "'");
-        this.issuer_provider = new Select2ChoiceProvider(Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
-        this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
-        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
-        this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
-        this.country_provider = new Select2ChoiceProvider(Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
+//        List<String> types = new ArrayList<>();
+//        types.add("'" + CertificateTypeEnum.Issuer.name() + "'");
+//        types.add("'" + CertificateTypeEnum.Root.name() + "'");
+//        this.issuer_provider = new Select2ChoiceProvider(Sql.table(Certificate_.class), Sql.column(Certificate_.serial), Sql.column(Certificate_.commonName));
+//        this.issuer_provider.applyWhere("status", Sql.column(Certificate_.status) + " = '" + CertificateStatusEnum.Good.name() + "'");
+//        this.issuer_provider.applyWhere("type", Sql.column(Certificate_.type) + " IN (" + StringUtils.join(types, ", ") + ")");
+//        this.issuer_provider.applyWhere("user", Sql.column(Certificate_.user) + " = '" + session.getUserId() + "'");
+//        this.country_provider = new Select2ChoiceProvider(Sql.table(Iban_.class), Sql.column(Iban_.alpha2Code), Sql.column(Iban_.country));
 
+        this.country_provider = new ArrayList<>();
+        for (Iban iban : ibanRepository.findAll()) {
+            this.country_provider.add(new Option(iban.getAlpha2Code(), iban.getCountry()));
+        }
+        this.issuer_provider = new ArrayList<>();
+        for (Certificate certificate : certificateRepository.findByUserAndStatusAndTypeIn(user, CertificateStatusEnum.Good, Arrays.asList(CertificateTypeEnum.Issuer, CertificateTypeEnum.Root))) {
+            this.issuer_provider.add(new Option(String.valueOf(certificate.getSerial()), certificate.getCommonName()));
+        }
 
         if (this.issuerCertificate != null) {
             this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
@@ -146,8 +152,8 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         LocalDate now = LocalDate.now();
 
-        this.valid_from_value = now.toDate();
-        this.valid_until_value = now.plusYears(3).toDate();
+        this.valid_from_value = DateFormatUtils.format(now.toDate(), "dd/MM/yyyy");
+        this.valid_until_value = DateFormatUtils.format(now.plusYears(3).toDate(), "dd/MM/yyyy");
     }
 
     @Override
@@ -159,7 +165,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         this.issuer_column = this.row1.newUIColumn("issuer_column", Size.Twelve_12);
         this.issuer_container = this.issuer_column.newUIContainer("issuer_container");
-        this.issuer_field = new Select2SingleChoice("issuer_field", new PropertyModel<>(this, "issuer_value"), this.issuer_provider);
+        this.issuer_field = new DropDownChoice<>("issuer_field", new PropertyModel<>(this, "issuer_value"), this.issuer_provider);
         this.issuer_field.setLabel(Model.of("Root"));
         this.issuer_field.setRequired(true);
         this.issuer_field.add(new ContainerFeedbackBehavior());
@@ -221,7 +227,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         this.country_column = this.row3.newUIColumn("country_column", Size.Four_4);
         this.country_container = this.country_column.newUIContainer("country_container");
-        this.country_field = new Select2SingleChoice("country_field", new PropertyModel<>(this, "country_value"), this.country_provider);
+        this.country_field = new DropDownChoice<>("country_field", new PropertyModel<>(this, "country_value"), this.country_provider);
         this.country_field.setLabel(Model.of("Country"));
         this.country_field.setRequired(true);
         this.country_field.add(new ContainerFeedbackBehavior());
@@ -234,7 +240,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         this.valid_from_column = this.row4.newUIColumn("valid_from_column", Size.Four_4);
         this.valid_from_container = this.valid_from_column.newUIContainer("valid_from_container");
-        this.valid_from_field = new DateTextField("valid_from_field", new PropertyModel<>(this, "valid_from_value"));
+        this.valid_from_field = new TextField<>("valid_from_field", new PropertyModel<>(this, "valid_from_value"));
         this.valid_from_field.setRequired(true);
         this.valid_from_field.setLabel(Model.of("Valid From"));
         this.valid_from_field.add(new ContainerFeedbackBehavior());
@@ -243,7 +249,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
 
         this.valid_until_column = this.row4.newUIColumn("valid_until_column", Size.Four_4);
         this.valid_until_container = this.valid_until_column.newUIContainer("valid_until_container");
-        this.valid_until_field = new DateTextField("valid_until_field", new PropertyModel<>(this, "valid_until_value"));
+        this.valid_until_field = new TextField<>("valid_until_field", new PropertyModel<>(this, "valid_until_value"));
         this.valid_until_field.setRequired(true);
         this.valid_until_field.setLabel(Model.of("Valid Until"));
         this.valid_until_field.add(new ContainerFeedbackBehavior());
@@ -289,10 +295,10 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             IssuerGenerateRequest request = new IssuerGenerateRequest();
 
             request.setSerial(System.currentTimeMillis());
-            request.setIssuerSerial(Long.valueOf(this.issuer_value.getId()));
+            request.setIssuerSerial(Long.valueOf(this.issuer_value.getIdValue()));
             request.setLocality(this.locality_name_value);
             request.setProvince(this.state_or_province_name_value);
-            request.setCountry(this.country_value.getId());
+            request.setCountry(this.country_value.getIdValue());
             request.setCommonName(this.common_name_value);
             request.setOrganization(this.organization_value);
             request.setOrganizationalUnit(this.organizational_unit_value);

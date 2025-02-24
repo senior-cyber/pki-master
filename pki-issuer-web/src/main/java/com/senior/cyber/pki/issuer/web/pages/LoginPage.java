@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.issuer.web.pages;
 
-import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
 import com.senior.cyber.frmk.common.base.Bookmark;
 import com.senior.cyber.frmk.common.base.LTEAdminProperties;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ComponentFeedbackPanel;

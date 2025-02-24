@@ -15,16 +15,13 @@ import com.senior.cyber.frmk.common.wicket.layout.Size;
 import com.senior.cyber.frmk.common.wicket.layout.UIColumn;
 import com.senior.cyber.frmk.common.wicket.layout.UIContainer;
 import com.senior.cyber.frmk.common.wicket.layout.UIRow;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Option;
-import com.senior.cyber.frmk.common.wicket.markup.html.form.select2.Select2SingleChoice;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.*;
 import com.senior.cyber.pki.dao.repository.GroupRepository;
 import com.senior.cyber.pki.dao.repository.UserRepository;
-import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
-import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
+import com.senior.cyber.pki.issuer.web.wicket.Option;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
@@ -38,6 +35,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
@@ -58,8 +56,8 @@ public class UserModifyPageGroupTab extends ContentPanel {
 
     protected UIColumn group_column;
     protected UIContainer group_container;
-    protected Select2SingleChoice group_field;
-    protected Select2ChoiceProvider group_provider;
+    protected DropDownChoice<Option> group_field;
+    protected List<Option> group_provider;
     protected Option group_value;
 
     protected Button addButton;
@@ -76,11 +74,17 @@ public class UserModifyPageGroupTab extends ContentPanel {
 
     @Override
     protected void onInitData() {
+        ApplicationContext applicationContext = WicketFactory.getApplicationContext();
+        GroupRepository groupRepository = applicationContext.getBean(GroupRepository.class);
         this.uuid = getPage().getPageParameters().get("id").toLong(-1);
 
-        String not_in = "SELECT " + Sql.column(UserGroup_.groupId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.userId) + " = " + this.uuid;
-        this.group_provider = new Select2ChoiceProvider(Sql.table(Group_.class), Sql.column(Group_.id), Sql.column(Group_.name));
-        this.group_provider.applyWhere("GroupRole", Sql.column(Group_.id) + " NOT IN (" + not_in + ")");
+//        String not_in = "SELECT " + Sql.column(UserGroup_.groupId) + " FROM " + Sql.table(UserGroup_.class) + " WHERE " + Sql.column(UserGroup_.userId) + " = " + this.uuid;
+//        this.group_provider = new Select2ChoiceProvider(Sql.table(Group_.class), Sql.column(Group_.id), Sql.column(Group_.name));
+//        this.group_provider.applyWhere("GroupRole", Sql.column(Group_.id) + " NOT IN (" + not_in + ")");
+        this.group_provider = new ArrayList<>();
+        for (Group group : groupRepository.findAll()) {
+            this.group_provider.add(new Option(group.getId(), group.getName()));
+        }
 
         this.group_browse_provider = new MySqlDataProvider(Sql.table(Group_.class));
         this.group_browse_provider.applyJoin("UserGroup", "INNER JOIN " + Sql.table(UserGroup_.class) + " ON " + Sql.column(UserGroup_.groupId) + " = " + Sql.column(Group_.id));
@@ -132,7 +136,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
 
         this.group_column = this.row1.newUIColumn("group_column", Size.Six_6);
         this.group_container = this.group_column.newUIContainer("group_container");
-        this.group_field = new Select2SingleChoice("group_field", new PropertyModel<>(this, "group_value"), this.group_provider);
+        this.group_field = new DropDownChoice<>("group_field", new PropertyModel<>(this, "group_value"), this.group_provider);
         this.group_field.setLabel(Model.of("Group"));
         this.group_field.setRequired(true);
         this.group_field.add(new ContainerFeedbackBehavior());
@@ -210,7 +214,7 @@ public class UserModifyPageGroupTab extends ContentPanel {
         query.setHint(QueryHints.HINT_LOADGRAPH, graph);
         User user = query.getSingleResult();
 
-        Group group = groupRepository.findById(this.group_value.getId()).orElseThrow();
+        Group group = groupRepository.findById(this.group_value.getIdValue()).orElseThrow();
         if (user.getGroups() == null || user.getGroups().isEmpty()) {
             Map<String, Group> groups = new HashMap<>();
             groups.put(UUID.randomUUID().toString(), group);
