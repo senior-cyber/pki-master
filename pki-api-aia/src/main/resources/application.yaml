@@ -1,5 +1,5 @@
 server:
-  port: ${override.server.port}
+  port: 3001
   error:
     include-message: always
 spring:
@@ -16,16 +16,16 @@ spring:
       path: /api
       load-on-startup: 1
   datasource:
-    username: ${override.datasource.username}
-    password: ${override.datasource.password}
-    url: ${override.datasource.url}
+    username: root
+    password: 123123a
+    url: jdbc:mysql://127.0.0.1:3306/rootca
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
 logging:
   file:
-    path: ${override.logging.file.path}
-    name: ${override.logging.file.name}
+    path: /opt/apps/pki/pki-api-aia
+    name: info.log
   pattern:
     console: "%d %-5level %logger : %msg%n"
     file: "%d %-5level [%thread] %logger : %msg%n"
