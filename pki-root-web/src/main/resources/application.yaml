@@ -1,5 +1,5 @@
 server:
-  port: ${override.server.port}
+  port: 3006
 webui:
   servlet:
     load-on-startup: 1
@@ -7,11 +7,11 @@ webui:
   configuration-type: DEPLOYMENT
   wicket-factory: com.senior.cyber.pki.root.web.factory.WicketFactory
   pages: com.senior.cyber.pki.root.web.pages
-  admin-lte: ${override.webui.admin-lte}
+  admin-lte: /opt/apps/admin-lte
   csrf: false
 api:
-  crl: ${override.api.crl}
-  aia: ${override.api.aia}
+  aia: http://aia.pki.khmer.name/api
+  crl: http://crl.pki.khmer.name/api
 spring:
   jpa:
     hibernate:
@@ -26,9 +26,9 @@ spring:
       path: /api
       load-on-startup: 1
   datasource:
-    username: ${override.datasource.username}
-    password: ${override.datasource.password}
-    url: ${override.datasource.url}
+    username: root
+    password: 123123a
+    url: jdbc:mysql://127.0.0.1:3306/rootca
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway
@@ -39,8 +39,8 @@ crypto:
   iv: Lxomdim3thxLYtOu8NmaXg==
 logging:
   file:
-    path: ${override.logging.file.path}
-    name: ${override.logging.file.name}
+    path: /opt/apps/pki/pki-root-web
+    name: info.log
   pattern:
     console: "%d %-5level %logger : %msg%n"
     file: "%d %-5level [%thread] %logger : %msg%n"
