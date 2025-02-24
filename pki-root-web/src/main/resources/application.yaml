@@ -7,7 +7,7 @@ webui:
   configuration-type: DEPLOYMENT
   wicket-factory: com.senior.cyber.pki.root.web.factory.WicketFactory
   pages: com.senior.cyber.pki.root.web.pages
-  admin-lte: /opt/apps/admin-lte
+  admin-lte: /opt/apps/admin-lte/v4.0.0-beta3/dist
   csrf: false
 api:
   aia: http://aia.pki.khmer.name/api

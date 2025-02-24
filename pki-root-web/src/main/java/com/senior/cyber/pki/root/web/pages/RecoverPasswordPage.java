@@ -29,6 +29,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.UUID;
 
 @Bookmark("/recover/password")
 public class RecoverPasswordPage extends WebPage {
@@ -115,23 +116,45 @@ public class RecoverPasswordPage extends WebPage {
     @Override
     public void renderHead(IHeaderResponse response) {
         File adminLte = ((LTEAdminProperties) WebApplication.get()).getWebUiProperties().getAdminLte();
-        // <!-- Font Awesome -->
-        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_FONT_AWESOME).getPath())));
-        // <!-- Ionicons -->
-        response.render(CssHeaderItem.forUrl(AdminLTEResourceReference.CSS_ION_ICONS));
-        // <!-- icheck bootstrap -->
-        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_ICHECK_BOOTSTRAP).getPath())));
-        // <!-- Theme style -->
-        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_THEME_STYLE).getPath())));
-        // <!-- Google Font: Source Sans Pro -->
-        response.render(CssHeaderItem.forUrl(AdminLTEResourceReference.CSS_GOOGLE_FONT));
-
-        response.render(JavaScriptHeaderItem.forReference(getApplication().getJavaScriptLibrarySettings().getJQueryReference()));
-
-        // <!-- Bootstrap 4 -->
-        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.JS_BOOTSTRAP_4).getPath())));
-        // <!-- AdminLTE App -->
-        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.JS_ADMINLTE_APP).getPath())));
+        response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"));
+        response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"));
+        response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"));
+        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, "/css/adminlte.css").getPath())));
+        response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"));
+        response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"));
+        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, "/js/adminlte.js").getPath())));
+        StringBuilder js = new StringBuilder();
+        js.append("<script>").append("\n");
+        js.append("    const SELECTOR_SIDEBAR_WRAPPER = \".sidebar-wrapper\";").append("\n");
+        js.append("    const Default = {").append("\n");
+        js.append("        scrollbarTheme: \"os-theme-light\",").append("\n");
+        js.append("        scrollbarAutoHide: \"leave\",").append("\n");
+        js.append("        scrollbarClickScroll: true,").append("\n");
+        js.append("    };").append("\n");
+        js.append("    document.addEventListener(\"DOMContentLoaded\", function () {").append("\n");
+        js.append("        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);").append("\n");
+        js.append("        if (").append("\n");
+        js.append("            sidebarWrapper &&").append("\n");
+        js.append("            typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== \"undefined\"").append("\n");
+        js.append("        ) {").append("\n");
+        js.append("            OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {").append("\n");
+        js.append("                scrollbars: {").append("\n");
+        js.append("                    theme: Default.scrollbarTheme,").append("\n");
+        js.append("                    autoHide: Default.scrollbarAutoHide,").append("\n");
+        js.append("                    clickScroll: Default.scrollbarClickScroll,").append("\n");
+        js.append("                },").append("\n");
+        js.append("            });").append("\n");
+        js.append("        }").append("\n");
+        js.append("    });").append("\n");
+        js.append("</script>").append("\n");
+        response.render(JavaScriptHeaderItem.forScript(js.toString(), UUID.randomUUID().toString()));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"));
+        response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"));
     }
 
 }
