@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.root.web.pages.my.issuer;
 
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.Permission;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;

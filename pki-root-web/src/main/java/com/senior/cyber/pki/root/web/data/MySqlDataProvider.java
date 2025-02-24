@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.root.web.data;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.AbstractJdbcDataProvider;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.util.Jdbc;
 import org.springframework.context.ApplicationContext;

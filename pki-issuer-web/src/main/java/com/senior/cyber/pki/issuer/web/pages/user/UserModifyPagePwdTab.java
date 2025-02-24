@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.issuer.web.pages.user;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
 import com.senior.cyber.frmk.common.wicket.layout.Size;
@@ -10,6 +9,8 @@ import com.senior.cyber.frmk.common.wicket.layout.UIRow;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ContainerFeedbackBehavior;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.UserRepository;
+import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
+import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.html.form.Button;

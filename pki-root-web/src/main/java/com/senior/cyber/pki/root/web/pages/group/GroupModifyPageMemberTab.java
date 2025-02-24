@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.root.web.pages.group;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DefaultDataTable;

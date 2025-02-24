@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.root.web.pages.my.issuer;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -198,7 +198,7 @@ public class IssuerBrowsePage extends MasterPage {
             HtmlSerializerFunction<Long> htmlFunction = (tuple, value) -> {
                 return new ClickableCell(this::download, tuple, value + ".zip");
             };
-            this.intermediate_browse_column.add(this.intermediate_browse_provider.column(Long.class, Model.of(label), key, sql, serializer, htmlFunction));
+            this.intermediate_browse_column.add(this.intermediate_browse_provider.column(Long.class, Model.of(label), key, sql, htmlFunction));
         }
 
         this.intermediate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::intermediate_browse_action_link, this::intermediate_browse_action_click));

@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.root.web.provider;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.model.Brand;
 import com.senior.cyber.frmk.common.model.MainSidebar;
 import com.senior.cyber.frmk.common.model.UserPanel;

@@ -4,6 +4,7 @@ import com.senior.cyber.frmk.common.exception.UnauthorizedResponseStatusExceptio
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.root.web.factory.WicketFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.password.PasswordEncryptor;
@@ -11,7 +12,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;

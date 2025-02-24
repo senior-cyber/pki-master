@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.issuer.web.pages.my.issuer;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.ContentPanel;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.tabs.Tab;
@@ -24,6 +23,7 @@ import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.configuration.ApiConfiguration;
 import com.senior.cyber.pki.issuer.web.data.Select2ChoiceProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
+import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.validator.ValidityValidator;
 import com.senior.cyber.pki.service.IssuerService;
 import org.apache.commons.lang3.StringUtils;

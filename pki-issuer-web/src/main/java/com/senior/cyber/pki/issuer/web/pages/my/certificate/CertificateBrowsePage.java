@@ -1,7 +1,6 @@
 package com.senior.cyber.pki.issuer.web.pages.my.certificate;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jackson.PrivateKeySerializer;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
@@ -23,9 +22,11 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.KeyRepository;
+import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.configuration.ApplicationConfiguration;
 import com.senior.cyber.pki.issuer.web.data.MySqlDataProvider;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
+import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.pages.MasterPage;
 import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
 import com.senior.cyber.pki.issuer.web.utility.MemoryResourceStream;
@@ -176,19 +177,16 @@ public class CertificateBrowsePage extends MasterPage {
             String label = "Download";
             String key = "download";
             String sql = Sql.column(Certificate_.serial);
-            SerializerFunction<Long> serializer = String::valueOf;
             HtmlSerializerFunction<Long> htmlFunction = (tuple, value) -> {
                 return new ClickableCell(this::download, tuple, value + ".zip");
             };
-            this.certificate_browse_column.add(this.certificate_browse_provider.column(Long.class, Model.of(label), key, sql, serializer, htmlFunction));
+            this.certificate_browse_column.add(this.certificate_browse_provider.column(Long.class, Model.of(label), key, sql, htmlFunction));
         }
         this.certificate_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::certificate_browse_action_link, this::certificate_browse_action_click));
     }
 
     protected void download(Tuple tuple, Link<Void> link) {
         ApplicationContext context = WicketFactory.getApplicationContext();
-        ApplicationConfiguration applicationConfiguration = context.getBean(ApplicationConfiguration.class);
-
         try {
             long serial = tuple.get("serial", long.class);
 

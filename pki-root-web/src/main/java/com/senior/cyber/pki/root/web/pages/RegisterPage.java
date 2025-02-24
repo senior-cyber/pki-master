@@ -2,7 +2,7 @@ package com.senior.cyber.pki.root.web.pages;
 
 import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ComponentFeedbackPanel;
 import com.senior.cyber.pki.dao.entity.Group;
 import com.senior.cyber.pki.dao.entity.User;

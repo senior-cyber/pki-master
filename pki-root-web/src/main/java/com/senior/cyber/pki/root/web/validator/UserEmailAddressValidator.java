@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.root.web.validator;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import org.apache.wicket.validation.IValidatable;

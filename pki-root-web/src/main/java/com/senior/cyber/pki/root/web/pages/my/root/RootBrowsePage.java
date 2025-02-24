@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.root.web.pages.my.root;
 
 import com.senior.cyber.frmk.common.base.Bookmark;
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.frmk.common.jackson.CertificateSerializer;
 import com.senior.cyber.frmk.common.jakarta.persistence.Sql;
 import com.senior.cyber.frmk.common.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -173,11 +173,10 @@ public class RootBrowsePage extends MasterPage {
             String label = "Download";
             String key = "download";
             String sql = Sql.column(Certificate_.serial);
-            SerializerFunction<Long> serializer = String::valueOf;
             HtmlSerializerFunction<Long> htmlFunction = (tuple, value) -> {
                 return new ClickableCell(this::download, tuple, value + ".zip");
             };
-            this.root_browse_column.add(this.root_browse_provider.column(Long.class, Model.of(label), key, sql, serializer, htmlFunction));
+            this.root_browse_column.add(this.root_browse_provider.column(Long.class, Model.of(label), key, sql, htmlFunction));
         }
         this.root_browse_column.add(new ActionFilteredColumn<>(Model.of("Action"), this::root_browse_action_link, this::root_browse_action_click));
     }

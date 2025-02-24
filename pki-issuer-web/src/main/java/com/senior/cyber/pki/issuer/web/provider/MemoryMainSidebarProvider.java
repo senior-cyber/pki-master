@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.issuer.web.provider;
 
-import com.senior.cyber.frmk.common.base.WicketFactory;
 import com.senior.cyber.frmk.common.model.Brand;
 import com.senior.cyber.frmk.common.model.MainSidebar;
 import com.senior.cyber.frmk.common.model.UserPanel;
@@ -13,6 +12,7 @@ import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.UserRepository;
 import com.senior.cyber.pki.issuer.web.IssuerWebApplication;
 import com.senior.cyber.pki.issuer.web.factory.WebSession;
+import com.senior.cyber.pki.issuer.web.factory.WicketFactory;
 import com.senior.cyber.pki.issuer.web.pages.LogoutPage;
 import com.senior.cyber.pki.issuer.web.pages.csr.CsrGeneratePage;
 import com.senior.cyber.pki.issuer.web.pages.group.GroupBrowsePage;

@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.root.web;
 
 import com.google.crypto.tink.aead.AeadConfig;
-import com.senior.cyber.frmk.common.base.WicketFactory;
+import com.senior.cyber.pki.root.web.factory.WicketFactory;
 import com.senior.cyber.pki.root.web.utility.Crypto;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
