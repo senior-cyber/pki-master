@@ -2,6 +2,7 @@ package com.senior.cyber.pki.root.web.pages;
 
 import com.senior.cyber.frmk.common.base.AdminLTEResourceReference;
 import com.senior.cyber.frmk.common.base.Bookmark;
+import com.senior.cyber.frmk.common.base.LTEAdminProperties;
 import com.senior.cyber.frmk.common.wicket.markup.html.panel.ComponentFeedbackPanel;
 import com.senior.cyber.pki.dao.entity.User;
 import com.senior.cyber.pki.dao.repository.UserRepository;
@@ -17,6 +18,8 @@ import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.resource.FileSystemResourceReference;
 import org.apache.wicket.validation.ValidationError;
 import org.apache.wicket.validation.validator.EmailAddressValidator;
 import org.jasypt.util.password.PasswordEncryptor;
@@ -24,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+import java.io.File;
 import java.util.Optional;
 
 @Bookmark("/forget/password")
@@ -83,23 +87,24 @@ public class ForgetPasswordPage extends WebPage {
 
     @Override
     public void renderHead(IHeaderResponse response) {
+        File adminLte = ((LTEAdminProperties) WebApplication.get()).getWebUiProperties().getAdminLte();
         // <!-- Font Awesome -->
-        response.render(CssHeaderItem.forReference(new AdminLTEResourceReference(AdminLTEResourceReference.CSS_FONT_AWESOME)));
+        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_FONT_AWESOME).getPath())));
         // <!-- Ionicons -->
         response.render(CssHeaderItem.forUrl(AdminLTEResourceReference.CSS_ION_ICONS));
         // <!-- icheck bootstrap -->
-        response.render(CssHeaderItem.forReference(new AdminLTEResourceReference(AdminLTEResourceReference.CSS_ICHECK_BOOTSTRAP)));
+        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_ICHECK_BOOTSTRAP).getPath())));
         // <!-- Theme style -->
-        response.render(CssHeaderItem.forReference(new AdminLTEResourceReference(AdminLTEResourceReference.CSS_THEME_STYLE)));
+        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.CSS_THEME_STYLE).getPath())));
         // <!-- Google Font: Source Sans Pro -->
         response.render(CssHeaderItem.forUrl(AdminLTEResourceReference.CSS_GOOGLE_FONT));
 
         response.render(JavaScriptHeaderItem.forReference(getApplication().getJavaScriptLibrarySettings().getJQueryReference()));
 
         // <!-- Bootstrap 4 -->
-        response.render(JavaScriptHeaderItem.forReference(new AdminLTEResourceReference(AdminLTEResourceReference.JS_BOOTSTRAP_4)));
+        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.JS_BOOTSTRAP_4).getPath())));
         // <!-- AdminLTE App -->
-        response.render(JavaScriptHeaderItem.forReference(new AdminLTEResourceReference(AdminLTEResourceReference.JS_ADMINLTE_APP)));
+        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, AdminLTEResourceReference.JS_ADMINLTE_APP).getPath())));
     }
 
 }
