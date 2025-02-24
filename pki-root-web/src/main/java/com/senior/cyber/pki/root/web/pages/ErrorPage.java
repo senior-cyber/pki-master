@@ -29,13 +29,13 @@ public class ErrorPage extends WebPage {
         response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"));
         response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"));
         response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"));
-        response.render(CssHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, "/css/adminlte.css").getPath(), new File(adminLte, "/css/adminlte.css").toPath())));
+        response.render(CssHeaderItem.forReference(new PackageResourceReference(Pkg.class, "v4.0.0-beta3/css/adminlte.css")));
         response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"));
         response.render(CssHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"));
         response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"));
         response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"));
         response.render(JavaScriptHeaderItem.forUrl("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"));
-        response.render(JavaScriptHeaderItem.forReference(new FileSystemResourceReference(new File(adminLte, "/js/adminlte.js").getPath(), new File(adminLte, "/js/adminlte.js").toPath())));
+        response.render(JavaScriptHeaderItem.forReference(new PackageResourceReference(Pkg.class, "v4.0.0-beta3/js/adminlte.js")));
         StringBuilder js = new StringBuilder();
         js.append("<script>").append("\n");
         js.append("    const SELECTOR_SIDEBAR_WRAPPER = \".sidebar-wrapper\";").append("\n");
