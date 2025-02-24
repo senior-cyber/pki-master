@@ -21,6 +21,9 @@ public class WicketApplication extends AbstractAuthenticatedWebApplication {
     @Override
     protected void init() {
         super.init();
+        getResourceSettings().setUseMinifiedResources(false); // Ensure debug mode
+        getResourceSettings().setThrowExceptionOnMissingResource(true);
+
         getApplicationSettings().setInternalErrorPage(ErrorPage.class);
         getApplicationSettings().setAccessDeniedPage(DeniedPage.class);
         getApplicationSettings().setPageExpiredErrorPage(ErrorPage.class);
