@@ -1,14 +1,5 @@
 server:
   port: 3004
-webui:
-  servlet:
-    load-on-startup: 1
-    path: /*
-  configuration-type: DEPLOYMENT
-  wicket-factory: com.senior.cyber.pki.issuer.web.factory.WicketFactory
-  pages: com.senior.cyber.pki.issuer.web.pages
-  admin-lte: /opt/apps/admin-lte
-  csrf: false
 api:
   aia: http://aia.pki.khmer.name/api
   crl: http://crl.pki.khmer.name/api
@@ -23,12 +14,26 @@ spring:
     database-platform: com.senior.cyber.pki.dao.dialect.MySQLDialect
   mvc:
     servlet:
-      path: /api
+      path: /
       load-on-startup: 1
+  web:
+    resources:
+      static-locations:
+        - 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/public/'
+  #        - 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/public/'
+  #        - 'classpath:/public/'
+  thymeleaf:
+    prefix: 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/templates/'
+    #    prefix: 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/templates/'
+    #    prefix: 'classpath:/templates/'
+    cache: false
+  messages:
+    encoding: UTF-8
+
   datasource:
     username: root
     password: 123123a
-    url: jdbc:mysql://127.0.0.1:3306/rootca
+    url: jdbc:mysql://192.168.1.53:3306/rootca
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway

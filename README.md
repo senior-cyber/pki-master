@@ -66,10 +66,20 @@ cp pki-api-aia/build/libs/pki-api-aia.jar /opt/apps/pki-master/pki-api-aia
 mkdir -p /opt/apps/pki-master/pki-api-crl
 cp pki-api-crl/build/libs/pki-api-crl.jar /opt/apps/pki-master/pki-api-crl
 
-sudo service pki-root-web start
-sudo service pki-root-api start
-sudo service pki-issuer-web start
-sudo service pki-issuer-api start
-sudo service pki-api-aia start
-sudo service pki-api-crl start
+sudo service pki-root-web restart
+sudo service pki-root-api restart
+sudo service pki-issuer-web restart
+sudo service pki-issuer-api restart
+sudo service pki-api-crl restart
+sudo service pki-api-aia restart
+sudo service pki-api-aia restart
+
+
+sudo service pki-root-web stop
+sudo service pki-root-api stop
+sudo service pki-issuer-web stop
+sudo service pki-issuer-api stop
+sudo service pki-api-crl stop
+sudo service pki-api-aia stop
+sudo service pki-api-aia stop
 ```

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"> <!--begin::Head-->
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>ការធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការស៊ីវិល</title><!--begin::Primary Meta Tags-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="ការធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការស៊ីវិល">
+    <meta name="description" content="ការធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការស៊ីវិល">
+    <meta name="keywords" content="ការធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការស៊ីវិល">
+    <!--end::Primary Meta Tags--><!--begin::Fonts-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=" crossorigin="anonymous"><!--end::Fonts-->
+    <!--begin::Third Party Plugin(OverlayScrollbars)-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css" integrity="sha256-tZHrRjVqNSRyWg2wbppGnT833E/Ys0DHWGwT04GiqQg=" crossorigin="anonymous">
+    <!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Third Party Plugin(Bootstrap Icons)-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha256-9kPW/n5nn53j4WMRYAxe9c1rCY96Oogo/MKSVdKzPmI=" crossorigin="anonymous">
+    <!--end::Third Party Plugin(Bootstrap Icons)--><!--begin::Required Plugin(AdminLTE)-->
+    <link rel="stylesheet" href="../../dist/css/adminlte.css" th:href="@{/css/adminlte.css}"><!--end::Required Plugin(AdminLTE)-->
+    <!-- apexcharts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css" integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous"><!-- jsvectormap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4=" crossorigin="anonymous">
+</head> <!--end::Head--> <!--begin::Body-->
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary"> <!--begin::App Wrapper-->
+<div class="app-wrapper"> <!--begin::Header-->
+
+    <!--end::Sidebar--> <!--begin::App Main-->
+    <main class="app-main"> <!--begin::App Content Header-->
+        <!--begin::App Content-->
+        <div class="app-content"> <!--begin::Container-->
+            <div class="container-fluid"> <!--begin::Row-->
+                <form method="post" th:object="${surveyForm}" th:action="@{/}">
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <img th:src="@{/img/mio-head.png}" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="card card-primary card-outline mb-4">
+                        <div class="card-header">
+                            <div class="card-title"><h3>ការធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការស៊ីវិល</h3></div>
+                        </div>
+                        <div class="card-body">ស្របតាមការអនុវត្តគោលនយោបាយរដ្ឋាភិបាលឌីជីថល-ដំណាក់កាលទី០១
+                            លើការងារកសាងមូលធនមនុស្សឌីជីថលក្របខ័ណ្ឌក្រសួងមហាផ្ទៃ អគ្គនាយកដ្ឋានបច្ចេកវិទ្យាឌីជីថល
+                            និងផ្សព្វផ្សាយអប់រំសហការជាមួយអគ្គនាយកដ្ឋានរដ្ឋបាលដើម្បីរៀបចំធ្វើបច្ចុប្បន្នភាពជំនាញឌីជីថលរបស់មន្ត្រីរាជការសុីវិលថ្នាក់ក្រោមជាតិដែលជាមូលដ្ឋានចាំបាច់សម្រាប់រៀបចំផែនការអភិវឌ្ឍន៍ជំនាញឌីជីថលឱ្យសមស្របនឹងតម្រូវការងារ
+                            និងស្ថានភាពសមត្ថភាពជំនាញឌីជីថលជាក់ស្តែងរបស់មន្ត្រីរាជការ។
+                        </div>
+                        <div class="card-footer"><span class="text-danger">* Indicates required question</span></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="civilServantIdNumber" class="form-label">អត្តលេខមន្ត្រីរាជការ <span class="text-danger">*</span></label>
+                                <input id="civilServantIdNumber" type="text" class="form-control" th:field="*{civilServantIdNumber}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('civilServantIdNumber')}" th:errors="*{civilServantIdNumber}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="surName" class="form-label">គោត្តនាម <span class="text-danger">*</span></label>
+                                <input id="surName" type="text" class="form-control" th:field="*{surName}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('surName')}" th:errors="*{surName}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="givenName" class="form-label">នាម <span class="text-danger">*</span></label>
+                                <input id="givenName" type="text" class="form-control" th:field="*{givenName}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('givenName')}" th:errors="*{givenName}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="dateOfBirth" class="form-label">ថ្ងៃ ខែ ឆ្នាំកំណើត (DD/MM/YYYY) <span class="text-danger">*</span></label>
+                                <input id="dateOfBirth" type="text" class="form-control" th:field="*{dateOfBirth}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">លេខទូរស័ព្ទ <span class="text-danger">*</span></label>
+                                <input id="phoneNumber" type="text" class="form-control" th:field="*{phoneNumber}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="province" class="form-label">ខេត្ត<span class="text-danger">*</span></label>
+                                <input id="province" type="text" class="form-control" th:field="*{province}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('province')}" th:errors="*{province}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="district" class="form-label">ក្រុង / ស្រុក <span class="text-danger">*</span></label>
+                                <input id="district" type="text" class="form-control" th:field="*{district}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('district')}" th:errors="*{district}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="commune" class="form-label">ឃុំ / សង្កាត់ <span class="text-danger">*</span></label>
+                                <input id="commune" type="text" class="form-control" th:field="*{commune}">
+                                <div class="form-text text-danger" th:if="${#fields.hasErrors('commune')}" th:errors="*{commune}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4">
+                        <div class="card-header text-bg-primary">
+                            <div class="card-title"><h4>កម្រងសំណួរនៃការធ្វើបច្ចុប្បន្នភាពជំនាញមូលដ្ឋានឌីជីថល</h4></div>
+                        </div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">១ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់កុំព្យូទ័រ <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question1-1" name="question1" th:field="*{question1}" class="form-check-input" type="radio" value="1"> <label for="question1-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question1-2" name="question1" th:field="*{question1}" class="form-check-input" type="radio" value="2"> <label for="question1-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question1-3" name="question1" th:field="*{question1}" class="form-check-input" type="radio" value="3"> <label for="question1-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question1-4" name="question1" th:field="*{question1}" class="form-check-input" type="radio" value="4"> <label for="question1-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question1')}"><div class="text-danger" th:errors="*{question1}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">២ - កម្រិតចំណេះដឹងពីសុវត្ថិភាពនិងការប្រើប្រាស់អុីនធឺណេតនិងប្រព័ន្ធអនឡាញ <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question2-1" name="question2" th:field="*{question2}" class="form-check-input" type="radio" value="1"> <label for="question2-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question2-2" name="question2" th:field="*{question2}" class="form-check-input" type="radio" value="2"> <label for="question2-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question2-3" name="question2" th:field="*{question2}" class="form-check-input" type="radio" value="3"> <label for="question2-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question2-4" name="question2" th:field="*{question2}" class="form-check-input" type="radio" value="4"> <label for="question2-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question2')}"><div class="text-danger" th:errors="*{question2}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៣ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់ទូរស័ព្ទដៃឆ្លាតវៃ <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question3-1" name="question3" th:field="*{question3}" class="form-check-input" type="radio" value="1"> <label for="question3-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question3-2" name="question3" th:field="*{question3}" class="form-check-input" type="radio" value="2"> <label for="question3-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question3-3" name="question3" th:field="*{question3}" class="form-check-input" type="radio" value="3"> <label for="question3-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question3-4" name="question3" th:field="*{question3}" class="form-check-input" type="radio" value="4"> <label for="question3-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question3')}"><div class="text-danger" th:errors="*{question3}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៤ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់ប្រព័ន្ធទំនាក់ទំនងសង្គម (Facebook,Telegram…) <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question4-1" name="question4" th:field="*{question4}" class="form-check-input" type="radio" value="1"> <label for="question4-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question4-2" name="question4" th:field="*{question4}" class="form-check-input" type="radio" value="2"> <label for="question4-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question4-3" name="question4" th:field="*{question4}" class="form-check-input" type="radio" value="3"> <label for="question4-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question4-4" name="question4" th:field="*{question4}" class="form-check-input" type="radio" value="4"> <label for="question4-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question4')}"><div class="text-danger" th:errors="*{question4}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៥ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់កម្មវិធីបង្កើតឯកសាររដ្ឋបាល (MS Word) <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question5-1" name="question5" th:field="*{question5}" class="form-check-input" type="radio" value="1"> <label for="question5-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question5-2" name="question5" th:field="*{question5}" class="form-check-input" type="radio" value="2"> <label for="question5-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question5-3" name="question5" th:field="*{question5}" class="form-check-input" type="radio" value="3"> <label for="question5-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question5-4" name="question5" th:field="*{question5}" class="form-check-input" type="radio" value="4"> <label for="question5-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question5')}"><div class="text-danger" th:errors="*{question5}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៦ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់កម្មវិធីបង្កើតសៀវភៅបញ្ជី (MS Excel) <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question6-1" name="question6" th:field="*{question6}" class="form-check-input" type="radio" value="1"> <label for="question6-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question6-2" name="question6" th:field="*{question6}" class="form-check-input" type="radio" value="2"> <label for="question6-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question6-3" name="question6" th:field="*{question6}" class="form-check-input" type="radio" value="3"> <label for="question6-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question6-4" name="question6" th:field="*{question6}" class="form-check-input" type="radio" value="4"> <label for="question6-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question6')}"><div class="text-danger" th:errors="*{question6}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៧ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់មាតិកាឌីជីថលសម្រាប់ការធ្វើបទបង្ហាញ <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question7-1" name="question7" th:field="*{question7}" class="form-check-input" type="radio" value="1"> <label for="question7-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question7-2" name="question7" th:field="*{question7}" class="form-check-input" type="radio" value="2"> <label for="question7-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question7-3" name="question7" th:field="*{question7}" class="form-check-input" type="radio" value="3"> <label for="question7-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question7-4" name="question7" th:field="*{question7}" class="form-check-input" type="radio" value="4"> <label for="question7-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question7')}"><div class="text-danger" th:errors="*{question7}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៨ - កម្រិតចំណេះដឹងពីការប្រើប្រាស់កម្មវិធីប្រជុំអនឡាញ (Google Meet, …) <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question8-1" name="question8" th:field="*{question8}" class="form-check-input" type="radio" value="1"> <label for="question8-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question8-2" name="question8" th:field="*{question8}" class="form-check-input" type="radio" value="2"> <label for="question8-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question8-3" name="question8" th:field="*{question8}" class="form-check-input" type="radio" value="3"> <label for="question8-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question8-4" name="question8" th:field="*{question8}" class="form-check-input" type="radio" value="4"> <label for="question8-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question8')}"><div class="text-danger" th:errors="*{question8}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">៩ - កម្រិតចំណេះដឹងពីបរិវត្តកម្មរដ្ឋាភិបាលឌីជីថល <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question9-1" name="question9" th:field="*{question9}" class="form-check-input" type="radio" value="1"> <label for="question9-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question9-2" name="question9" th:field="*{question9}" class="form-check-input" type="radio" value="2"> <label for="question9-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question9-3" name="question9" th:field="*{question9}" class="form-check-input" type="radio" value="3"> <label for="question9-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question9-4" name="question9" th:field="*{question9}" class="form-check-input" type="radio" value="4"> <label for="question9-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question9')}"><div class="text-danger" th:errors="*{question9}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">១០ - កម្រិតជំនាញបច្ចេកទេសក្នុងការដំឡើង និងថែទាំកុំព្យូទ័រ <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question10-1" name="question10" th:field="*{question10}" class="form-check-input" type="radio" value="1"> <label for="question10-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question10-2" name="question10" th:field="*{question10}" class="form-check-input" type="radio" value="2"> <label for="question10-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question10-3" name="question10" th:field="*{question10}" class="form-check-input" type="radio" value="3"> <label for="question10-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question10-4" name="question10" th:field="*{question10}" class="form-check-input" type="radio" value="4"> <label for="question10-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question10')}"><div class="text-danger" th:errors="*{question10}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">១១ - កម្រិតជំនាញបច្ចេកទេសក្នុងការដំឡើង និងថែទាំបណ្តាញឌីជីថល <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question11-1" name="question11" th:field="*{question11}" class="form-check-input" type="radio" value="1"> <label for="question11-1" class="form-check-label">១ - មិនយល់ដឹង</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question11-2" name="question11" th:field="*{question11}" class="form-check-input" type="radio" value="2"> <label for="question11-2" class="form-check-label">២ - យល់ដឹងខ្លះ (មានចំណេះដឹងតិចតួចហើយត្រូវការបណ្តុះបណ្តាលបន្ថែមទើបអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question11-3" name="question11" th:field="*{question11}" class="form-check-input" type="radio" value="3"> <label for="question11-3" class="form-check-label">៣ - យល់ដឹងមធ្យម (មានចំណេះដឹង និងសមត្ថភាពជំនាញឌីជីថលអាចបំពេញការងារបាន)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question11-4" name="question11" th:field="*{question11}" class="form-check-input" type="radio" value="4"> <label for="question11-4" class="form-check-label">៤ - យល់ដឹងច្រើន (មានចំណេះដឹង និងសមត្ថភាពជំនាញជាច្រើនឆ្នាំអាចធ្វើការស្រាវជ្រាវនិងស្វ័យសិក្សា)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question11')}"><div class="text-danger" th:errors="*{question11}"></div></div>
+                    </div>
+                    <div class="card card-outline mb-4 mt-4">
+                        <div class="card-header">
+                            <div class="card-title">១២ - តើលោក/លោកស្រីមានកុំព្យូទ័រសម្រាប់បំពេញការងារឬទេ? <span class="text-danger">*</span></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input id="question12-1" name="question12" th:field="*{question12}" class="form-check-input" type="radio" value="1"> <label for="question12-1" class="form-check-label">១ - ពុំទាន់មានកុំព្យូទ័រប្រើប្រាស់</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question12-2" name="question12" th:field="*{question12}" class="form-check-input" type="radio" value="2"> <label for="question12-2" class="form-check-label">២ - មានកុំព្យូទ័រប្រើប្រាស់ (អង្គភាព)</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="question12-3" name="question12" th:field="*{question12}" class="form-check-input" type="radio" value="3"> <label for="question12-3" class="form-check-label">៣ - មានកុំព្យូទ័រប្រើប្រាស់ (ផ្ទាល់ខ្លួន)</label>
+                            </div>
+                        </div>
+                        <div class="card-footer" th:if="${#fields.hasErrors('question12')}"><div class="text-danger" th:errors="*{question12}"></div></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div> <!--end::Container-->
+        </div>
+        <!--end::App Content-->
+    </main> <!--end::App Main--> <!--begin::Footer-->
+    <!--end::Footer-->
+</div> <!--end::App Wrapper--> <!--begin::Script-->
+<!--begin::Third Party Plugin(OverlayScrollbars)-->
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js" integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>
+<!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Required Plugin(popperjs for Bootstrap 5)-->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)-->
+<!--begin::Required Plugin(Bootstrap 5)-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script> <!--end::Required Plugin(Bootstrap 5)-->
+<!--begin::Required Plugin(AdminLTE)-->
+<script src="../../dist/js/adminlte.js" th:src="@{/js/adminlte.js}"></script>
+<!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
+<script>
+    const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
+    const Default = {
+        scrollbarTheme: "os-theme-light",
+        scrollbarAutoHide: "leave",
+        scrollbarClickScroll: true,
+    };
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+        if (
+            sidebarWrapper &&
+            typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== "undefined"
+        ) {
+            OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+                scrollbars: {
+                    theme: Default.scrollbarTheme,
+                    autoHide: Default.scrollbarAutoHide,
+                    clickScroll: Default.scrollbarClickScroll,
+                },
+            });
+        }
+    });
+</script> <!--end::OverlayScrollbars Configure--> <!-- OPTIONAL SCRIPTS --> <!-- sortablejs -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" integrity="sha256-ipiJrswvAR4VAx/th+6zWsdeYmVae0iJuiR+6OqHJHQ=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js" integrity="sha256-+vh8GkaU7C9/wbSLIcwq82tQ2wTf44aOHA8HlBMwRI8=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js" integrity="sha256-/t1nN2956BT869E6H4V1dnt0X5pAQHPytli+1nTZm2Y=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js" integrity="sha256-XPpPaZlU8S/HWf7FZLAncLg2SAkP8ScUTII89x9D3lY=" crossorigin="anonymous"></script>
+</body><!--end::Body--></html>

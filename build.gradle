@@ -4,7 +4,6 @@ buildscript {
 
         // Dependency Management
         poi = '5.4.0' // https://mvnrepository.com/artifact/org.apache.poi/poi
-        wicket = '10.4.0' // https://mvnrepository.com/artifact/org.apache.wicket/wicket
         spring_boot = '3.4.3' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
         reflections = '0.10.2' // https://mvnrepository.com/artifact/org.reflections/reflections
         servlet = '6.1.0' // https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api
