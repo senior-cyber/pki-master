@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:fragment="layout (title, content)" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:replace="${title}">Layout Title</title>
+    <th:block th:replace="~{common :: meta}"/>
+    <th:block th:replace="~{common :: head-css}"/>
+</head>
+
+
+<body>
+<!-- Begin page -->
+<div class="wrapper">
+
+    <th:block th:replace="~{common :: menu}"/>
+
+    <!-- ============================================================== -->
+    <!-- Start Page Content here -->
+    <!-- ============================================================== -->
+
+    <div class="content-page">
+        <th:block th:replace="${content}"/>
+        <th:block th:replace="~{common :: footer}"/>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- End Page content -->
+    <!-- ============================================================== -->
+
+</div>
+<!-- END wrapper -->
+
+<th:block th:replace="~{common :: right-sidebar}"/>
+
+<th:block th:replace="~{common :: footer-scripts}"/>
+
+<!-- App js -->
+<script th:src="@{/js/app.min.js}"></script>
+
+</body>
+
+</html>

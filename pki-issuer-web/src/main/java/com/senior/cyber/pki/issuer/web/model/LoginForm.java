@@ -10,13 +10,13 @@ import java.util.UUID;
 @Getter
 public class LoginForm implements Serializable {
 
-    private String uid;
+    private String login;
 
-    private String uidId = UUID.randomUUID().toString();
+    private String loginId = UUID.randomUUID().toString();
 
-    private String pwd;
+    private String password;
 
-    private String pwdId = UUID.randomUUID().toString();
+    private String passwordId = UUID.randomUUID().toString();
 
     private boolean rememberMe;
 

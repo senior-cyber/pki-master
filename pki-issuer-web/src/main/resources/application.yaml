@@ -19,13 +19,13 @@ spring:
   web:
     resources:
       static-locations:
-        - 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/public/'
-  #        - 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/public/'
-  #        - 'classpath:/public/'
+        - 'classpath:/public/'
+#        - 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/public/'
+#        - 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/public/'
   thymeleaf:
-    prefix: 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/templates/'
-    #    prefix: 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/templates/'
-    #    prefix: 'classpath:/templates/'
+#    prefix: 'file:/Users/socheatkhauv/code/github/senior-cyber/pki-master/pki-issuer-web/src/main/resources/templates/'
+#    prefix: 'file:/home/socheat/gitlab/socheat/survey/src/main/resources/templates/'
+    prefix: 'classpath:/templates/'
     cache: false
   messages:
     encoding: UTF-8

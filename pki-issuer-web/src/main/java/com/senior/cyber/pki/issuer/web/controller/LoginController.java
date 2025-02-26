@@ -36,15 +36,12 @@ public class LoginController {
                          HttpServletRequest request,
                          BindingResult bindingResult,
                          RedirectAttributes redirectAttributes) {
-        if (loginForm.getUid() == null || loginForm.getUid().isEmpty()) {
-            bindingResult.rejectValue("uid", "uid.required");
+        if (loginForm.getLogin() == null || loginForm.getLogin().isEmpty()) {
+            bindingResult.rejectValue("login", "login.required");
         }
-        if (loginForm.getPwd() == null || loginForm.getPwd().isEmpty()) {
-            bindingResult.rejectValue("pwd", "pwd.required");
+        if (loginForm.getPassword() == null || loginForm.getPassword().isEmpty()) {
+            bindingResult.rejectValue("password", "password.required");
         }
-
-        loginForm.setUid("wewe");
-        loginForm.setPwd("wwe");
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("loginForm", loginForm); // Add the form with errors
