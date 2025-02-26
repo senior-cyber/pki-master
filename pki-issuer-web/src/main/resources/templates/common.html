@@ -2,6 +2,25 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
+<th:block th:fragment="page-title (subtitle, title)">
+    <!-- start page title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">Hyper</a></li>
+                        <li class="breadcrumb-item"><a href="javascript: void(0);"><th:block th:text="${subtitle}"/></a></li>
+                        <li class="breadcrumb-item active"><th:block th:text="${title}"/></li>
+                    </ol>
+                </div>
+                <h4 class="page-title"><th:block th:text="${title}"/></h4>
+            </div>
+        </div>
+    </div>
+    <!-- end page title -->
+</th:block>
+
 <!-- meta fragment -->
 <th:block th:fragment="meta">
     <meta charset="utf-8"/>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html th:fragment="layout (title, content)" xmlns:th="http://www.thymeleaf.org">
+<html th:fragment="layout (title, content, script)" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:replace="${title}">Layout Title</title>
     <th:block th:replace="~{common :: meta}"/>
@@ -8,6 +8,18 @@
 
 
 <body>
+
+<!-- Pre-loader -->
+<div id="preloader">
+    <div id="status">
+        <div class="bouncing-loader">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+<!-- End Preloader-->
 <!-- Begin page -->
 <div class="wrapper">
 
@@ -32,6 +44,8 @@
 <th:block th:replace="~{common :: right-sidebar}"/>
 
 <th:block th:replace="~{common :: footer-scripts}"/>
+
+<th:block th:replace="${script}"/>
 
 <!-- App js -->
 <script th:src="@{/js/app.min.js}"></script>
