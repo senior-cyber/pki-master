@@ -7,9 +7,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
 
 @Controller
 @RequestMapping(path = "/user")
+@SessionAttributes("userCreateInfo")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -18,6 +20,16 @@ public class UserController {
     @RequestMapping(path = {"/browse"}, method = RequestMethod.GET)
     public String browseGet(Model model) {
         return "user/user-browse";
+    }
+
+    @RequestMapping(path = {"/create/info"}, method = RequestMethod.GET)
+    public String createInfoGet(Model model) {
+        return "user/user-create-info";
+    }
+
+    @RequestMapping(path = {"/create/password"}, method = RequestMethod.GET)
+    public String createPasswordGet(Model model) {
+        return "user/user-create-password";
     }
 
     @RequestMapping(path = {"/modify/info"}, method = RequestMethod.GET)

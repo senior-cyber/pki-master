@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html th:replace="~{layout :: layout(~{::title}, ~{::content}, ~{::script})}">
+<head>
+    <title>Page Title</title>
+</head>
+<body>
+<div th:fragment="content" class="content">
+
+    <!-- Start Content-->
+    <div class="container-fluid">
+
+        <th:block th:replace="~{common :: page-title('User', 'Create')}"/>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs nav-bordered mb-3">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link active">Info</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">Password</a>
+                            </li>
+                        </ul> <!-- end nav-->
+                        <div class="tab-content">
+                            <form method="post" th:object="${userCreateInfoForm}" th:action="@{/user/user-create-info}">
+                                <div class="row g-2">
+                                    <div class="mb-3 col-md-6">
+                                        <label th:for="*{emailAddressId}" class="form-label">Email</label>
+                                        <input type="text" class="form-control" th:id="*{emailAddress}" placeholder="Email">
+
+                                        <label th:for="*{loginId}" class="form-label">Login</label>
+                                        <input th:id="*{loginId}" th:field="*{login}" class="form-control" type="text" placeholder="Enter your login">
+                                        <div th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="form-text text-danger"></div>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="inputEmail4" class="form-label">Login</label>
+                                        <input type="text" class="form-control" id="inputEmail4" placeholder="Login">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="inputEmail4" class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" id="inputEmail4" placeholder="Email">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Next</button>
+                            </form>
+                        </div> <!-- end tab-content-->
+
+                    </div> <!-- end card-body -->
+                </div> <!-- end card-->
+            </div> <!-- end col -->
+        </div>
+
+    </div>
+
+</div>
+
+<th:block th:fragment="script">
+    <!-- Datatable js -->
+    <script th:src="@{/vendor/datatables.net/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/vendor/datatables.net-bs5/js/dataTables.bootstrap5.min.js}"></script>
+    <script th:src="@{/vendor/datatables.net-responsive/js/dataTables.responsive.min.js}"></script>
+    <script th:src="@{/vendor/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js}"></script>
+    <script th:src="@{/vendor/jquery-datatables-checkboxes/js/dataTables.checkboxes.min.js}"></script>
+
+    <!-- Customers Demo App js -->
+    <script th:src="@{/js/pages/demo.customers.js}"></script>
+</th:block>
+</body>
+</html>
