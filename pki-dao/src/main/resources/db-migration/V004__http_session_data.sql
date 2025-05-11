@@ -1,0 +1,1 @@
+INSERT INTO tbl_rbac_role(role_id, name, description, enabled) VALUES(UUID(), 'Menu-Cluster-Session', 'Menu-Cluster-Session', 1);
