@@ -22,10 +22,6 @@ dependencies {
     implementation project(":pki-common")
     implementation project(":pki-service")
 
-    implementation "com.senior.cyber.frmk:common:1.0.0"
-    implementation "com.senior.cyber.frmk:jdbc-query:1.0.0"
-    implementation "com.senior.cyber.frmk:x509:1.0.0"
-
     implementation "joda-time:joda-time:${joda_time}"
     implementation "commons-validator:commons-validator:${commons_validator}"
 

@@ -35,7 +35,6 @@ dependencies {
 
     implementation "org.jasypt:jasypt:${jasypt}"
 
-    implementation "org.liquibase:liquibase-core:${liquibase}"
     implementation "org.flywaydb:flyway-core:${flyway}"
     implementation "org.flywaydb:flyway-mysql:${flyway}"
     implementation "com.mysql:mysql-connector-j:${mysql}"
