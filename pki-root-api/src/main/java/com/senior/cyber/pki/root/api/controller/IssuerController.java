@@ -2,8 +2,8 @@ package com.senior.cyber.pki.root.api.controller;
 
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;

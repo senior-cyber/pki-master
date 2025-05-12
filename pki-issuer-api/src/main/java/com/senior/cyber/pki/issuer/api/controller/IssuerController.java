@@ -2,11 +2,11 @@ package com.senior.cyber.pki.issuer.api.controller;
 
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -30,7 +30,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.util.Date;
-import java.util.Optional;
 
 @RestController
 public class IssuerController {
@@ -60,8 +59,10 @@ public class IssuerController {
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
                 issuerCertificate.getValidFrom().after(now) ||

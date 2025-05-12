@@ -4,7 +4,7 @@ import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;

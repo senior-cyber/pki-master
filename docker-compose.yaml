@@ -1,0 +1,25 @@
+services:
+  mysql-pki:
+    container_name: pki
+    image: docker.io/bitnami/mysql:9.0
+    restart: 'always'
+    ports:
+      - '33066:3306'
+    volumes:
+      - 'mysql-pki:/bitnami/mysql/data'
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=no
+      - MYSQL_DATABASE=pki
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=123123a
+    healthcheck:
+      test: [ 'CMD', '/opt/bitnami/scripts/mysql/healthcheck.sh' ]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  mysql-pki:
+    name: mysql-pki
+    driver: local

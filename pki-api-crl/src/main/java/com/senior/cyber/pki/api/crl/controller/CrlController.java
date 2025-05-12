@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.api.crl.controller;
 
-import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x509.CRLNumber;
 import org.bouncycastle.asn1.x509.CRLReason;
@@ -41,7 +41,6 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 public class CrlController {
@@ -78,8 +77,10 @@ public class CrlController {
 
         long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(serial);
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(serial);
+        if (issuerCertificate == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
 
         List<Certificate> certificates = certificateRepository.findByIssuerCertificate(issuerCertificate);
 

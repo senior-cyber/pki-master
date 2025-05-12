@@ -3,14 +3,14 @@ package com.senior.cyber.pki.service;
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.KeyRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
@@ -41,15 +41,16 @@ public class IssuerService {
 
     @Transactional(rollbackFor = Throwable.class)
     public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
@@ -61,8 +62,11 @@ public class IssuerService {
         // issuing
         Key issuingKey = null;
         if (request.getKey() > 0) {
-            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
-            issuingKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+            Key key = keyRepository.findBySerial(request.getKey());
+            if (key == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+            }
+            issuingKey = key;
         } else {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);

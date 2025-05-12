@@ -2,14 +2,14 @@ package com.senior.cyber.pki.service;
 
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.KeyRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -46,15 +46,16 @@ public class CertificateService {
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateCommonCsrResponse certificateCommonGenerate(User user, CertificateCommonCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
@@ -104,15 +105,16 @@ public class CertificateService {
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
@@ -179,15 +181,16 @@ public class CertificateService {
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
@@ -199,8 +202,11 @@ public class CertificateService {
         // certificate
         Key certificateKey = null;
         if (request.getKey() > 0) {
-            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
-            certificateKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+            Key key = keyRepository.findBySerial(request.getKey());
+            if (key == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+            }
+            certificateKey = key;
         } else {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
@@ -253,15 +259,16 @@ public class CertificateService {
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         Date now = LocalDate.now().toDate();
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+        }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
@@ -295,8 +302,11 @@ public class CertificateService {
         // certificate
         Key certificateKey = null;
         if (request.getKey() > 0) {
-            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
-            certificateKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+            Key key = keyRepository.findBySerial(request.getKey());
+            if (key == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+            }
+            certificateKey = key;
         } else {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);

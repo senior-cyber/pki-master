@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.api.aia.controller;
 
-import com.senior.cyber.pki.dao.entity.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -39,7 +39,6 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Date;
-import java.util.Optional;
 
 @RestController
 public class OcspController {
@@ -55,8 +54,10 @@ public class OcspController {
 
         long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
 
-        Optional<Certificate> optionalIssuerCertificate = certificateRepository.findBySerial(serial);
-        Certificate issuerCertificate = optionalIssuerCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found"));
+        Certificate issuerCertificate = certificateRepository.findBySerial(serial);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
 
         X509Certificate ocspCertificate = issuerCertificate.getOcspCertificate().getCertificate();
         PrivateKey ocspPrivateKey = issuerCertificate.getOcspCertificate().getKey().getPrivateKey();
@@ -78,8 +79,7 @@ public class OcspController {
 
         JcaBasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(ocspCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
         for (Req req : ocspReq.getRequestList()) {
-            Optional<Certificate> optionalCertificate = this.certificateRepository.findBySerial(req.getCertID().getSerialNumber().longValueExact());
-            Certificate certificate = optionalCertificate.orElse(null);
+            Certificate certificate = this.certificateRepository.findBySerial(req.getCertID().getSerialNumber().longValueExact());
             if (certificate == null) {
                 ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
             } else {

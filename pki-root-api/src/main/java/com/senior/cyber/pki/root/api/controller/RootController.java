@@ -2,9 +2,9 @@ package com.senior.cyber.pki.root.api.controller;
 
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
-import com.senior.cyber.pki.dao.entity.User;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.KeyRepository;
+import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -42,7 +42,7 @@ public class RootController {
 
     @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         RootGenerateRequest request = httpRequest.getBody();
         RootGenerateResponse response = rootService.rootGenerate(user, request);
         return ResponseEntity.ok(response);

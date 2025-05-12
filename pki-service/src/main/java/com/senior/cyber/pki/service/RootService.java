@@ -3,19 +3,15 @@ package com.senior.cyber.pki.service;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.entity.Key;
-import com.senior.cyber.pki.dao.entity.User;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.KeyRepository;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.X500NameStyle;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,16 +40,18 @@ public class RootService {
 
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(request.getSerial());
-        if (optionalCertificate.isPresent()) {
+        if (certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
 
         // root
         Key rootKey = null;
         if (request.getKey() > 0) {
-            Optional<Key> optionalKey = keyRepository.findBySerial(request.getKey());
-            rootKey = optionalKey.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found"));
+            Key key = this.keyRepository.findBySerial(request.getKey());
+            if (key == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+            }
+            rootKey = key;
         } else {
             request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);

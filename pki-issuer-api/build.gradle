@@ -23,14 +23,14 @@ dependencies {
     implementation project(":pki-service")
 
     implementation "joda-time:joda-time:${joda_time}"
-    implementation "commons-validator:commons-validator:${commons_validator}"
-
-    implementation "org.bouncycastle:bcprov-jdk15to18:${bouncycastle}"
+//    implementation "commons-validator:commons-validator:${commons_validator}"
+//
+//    implementation "org.bouncycastle:bcprov-jdk15to18:${bouncycastle}"
     implementation "org.bouncycastle:bcpkix-jdk15to18:${bouncycastle}"
-    implementation "org.bouncycastle:bcpg-jdk15to18:${bouncycastle}"
-
-    implementation "commons-io:commons-io:${commons_io}"
-    implementation "org.apache.commons:commons-lang3:${commons_lang3}"
+//    implementation "org.bouncycastle:bcpg-jdk15to18:${bouncycastle}"
+//
+//    implementation "commons-io:commons-io:${commons_io}"
+//    implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot}"
 

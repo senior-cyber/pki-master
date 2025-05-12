@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.api.aia.controller;
 
-import com.senior.cyber.pki.dao.entity.Certificate;
-import com.senior.cyber.pki.dao.repository.CertificateRepository;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.cert.CertificateException;
-import java.util.Optional;
 
 @RestController
 public class X509Controller {
@@ -31,8 +30,10 @@ public class X509Controller {
     public ResponseEntity<byte[]> x509Serial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
-        Optional<Certificate> optionalCertificate = certificateRepository.findBySerial(serial);
-        Certificate certificate = optionalCertificate.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found"));
+        Certificate certificate = certificateRepository.findBySerial(serial);
+        if (certificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline");
         headers.add("Content-Type", "application/pkix-cert");

@@ -10,7 +10,11 @@ spring:
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     database: mysql
-    database-platform: com.senior.cyber.pki.dao.dialect.MySQLDialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        generate_statistics: true
+        format_sql: true
   mvc:
     servlet:
       path: /api
@@ -18,13 +22,26 @@ spring:
   datasource:
     username: root
     password: 123123a
-    url: jdbc:mysql://127.0.0.1:3306/rootca
+    url: jdbc:mysql://192.168.1.53:33066/pki
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
-    locations: classpath:com/senior/cyber/pki/dao/flyway
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db-migration
+    clean-disabled: false
+    validate-on-migrate: true
+  session:
+    jdbc:
+      save-mode: always
+      flush-mode: immediate
+      cleanup-cron: 0 * * * * *
+      initialize-schema: never
+      table-name: tbl_cluster_SPRING_SESSION
+      platform: mysql
+      schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
 logging:
   file:
-    path: /opt/apps/pki/pki-api-crl
+    path: ./
     name: info.log
   pattern:
     console: "%d %-5level %logger : %msg%n"
