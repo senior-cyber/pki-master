@@ -1,6 +1,6 @@
 services:
   mysql-pki:
-    container_name: pki
+    container_name: mysql-pki
     image: docker.io/bitnami/mysql:9.3
     restart: 'always'
     ports:
