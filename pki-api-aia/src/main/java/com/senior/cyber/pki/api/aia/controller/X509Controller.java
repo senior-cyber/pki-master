@@ -29,7 +29,12 @@ public class X509Controller {
     @RequestMapping(path = "/x509/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-cert")
     public ResponseEntity<byte[]> x509Serial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
-        long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        long serial = -1;
+        try {
+            serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+        }
         Certificate certificate = certificateRepository.findBySerial(serial);
         if (certificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");

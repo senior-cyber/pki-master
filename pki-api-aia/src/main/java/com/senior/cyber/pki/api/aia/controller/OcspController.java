@@ -52,7 +52,12 @@ public class OcspController {
     public ResponseEntity<byte[]> ocspSerial(RequestEntity<byte[]> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, OperatorCreationException, OCSPException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
 
-        long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        long serial = -1;
+        try {
+            serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+        }
 
         Certificate issuerCertificate = certificateRepository.findBySerial(serial);
         if (issuerCertificate == null) {
@@ -62,7 +67,12 @@ public class OcspController {
         X509Certificate ocspCertificate = issuerCertificate.getOcspCertificate().getCertificate();
         PrivateKey ocspPrivateKey = issuerCertificate.getOcspCertificate().getKey().getPrivateKey();
 
-        OCSPReq ocspReq = new OCSPReq(httpRequest.getBody());
+        byte[] requestBody = httpRequest.getBody();
+        if (requestBody == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+
+        OCSPReq ocspReq = new OCSPReq(requestBody);
 
         DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
 

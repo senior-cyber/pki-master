@@ -34,7 +34,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CertificateService {
@@ -69,9 +72,8 @@ public class CertificateService {
         converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
         Key certificateKey = new Key();
-        certificateKey.setType(KeyTypeEnum.Csr);
+        certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
-        certificateKey.setSerial(System.currentTimeMillis());
         certificateKey.setUser(user);
         certificateKey.setCreatedDatetime(new Date());
         keyRepository.save(certificateKey);
@@ -105,7 +107,7 @@ public class CertificateService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
         if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
@@ -128,9 +130,8 @@ public class CertificateService {
         converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
         Key certificateKey = new Key();
-        certificateKey.setType(KeyTypeEnum.Csr);
+        certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
-        certificateKey.setSerial(System.currentTimeMillis());
         certificateKey.setCreatedDatetime(new Date());
         certificateKey.setUser(user);
         keyRepository.save(certificateKey);
@@ -200,27 +201,17 @@ public class CertificateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
         }
 
+        KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+
         // certificate
-        Key certificateKey = null;
-        if (request.getKey() > 0) {
-            Key key = keyRepository.findBySerial(request.getKey());
-            if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
-            }
-            certificateKey = key;
-        } else {
-            request.setKey(System.currentTimeMillis());
-            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-            Key key = new Key();
-            key.setUser(user);
-            key.setType(KeyTypeEnum.Plain);
-            key.setPublicKey(x509.getPublic());
-            key.setPrivateKey(x509.getPrivate());
-            key.setSerial(request.getKey());
-            key.setCreatedDatetime(new Date());
-            keyRepository.save(key);
-            certificateKey = key;
-        }
+        Key certificateKey = new Key();
+        certificateKey.setUser(user);
+        certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
+        certificateKey.setPublicKey(x509.getPublic());
+        certificateKey.setPrivateKey(x509.getPrivate());
+        certificateKey.setCreatedDatetime(new Date());
+        this.keyRepository.save(certificateKey);
+
         X500Name certificateSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -254,12 +245,12 @@ public class CertificateService {
 
         CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
         response.setSerial(certificate.getSerial());
-        response.setKey(request.getKey());
+//        response.setKey(request.getKey());
         return response;
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
         if (certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
@@ -300,27 +291,17 @@ public class CertificateService {
             }
         }
 
+        KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+
         // certificate
-        Key certificateKey = null;
-        if (request.getKey() > 0) {
-            Key key = keyRepository.findBySerial(request.getKey());
-            if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
-            }
-            certificateKey = key;
-        } else {
-            request.setKey(System.currentTimeMillis());
-            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-            Key key = new Key();
-            key.setType(KeyTypeEnum.Plain);
-            key.setPublicKey(x509.getPublic());
-            key.setPrivateKey(x509.getPrivate());
-            key.setSerial(request.getKey());
-            key.setCreatedDatetime(new Date());
-            key.setUser(user);
-            keyRepository.save(key);
-            certificateKey = key;
-        }
+        Key certificateKey = new Key();
+        certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
+        certificateKey.setPublicKey(x509.getPublic());
+        certificateKey.setPrivateKey(x509.getPrivate());
+        certificateKey.setCreatedDatetime(new Date());
+        certificateKey.setUser(user);
+        this.keyRepository.save(certificateKey);
+
         X500Name certificateSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),

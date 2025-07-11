@@ -51,7 +51,7 @@ public class CertificateController {
     }
 
     @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
         User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
         CertificateTlsGenerateResponse response = certificateService.certificateTlsGenerate(user, request, crlApi, aiaApi);

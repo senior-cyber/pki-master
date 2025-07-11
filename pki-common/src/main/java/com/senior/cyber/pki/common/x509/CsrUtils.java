@@ -9,12 +9,19 @@ import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.Security;
 import java.security.interfaces.DSAPublicKey;
@@ -31,18 +38,12 @@ public class CsrUtils {
         }
     }
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
-    public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject) throws OperatorCreationException {
+    public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject) {
         int shaSize = 256;
         return generate(key, subject, shaSize);
     }
 
-    public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject, int shaSize) throws OperatorCreationException {
+    public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject, int shaSize) {
         String format = "";
         if (key.getPublic() instanceof RSAPublicKey) {
             format = "RSA";
@@ -54,12 +55,16 @@ public class CsrUtils {
         JcaPKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, key.getPublic());
         JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
         csBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-        ContentSigner contentSigner = csBuilder.build(key.getPrivate());
+        ContentSigner contentSigner = null;
+        try {
+            contentSigner = csBuilder.build(key.getPrivate());
+        } catch (OperatorCreationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
         return builder.build(contentSigner);
     }
 
     public static Map<ASN1ObjectIdentifier, String> parse(PKCS10CertificationRequest csr) {
-
         Map<ASN1ObjectIdentifier, String> subject = new HashMap<>();
 
         X500Name _subject = csr.getSubject();
@@ -97,8 +102,30 @@ public class CsrUtils {
                 }
             }
         }
-
         return subject;
+    }
+
+    public static String convert(PKCS10CertificationRequest value) {
+        StringWriter pem = new StringWriter();
+        try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
+            writer.writeObject(value);
+        } catch (IOException e) {
+            return null;
+        }
+        return pem.toString();
+    }
+
+    public static PKCS10CertificationRequest convert(String value) {
+        try (PEMParser parser = new PEMParser(new StringReader(value))) {
+            Object object = parser.readObject();
+            if (object instanceof PKCS10CertificationRequest holder) {
+                return holder;
+            } else {
+                throw new UnsupportedOperationException(object.getClass().getName());
+            }
+        } catch (IOException e) {
+            return null;
+        }
     }
 
 }

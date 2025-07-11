@@ -7,6 +7,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface KeyRepository extends JpaRepository<Key, String> {
 
-    Key findBySerial(long serial);
-
 }

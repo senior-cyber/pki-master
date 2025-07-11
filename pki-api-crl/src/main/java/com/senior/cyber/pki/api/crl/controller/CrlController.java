@@ -75,10 +75,15 @@ public class CrlController {
         LocalDate now = LocalDate.now();
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
 
-        long serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        long serial = -1;
+        try {
+            serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+        }
 
         Certificate issuerCertificate = certificateRepository.findBySerial(serial);
-        if (issuerCertificate == null){
+        if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 

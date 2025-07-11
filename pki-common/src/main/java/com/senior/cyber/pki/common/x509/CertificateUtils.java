@@ -117,11 +117,11 @@ public class CertificateUtils {
                 .getCertificate(holder);
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, List<String> ip, List<String> dns) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
+    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, List<String> ip, List<String> dns) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
         return generateTls(issuerCertificate, issuerKey, csr, crlApi, aiaApi, ip, dns, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, List<String> ip, List<String> dns, long serial) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
+    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, List<String> ip, List<String> dns, long serial) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         boolean basicConstraintsCritical = true;
@@ -143,6 +143,15 @@ public class CertificateUtils {
         PublicKey subjectPublicKey = new JcaPEMKeyConverter()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getPublicKey(csr.getSubjectPublicKeyInfo());
+
+        ContentVerifierProvider verifier =
+                new JcaContentVerifierProviderBuilder()
+                        .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                        .build(subjectPublicKey);
+
+        if (!csr.isSignatureValid(verifier)) {
+            throw new PKCSException("Signature verification failed");
+        }
 
         JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
         builder.addExtension(Extension.authorityKeyIdentifier, authorityKeyIdentifierCritical, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));

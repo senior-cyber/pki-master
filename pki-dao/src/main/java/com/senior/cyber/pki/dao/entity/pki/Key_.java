@@ -13,7 +13,6 @@ import java.util.Date;
 public abstract class Key_ {
 
     public static volatile SingularAttribute<Key, String> id;
-    public static volatile SingularAttribute<Key, Long> serial;
     public static volatile SingularAttribute<Key, PublicKey> publicKey;
     public static volatile SingularAttribute<Key, PrivateKey> privateKey;
     public static volatile SingularAttribute<Key, Date> createdDatetime;

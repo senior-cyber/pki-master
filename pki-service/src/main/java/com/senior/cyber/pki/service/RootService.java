@@ -12,20 +12,14 @@ import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.bouncycastle.pkcs.PKCSException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -39,27 +33,21 @@ public class RootService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        if (certificateRepository.findBySerial(request.getSerial()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
-        }
-
+    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) {
         // root
         Key rootKey = null;
-        if (request.getKey() > 0) {
-            Key key = this.keyRepository.findBySerial(request.getKey());
+        if (request.getKeyId() != null && !request.getKeyId().isBlank()) {
+            Key key = this.keyRepository.findById(request.getKeyId()).orElse(null);
             if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not found");
             }
             rootKey = key;
         } else {
-            request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
-            key.setSerial(request.getKey());
             key.setCreatedDatetime(new Date());
             key.setUser(user);
             keyRepository.save(key);
@@ -75,8 +63,7 @@ public class RootService {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        PKCS10CertificationRequest rootCsr = CsrUtils.generate(new KeyPair(rootKey.getPublicKey(), rootKey.getPrivateKey()), rootSubject);
-        X509Certificate rootCertificate = RootUtils.generate(new KeyPair(rootKey.getPublicKey(), rootKey.getPrivateKey()), rootCsr, request.getSerial());
+        X509Certificate rootCertificate = RootUtils.generate(rootKey.getPrivateKey(), rootKey.getPublicKey(), rootSubject);
         Certificate root = new Certificate();
         root.setCountryCode(request.getCountry());
         root.setOrganization(request.getOrganization());
@@ -101,10 +88,9 @@ public class RootService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
-            key.setSerial(System.currentTimeMillis() + 1);
             key.setCreatedDatetime(new Date());
             key.setUser(user);
             keyRepository.save(key);
@@ -120,7 +106,7 @@ public class RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = CrlUtils.generate(rootCertificate, rootKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootKey.getPrivateKey(), crlCsr, root.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(root);
         crl.setCountryCode(request.getCountry());
@@ -146,10 +132,9 @@ public class RootService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
-            key.setSerial(System.currentTimeMillis() + 2);
             key.setCreatedDatetime(new Date());
             key.setUser(user);
             keyRepository.save(key);
@@ -165,7 +150,7 @@ public class RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = OcspUtils.generate(rootCertificate, rootKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootKey.getPrivateKey(), ocspCsr, root.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(root);
         ocsp.setCountryCode(request.getCountry());
@@ -192,7 +177,7 @@ public class RootService {
 
         RootGenerateResponse response = new RootGenerateResponse();
         response.setSerial(root.getSerial());
-        response.setKey(rootKey.getSerial());
+        response.setKeyId(rootKey.getId());
 
         return response;
     }

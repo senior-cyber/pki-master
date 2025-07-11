@@ -35,9 +35,6 @@ public class Key implements Serializable {
     @Column(name = "public_key_pem")
     private PublicKey publicKey;
 
-    @Column(name = "serial")
-    private Long serial;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private KeyTypeEnum type;

@@ -14,7 +14,6 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.bouncycastle.pkcs.PKCSException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,11 +39,7 @@ public class IssuerService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        if (certificateRepository.findBySerial(request.getSerial()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
-        }
-
+    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
@@ -61,21 +56,19 @@ public class IssuerService {
 
         // issuing
         Key issuingKey = null;
-        if (request.getKey() > 0) {
-            Key key = keyRepository.findBySerial(request.getKey());
+        if (request.getKeyId() != null && !request.getKeyId().isBlank()) {
+            Key key = keyRepository.findById(request.getKeyId()).orElse(null);
             if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKey() + " is not found");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not found");
             }
             issuingKey = key;
         } else {
-            request.setKey(System.currentTimeMillis());
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setUser(user);
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
-            key.setSerial(request.getKey());
             key.setCreatedDatetime(new Date());
             keyRepository.save(key);
             issuingKey = key;
@@ -90,7 +83,7 @@ public class IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
-        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi, request.getSerial());
+        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi);
         Certificate issuing = new Certificate();
         issuing.setIssuerCertificate(issuerCertificate);
         issuing.setCountryCode(request.getCountry());
@@ -116,11 +109,10 @@ public class IssuerService {
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setUser(user);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
-            key.setSerial(System.currentTimeMillis() + 1);
             key.setCreatedDatetime(new Date());
             keyRepository.save(key);
             crlKey = key;
@@ -135,7 +127,7 @@ public class IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = CrlUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(issuing);
         crl.setCountryCode(request.getCountry());
@@ -162,10 +154,9 @@ public class IssuerService {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setUser(user);
-            key.setType(KeyTypeEnum.Plain);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
-            key.setSerial(System.currentTimeMillis() + 2);
             key.setCreatedDatetime(new Date());
             keyRepository.save(key);
             ocspKey = key;
@@ -180,7 +171,7 @@ public class IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = OcspUtils.generate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(issuing);
         ocsp.setCountryCode(request.getCountry());
@@ -207,7 +198,7 @@ public class IssuerService {
 
         IssuerGenerateResponse response = new IssuerGenerateResponse();
         response.setSerial(issuing.getSerial());
-        response.setKey(request.getKey());
+        response.setKeyId(request.getKeyId());
         return response;
     }
 
