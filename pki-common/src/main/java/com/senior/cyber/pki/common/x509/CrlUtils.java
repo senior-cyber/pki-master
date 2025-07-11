@@ -5,9 +5,8 @@ import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.x509.*;
-import org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,11 +14,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.PrivateKey;
+import java.security.NoSuchProviderException;
 import java.security.Security;
-import java.security.cert.CRL;
-import java.security.cert.CRLException;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,15 +28,15 @@ public class CrlUtils {
         }
     }
 
-    public static boolean validate(X509Certificate certificate, String crlUrl) throws IOException, CRLException, InterruptedException {
+    public static boolean validate(X509Certificate certificate, String crlUrl) throws IOException, CRLException, InterruptedException, CertificateException, NoSuchProviderException {
         try (HttpClient client = HttpClient.newBuilder().build()) {
             HttpRequest request = HttpRequest.newBuilder(URI.create(crlUrl))
                     .GET()
                     .build();
             HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
             byte[] raw = response.body();
-            CertificateFactory certificateFactory = new CertificateFactory();
-            CRL crl = certificateFactory.engineGenerateCRL(new ByteArrayInputStream(raw));
+            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509", BouncyCastleProvider.PROVIDER_NAME);
+            X509CRL crl = (X509CRL) certificateFactory.generateCRL(new ByteArrayInputStream(raw));
             return !crl.isRevoked(certificate);
         }
     }

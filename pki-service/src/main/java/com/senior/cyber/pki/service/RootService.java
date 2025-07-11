@@ -93,7 +93,7 @@ public class RootService {
                 request.getCountry(),
                 request.getOrganization(),
                 request.getOrganizationalUnit(),
-                request.getCommonName() + " CRL",
+                request.getCommonName(),
                 request.getLocality(),
                 request.getProvince(),
                 request.getEmailAddress()
@@ -105,7 +105,7 @@ public class RootService {
         crl.setCountryCode(request.getCountry());
         crl.setOrganization(request.getOrganization());
         crl.setOrganizationalUnit(request.getOrganizationalUnit());
-        crl.setCommonName(request.getCommonName() + " CRL");
+        crl.setCommonName(request.getCommonName() );
         crl.setLocalityName(request.getLocality());
         crl.setStateOrProvinceName(request.getProvince());
         crl.setEmailAddress(request.getEmailAddress());
