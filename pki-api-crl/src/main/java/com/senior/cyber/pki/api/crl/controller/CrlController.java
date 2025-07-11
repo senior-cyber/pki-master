@@ -6,9 +6,7 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
-import org.bouncycastle.asn1.x509.CRLNumber;
-import org.bouncycastle.asn1.x509.CRLReason;
-import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v2CRLBuilder;
@@ -20,6 +18,7 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -74,6 +73,9 @@ public class CrlController {
     @Autowired
     protected KeyRepository keyRepository;
 
+    @Value("${api.aia}")
+    protected String aiaApi;
+
     @RequestMapping(path = "/crl/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
     public ResponseEntity<byte[]> crlSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, NoSuchAlgorithmException, OperatorCreationException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
@@ -92,29 +94,29 @@ public class CrlController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-//        Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
-//        if (_c == null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-//        }
-//        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
-//        if (_k == null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-//        }
-//        X509Certificate crlCertificate = _c.getCertificate();
-//        PrivateKey crlPrivateKey = _k.getPrivateKey();
-
-        X509Certificate crlCertificate = issuerCertificate.getCertificate();
-        Key _k = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
+        if (_c == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
         if (_k == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
+        X509Certificate crlCertificate = _c.getCertificate();
         PrivateKey crlPrivateKey = _k.getPrivateKey();
+
+        Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (_issuerKey == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+
+        String hex = String.format("%012X", issuerCertificate.getSerial());
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(crlCertificate, now.toDate());
         builder.setNextUpdate(now.plusWeeks(1).toDate());
-
-        builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(crlCertificate.getPublicKey()));
+        builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(_issuerKey.getPublicKey()));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())));
+        builder.addExtension(Extension.issuerAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, this.aiaApi + "/x509/" + hex + ".der")));
 
         List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
         for (Certificate certificate : certificates) {

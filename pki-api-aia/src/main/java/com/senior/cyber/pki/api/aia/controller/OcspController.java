@@ -5,7 +5,6 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
-import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -56,7 +55,6 @@ public class OcspController {
     @RequestMapping(path = "/ocsp/{serial}", method = RequestMethod.POST, consumes = "application/ocsp-request", produces = "application/ocsp-response")
     public ResponseEntity<byte[]> ocspSerial(RequestEntity<byte[]> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, OperatorCreationException, OCSPException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
-
         long serial = -1;
         try {
             serial = Long.parseLong(_serial, 16);
@@ -69,32 +67,21 @@ public class OcspController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-//        Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
-//        if (_c == null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-//        }
-//        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
-//        if (_k == null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-//        }
-//        X509Certificate ocspCertificate = _c.getCertificate();
-//        PrivateKey ocspPrivateKey = _k.getPrivateKey();
-
-        X509Certificate ocspCertificate = issuerCertificate.getCertificate();
-        Key _k = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
+        if (_c == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
         if (_k == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
+        X509Certificate ocspCertificate = _c.getCertificate();
         PrivateKey ocspPrivateKey = _k.getPrivateKey();
 
         byte[] requestBody = httpRequest.getBody();
         if (requestBody == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
-
-        OCSPReq ocspReq = new OCSPReq(requestBody);
-
-        DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
 
         String format = "";
         if (ocspPrivateKey instanceof RSAPrivateKey) {
@@ -107,22 +94,33 @@ public class OcspController {
 
         Date now = LocalDate.now().toDate();
 
-        JcaBasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(ocspCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
+        DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
+        BasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(ocspCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
+
+        OCSPReq ocspReq = new OCSPReq(requestBody);
         for (Req req : ocspReq.getRequestList()) {
-            Certificate certificate = this.certificateRepository.findBySerial(req.getCertID().getSerialNumber().longValueExact());
+            CertificateID certId = req.getCertID();
+
+            CertificateID respCertId = new CertificateID(
+                    new JcaDigestCalculatorProviderBuilder().build().get(CertificateID.HASH_SHA1),
+                    new JcaX509CertificateHolder(issuerCertificate.getCertificate()),
+                    certId.getSerialNumber()
+            );
+
+            Certificate certificate = this.certificateRepository.findBySerial(certId.getSerialNumber().longValueExact());
             if (certificate == null) {
-                ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(now, CRLReason.certificateHold));
+                ocspRespBuilder.addResponse(respCertId, new RevokedStatus(now, CRLReason.certificateHold));
             } else {
                 if (certificate.getStatus() == CertificateStatusEnum.Good) {
                     X509Certificate cert = certificate.getCertificate();
                     try {
                         cert.checkValidity();
-                        ocspRespBuilder.addResponse(req.getCertID(), CertificateStatus.GOOD);
+                        ocspRespBuilder.addResponse(respCertId, CertificateStatus.GOOD);
                     } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                        ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
+                        ocspRespBuilder.addResponse(respCertId, new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
                     }
                 } else {
-                    ocspRespBuilder.addResponse(req.getCertID(), new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
+                    ocspRespBuilder.addResponse(respCertId, new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
                 }
             }
         }
