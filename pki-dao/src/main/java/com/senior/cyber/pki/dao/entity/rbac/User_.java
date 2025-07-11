@@ -21,12 +21,4 @@ public abstract class User_ {
     public static volatile MapAttribute<User, String, Role> roles;
     public static volatile MapAttribute<User, String, Role> denyRoles;
 
-    // SftpS
-    public static volatile SingularAttribute<User, String> homeDirectory;
-    public static volatile SingularAttribute<User, String> dek;
-    public static volatile SingularAttribute<User, String> secret;
-    public static volatile SingularAttribute<User, Boolean> admin;
-    public static volatile SingularAttribute<User, Boolean> webhookEnabled;
-    public static volatile SingularAttribute<User, String> webhookUrl;
-    public static volatile SingularAttribute<User, String> webhookSecret;
 }

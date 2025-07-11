@@ -33,7 +33,7 @@ spring:
   datasource:
     username: root
     password: 123123a
-    url: jdbc:mysql://192.168.1.53:3306/rootca
+    url: jdbc:mysql://192.168.1.54:3306/rootca
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     locations: classpath:com/senior/cyber/pki/dao/flyway

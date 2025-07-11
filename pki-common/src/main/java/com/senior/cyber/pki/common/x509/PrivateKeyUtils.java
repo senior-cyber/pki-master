@@ -28,40 +28,9 @@ import java.util.Base64;
 
 public class PrivateKeyUtils {
 
-    private static final String password = "password";
-    private static final InputDecryptorProvider decryptor;
-    private static final OutputEncryptor encryptor;
-
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
-        }
-
-        boolean enabled = false;
-
-        InputDecryptorProvider _decryptor = null;
-        OutputEncryptor _encryptor = null;
-        try {
-            JceOpenSSLPKCS8DecryptorProviderBuilder decryptorBuilder = new JceOpenSSLPKCS8DecryptorProviderBuilder();
-            decryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-            _decryptor = decryptorBuilder.build(password.toCharArray());
-
-            JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PKCS8Generator.AES_256_CBC);
-            encryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-            encryptorBuilder.setRandom(new SecureRandom());
-            encryptorBuilder.setPassword(password.toCharArray());
-            encryptorBuilder.setIterationCount(10000);
-            _encryptor = encryptorBuilder.build();
-        } catch (OperatorCreationException e) {
-            e.getMessage();
-        }
-
-        if (enabled && _decryptor != null && _encryptor != null) {
-            decryptor = _decryptor;
-            encryptor = _encryptor;
-        } else {
-            decryptor = null;
-            encryptor = null;
         }
     }
 
@@ -109,7 +78,34 @@ public class PrivateKeyUtils {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
             if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
-                PrivateKeyInfo info = holder.decryptPrivateKeyInfo(decryptor);
+                throw new IllegalArgumentException("Encrypted private key is not supported");
+            } else if (objectHolder instanceof PEMKeyPair holder) {
+                return converter.getPrivateKey(holder.getPrivateKeyInfo());
+            } else if (objectHolder instanceof PrivateKeyInfo holder) {
+                return converter.getPrivateKey(holder);
+            } else {
+                throw new UnsupportedOperationException(objectHolder.getClass().getName());
+            }
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static PrivateKey convert(String value, String password) throws OperatorCreationException {
+        InputDecryptorProvider _decryptor = null;
+        JceOpenSSLPKCS8DecryptorProviderBuilder decryptorBuilder = new JceOpenSSLPKCS8DecryptorProviderBuilder();
+        decryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        _decryptor = decryptorBuilder.build(password.toCharArray());
+
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try (PEMParser parser = new PEMParser(new StringReader(value))) {
+            Object objectHolder = parser.readObject();
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
+                PrivateKeyInfo info = holder.decryptPrivateKeyInfo(_decryptor);
                 return converter.getPrivateKey(info);
             } else if (objectHolder instanceof PEMKeyPair holder) {
                 return converter.getPrivateKey(holder.getPrivateKeyInfo());
@@ -129,7 +125,28 @@ public class PrivateKeyUtils {
         }
         StringWriter pem = new StringWriter();
         try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
-            writer.writeObject(new JcaPKCS8Generator(value, encryptor));
+            writer.writeObject(value);
+        } catch (IOException e) {
+            return null;
+        }
+        return pem.toString();
+    }
+
+    public static String convert(PrivateKey value, String password) throws OperatorCreationException {
+        OutputEncryptor _encryptor = null;
+        JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PKCS8Generator.AES_256_CBC);
+        encryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        encryptorBuilder.setRandom(new SecureRandom());
+        encryptorBuilder.setPassword(password.toCharArray());
+        encryptorBuilder.setIterationCount(10000);
+        _encryptor = encryptorBuilder.build();
+
+        if (value == null) {
+            return null;
+        }
+        StringWriter pem = new StringWriter();
+        try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
+            writer.writeObject(new JcaPKCS8Generator(value, _encryptor));
         } catch (IOException e) {
             return null;
         }

@@ -1,14 +1,13 @@
 services:
   mysql-pki:
     container_name: mysql-pki
-    image: docker.io/bitnami/mysql:9.3
+    image: docker.io/bitnami/mysql:9.3.0
     restart: 'always'
     ports:
-      - '33066:3306'
+      - '33088:3306'
     volumes:
       - 'mysql-pki:/bitnami/mysql/data'
     environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
       - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_DATABASE=pki
       - MYSQL_ROOT_USER=root

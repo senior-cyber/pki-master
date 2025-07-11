@@ -45,9 +45,12 @@ public class UserService {
         }
 
         try {
-            if (!this.passwordEncryptor.checkPassword(password, user.getPassword())) {
+            if (!Strings.CI.equals(user.getPassword(), password)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
             }
+//            if (!this.passwordEncryptor.checkPassword(password, user.getPassword())) {
+//                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
+//            }
         } catch (EncryptionOperationNotPossibleException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
         }
