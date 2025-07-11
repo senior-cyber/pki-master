@@ -92,17 +92,22 @@ public class CrlController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
-        if (_c == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-        }
+//        Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
+//        if (_c == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+//        }
+//        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+//        if (_k == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+//        }
+//        X509Certificate crlCertificate = _c.getCertificate();
+//        PrivateKey crlPrivateKey = _k.getPrivateKey();
 
-        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+        X509Certificate crlCertificate = issuerCertificate.getCertificate();
+        Key _k = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
         if (_k == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
-
-        X509Certificate crlCertificate = _c.getCertificate();
         PrivateKey crlPrivateKey = _k.getPrivateKey();
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(crlCertificate, now.toDate());

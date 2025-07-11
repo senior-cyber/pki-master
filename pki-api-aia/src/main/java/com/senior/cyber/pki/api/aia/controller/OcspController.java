@@ -69,16 +69,22 @@ public class OcspController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
-        if (_c == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-        }
-        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+//        Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
+//        if (_c == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+//        }
+//        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+//        if (_k == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+//        }
+//        X509Certificate ocspCertificate = _c.getCertificate();
+//        PrivateKey ocspPrivateKey = _k.getPrivateKey();
+
+        X509Certificate ocspCertificate = issuerCertificate.getCertificate();
+        Key _k = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
         if (_k == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
-
-        X509Certificate ocspCertificate = _c.getCertificate();
         PrivateKey ocspPrivateKey = _k.getPrivateKey();
 
         byte[] requestBody = httpRequest.getBody();
