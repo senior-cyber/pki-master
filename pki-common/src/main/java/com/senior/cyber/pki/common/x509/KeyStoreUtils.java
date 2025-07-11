@@ -20,13 +20,6 @@ public class KeyStoreUtils {
     /**
      * for Trusted Manager Store
      *
-     * @param alias
-     * @param certificate
-     * @return
-     * @throws KeyStoreException
-     * @throws CertificateException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
      */
     public static KeyStore generateKeyStore(String alias, X509Certificate certificate) {
         try {
@@ -43,11 +36,6 @@ public class KeyStoreUtils {
     /**
      * for Trusted Manager Store
      *
-     * @return
-     * @throws KeyStoreException
-     * @throws CertificateException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
      */
     public static KeyStore generateKeyStore(Map<String, X509Certificate> certificates) {
         try {
@@ -66,14 +54,6 @@ public class KeyStoreUtils {
     /**
      * for Key Manager Store 2Ways TLS
      *
-     * @param alias
-     * @param privateKey
-     * @param certificate
-     * @return
-     * @throws KeyStoreException
-     * @throws CertificateException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
      */
     public static KeyStore generateKeyStore(String alias, PrivateKey privateKey, X509Certificate certificate) {
         try {
@@ -90,14 +70,6 @@ public class KeyStoreUtils {
     /**
      * for Key Manager Store to host the secure port
      *
-     * @param alias
-     * @param privateKey
-     * @param certificateChain
-     * @return
-     * @throws KeyStoreException
-     * @throws CertificateException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
      */
     public static KeyStore generateKeyStore(String alias, PrivateKey privateKey, X509Certificate[] certificateChain) {
         try {

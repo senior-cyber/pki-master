@@ -49,15 +49,6 @@ public class SecretKeyUtils {
     /**
      * AES_256/GCM/NoPadding
      *
-     * @param secretKey
-     * @param text
-     * @return iv.cipher.tag
-     * @throws NoSuchPaddingException
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidAlgorithmParameterException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
      */
     public static String encryptText(SecretKey secretKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         int length = 16;
@@ -81,17 +72,6 @@ public class SecretKeyUtils {
         return ivText + "." + cipherText + "." + authenticationText;
     }
 
-    /**
-     * @param secretKey
-     * @param text      iv.cipher.tag
-     * @return
-     * @throws NoSuchPaddingException
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidAlgorithmParameterException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
-     */
     public static String decryptText(SecretKey secretKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         int firstDotIndex = text.indexOf('.');
         int secondDotIndex = text.indexOf('.', firstDotIndex + 1);

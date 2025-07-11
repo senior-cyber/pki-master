@@ -49,15 +49,16 @@ public class CrlUtils {
     }
 
     public static boolean validate(X509Certificate certificate, String crlUrl) throws IOException, CRLException, InterruptedException {
-        HttpClient client = HttpClient.newBuilder().build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(crlUrl))
-                .GET()
-                .build();
-        HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-        byte[] raw = response.body();
-        CertificateFactory certificateFactory = new CertificateFactory();
-        CRL crl = certificateFactory.engineGenerateCRL(new ByteArrayInputStream(raw));
-        return !crl.isRevoked(certificate);
+        try (HttpClient client = HttpClient.newBuilder().build()) {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(crlUrl))
+                    .GET()
+                    .build();
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            byte[] raw = response.body();
+            CertificateFactory certificateFactory = new CertificateFactory();
+            CRL crl = certificateFactory.engineGenerateCRL(new ByteArrayInputStream(raw));
+            return !crl.isRevoked(certificate);
+        }
     }
 
     public static List<String> lookupUrl(X509Certificate certificate) throws IOException {
