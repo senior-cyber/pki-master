@@ -48,12 +48,12 @@ public class IssuerController {
 
     @RequestMapping(path = "/issuer/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IssuerGenerateResponse> issuerGenerate(RequestEntity<IssuerGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         IssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        IssuerGenerateResponse response = issuerService.issuerGenerate(user, request, crlApi, aiaApi);
+        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.aiaApi);
         return ResponseEntity.ok(response);
     }
 

@@ -42,27 +42,21 @@ public class IssuerService {
     public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
 
         // issuing
         Key issuingKey = null;
-        if (request.getKeyId() != null && !request.getKeyId().isBlank()) {
-            Key key = keyRepository.findById(request.getKeyId()).orElse(null);
-            if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not found");
-            }
-            issuingKey = key;
-        } else {
+        {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setUser(user);
@@ -70,9 +64,10 @@ public class IssuerService {
             key.setPublicKey(x509.getPublic());
             key.setPrivateKey(x509.getPrivate());
             key.setCreatedDatetime(new Date());
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             issuingKey = key;
         }
+
         X500Name issuingSubject = SubjectUtils.generate(
                 request.getCountry(),
                 request.getOrganization(),
@@ -102,7 +97,7 @@ public class IssuerService {
         issuing.setStatus(CertificateStatusEnum.Good);
         issuing.setType(CertificateTypeEnum.Issuer);
         issuing.setUser(user);
-        certificateRepository.save(issuing);
+        this.certificateRepository.save(issuing);
 
         // crl
         Key crlKey = null;
@@ -114,7 +109,7 @@ public class IssuerService {
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
             key.setCreatedDatetime(new Date());
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             crlKey = key;
         }
         X500Name crlSubject = SubjectUtils.generate(
@@ -146,7 +141,7 @@ public class IssuerService {
         crl.setStatus(CertificateStatusEnum.Good);
         crl.setType(CertificateTypeEnum.Crl);
         crl.setUser(user);
-        certificateRepository.save(crl);
+        this.certificateRepository.save(crl);
 
         // ocsp
         Key ocspKey = null;
@@ -158,7 +153,7 @@ public class IssuerService {
             key.setPrivateKey(x509.getPrivate());
             key.setPublicKey(x509.getPublic());
             key.setCreatedDatetime(new Date());
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             ocspKey = key;
         }
         X500Name ocspSubject = SubjectUtils.generate(
@@ -190,15 +185,24 @@ public class IssuerService {
         ocsp.setStatus(CertificateStatusEnum.Good);
         ocsp.setType(CertificateTypeEnum.Ocsp);
         ocsp.setUser(user);
-        certificateRepository.save(ocsp);
+        this.certificateRepository.save(ocsp);
 
         issuing.setCrlCertificate(crl);
         issuing.setOcspCertificate(ocsp);
-        certificateRepository.save(issuing);
+        this.certificateRepository.save(issuing);
 
         IssuerGenerateResponse response = new IssuerGenerateResponse();
-        response.setSerial(issuing.getSerial());
-        response.setKeyId(request.getKeyId());
+        response.setId(issuing.getId());
+        response.setCertificate(issuingCertificate);
+        response.setPublicKey(issuingKey.getPublicKey());
+        response.setPrivateKey(issuingKey.getPrivateKey());
+        response.setOcspCertificate(ocspCertificate);
+        response.setOcspPublicKey(ocspCertificate.getPublicKey());
+        response.setOcspPrivateKey(ocspKey.getPrivateKey());
+        response.setCrlCertificate(crlCertificate);
+        response.setCrlPublicKey(crlKey.getPublicKey());
+        response.setCrlPrivateKey(crlKey.getPrivateKey());
+
         return response;
     }
 

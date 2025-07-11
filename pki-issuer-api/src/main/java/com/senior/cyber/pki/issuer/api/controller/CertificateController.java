@@ -13,12 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -44,17 +46,23 @@ public class CertificateController {
 
     @RequestMapping(path = "/certificate/common/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateCommonGenerateRequest request = httpRequest.getBody();
-        CertificateCommonGenerateResponse response = certificateService.certificateCommonGenerate(user, request, crlApi, aiaApi);
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        CertificateCommonGenerateResponse response = this.certificateService.certificateCommonGenerate(user, request, this.crlApi, this.aiaApi);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
-        CertificateTlsGenerateResponse response = certificateService.certificateTlsGenerate(user, request, crlApi, aiaApi);
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.aiaApi);
         return ResponseEntity.ok(response);
     }
 

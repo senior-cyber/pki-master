@@ -10,11 +10,8 @@ import java.io.Serializable;
 @Setter
 public class IssuerGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerSerial")
-    private long issuerSerial;
-
-    @JsonProperty("keyId")
-    private String keyId;
+    @JsonProperty("issuerId")
+    private String issuerId;
 
     @JsonProperty("locality")
     private String locality;

@@ -10,9 +10,6 @@ import java.io.Serializable;
 @Getter
 public class RootGenerateRequest implements Serializable {
 
-    @JsonProperty("keyId")
-    private String keyId;
-
     @JsonProperty("locality")
     private String locality;
 

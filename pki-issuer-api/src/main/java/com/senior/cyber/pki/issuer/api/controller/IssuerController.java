@@ -55,24 +55,27 @@ public class IssuerController {
     @Transactional(rollbackFor = Throwable.class)
     @RequestMapping(path = "/issuer/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IssuerGenerateResponse> issuerGenerate(RequestEntity<IssuerGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        User user = userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         IssuerGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
 
-        IssuerGenerateResponse response = issuerService.issuerGenerate(user, request, crlApi, aiaApi);
+        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.aiaApi);
         return ResponseEntity.ok(response);
     }
 

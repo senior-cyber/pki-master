@@ -34,7 +34,7 @@ public class UserService {
         int colon = Strings.CS.indexOf(loginAndPassword, ":");
         String login = StringUtils.substring(loginAndPassword, 0, colon);
         String password = StringUtils.substring(loginAndPassword, colon + 1);
-        User user = userRepository.findByLogin(login);
+        User user = this.userRepository.findByLogin(login);
 
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
@@ -45,7 +45,7 @@ public class UserService {
         }
 
         try {
-            if (!passwordEncryptor.checkPassword(password, user.getPassword())) {
+            if (!this.passwordEncryptor.checkPassword(password, user.getPassword())) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
             }
         } catch (EncryptionOperationNotPossibleException e) {

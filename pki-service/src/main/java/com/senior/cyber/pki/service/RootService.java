@@ -14,10 +14,8 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
@@ -34,15 +32,10 @@ public class RootService {
 
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) {
+
         // root
         Key rootKey = null;
-        if (request.getKeyId() != null && !request.getKeyId().isBlank()) {
-            Key key = this.keyRepository.findById(request.getKeyId()).orElse(null);
-            if (key == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not found");
-            }
-            rootKey = key;
-        } else {
+        {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setType(KeyTypeEnum.ServerKeyJCE);
@@ -176,7 +169,16 @@ public class RootService {
         this.certificateRepository.save(root);
 
         RootGenerateResponse response = new RootGenerateResponse();
-        response.setKeyId(rootKey.getId());
+        response.setId(root.getId());
+        response.setCertificate(rootCertificate);
+        response.setPublicKey(rootKey.getPublicKey());
+        response.setPrivateKey(rootKey.getPrivateKey());
+        response.setOcspCertificate(ocspCertificate);
+        response.setOcspPublicKey(ocspCertificate.getPublicKey());
+        response.setOcspPrivateKey(ocspKey.getPrivateKey());
+        response.setCrlCertificate(crlCertificate);
+        response.setCrlPublicKey(crlKey.getPublicKey());
+        response.setCrlPrivateKey(crlKey.getPrivateKey());
 
         return response;
     }

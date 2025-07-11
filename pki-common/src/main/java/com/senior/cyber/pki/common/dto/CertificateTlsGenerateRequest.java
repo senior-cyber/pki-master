@@ -11,14 +11,8 @@ import java.util.List;
 @Getter
 public class CertificateTlsGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerSerial")
-    private long issuerSerial;
-
-    @JsonProperty("serial")
-    private long serial;
-
-    @JsonProperty("key")
-    private long key;
+    @JsonProperty("issuerId")
+    private String issuerId;
 
     @JsonProperty("locality")
     private String locality;

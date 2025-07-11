@@ -56,7 +56,7 @@ public class CertificateService {
 
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findBySerial(request.getIssuerSerial());
         if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
         }
@@ -76,7 +76,7 @@ public class CertificateService {
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
         certificateKey.setUser(user);
         certificateKey.setCreatedDatetime(new Date());
-        keyRepository.save(certificateKey);
+        this.keyRepository.save(certificateKey);
 
         Map<ASN1ObjectIdentifier, String> subject = CsrUtils.parse(request.getCsr());
 
@@ -99,7 +99,7 @@ public class CertificateService {
         certificate.setStatus(CertificateStatusEnum.Good);
         certificate.setType(CertificateTypeEnum.Certificate);
         certificate.setUser(user);
-        certificateRepository.save(certificate);
+        this.certificateRepository.save(certificate);
 
         CertificateCommonCsrResponse response = new CertificateCommonCsrResponse();
         response.setSerial(certificate.getSerial());
@@ -114,7 +114,7 @@ public class CertificateService {
 
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findBySerial(request.getIssuerSerial());
         if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
         }
@@ -134,7 +134,7 @@ public class CertificateService {
         certificateKey.setPublicKey(converter.getPublicKey(request.getCsr().getSubjectPublicKeyInfo()));
         certificateKey.setCreatedDatetime(new Date());
         certificateKey.setUser(user);
-        keyRepository.save(certificateKey);
+        this.keyRepository.save(certificateKey);
 
         Map<ASN1ObjectIdentifier, String> subject = CsrUtils.parse(request.getCsr());
 
@@ -174,7 +174,7 @@ public class CertificateService {
         certificate.setStatus(CertificateStatusEnum.Good);
         certificate.setType(CertificateTypeEnum.Certificate);
         certificate.setUser(user);
-        certificateRepository.save(certificate);
+        this.certificateRepository.save(certificate);
 
         CertificateTlsCsrResponse response = new CertificateTlsCsrResponse();
         response.setSerial(certificate.getSerial());
@@ -183,22 +183,18 @@ public class CertificateService {
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
-        }
-
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
 
         KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
@@ -222,7 +218,7 @@ public class CertificateService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getSerial());
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -241,32 +237,31 @@ public class CertificateService {
         certificate.setStatus(CertificateStatusEnum.Good);
         certificate.setType(CertificateTypeEnum.Certificate);
         certificate.setUser(user);
-        certificateRepository.save(certificate);
+        this.certificateRepository.save(certificate);
 
         CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
-        response.setSerial(certificate.getSerial());
-//        response.setKey(request.getKey());
+        response.setId(certificate.getId());
+        response.setCertificate(certificateCertificate);
+        response.setPrivateKey(certificateKey.getPrivateKey());
+        response.setPublicKey(certificateKey.getPublicKey());
+
         return response;
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
-        if (certificateRepository.findBySerial(request.getSerial()) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
-        }
-
         Date now = LocalDate.now().toDate();
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(request.getIssuerSerial());
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerSerial() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
 
         if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
@@ -329,7 +324,7 @@ public class CertificateService {
         }
 
         PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getIp(), request.getDns(), request.getSerial());
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getIp(), request.getDns(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -349,11 +344,14 @@ public class CertificateService {
         certificate.setStatus(CertificateStatusEnum.Good);
         certificate.setType(CertificateTypeEnum.Certificate);
         certificate.setUser(user);
-        certificateRepository.save(certificate);
+        this.certificateRepository.save(certificate);
 
         CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
-        response.setSerial(certificate.getSerial());
-        response.setKey(request.getKey());
+        response.setId(certificate.getId());
+        response.setCertificate(certificateCertificate);
+        response.setPrivateKey(certificateKey.getPrivateKey());
+        response.setPublicKey(certificateKey.getPublicKey());
+
         return response;
     }
 

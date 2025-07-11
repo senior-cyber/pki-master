@@ -8,13 +8,10 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class CertificateCommonGenerateRequest  implements Serializable {
+public class CertificateCommonGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerSerial")
-    private long issuerSerial;
-
-    @JsonProperty("serial")
-    private long serial;
+    @JsonProperty("issuerId")
+    private String issuerId;
 
     @JsonProperty("locality")
     private String locality;
