@@ -3,20 +3,20 @@ package com.senior.cyber.pki.common.converter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.senior.cyber.pki.common.x509.CsrUtils;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import com.senior.cyber.pki.common.x509.CertificateUtils;
 
 import java.io.IOException;
+import java.security.cert.X509Certificate;
 
-public class PKCS10CertificationRequestDeserializer extends JsonDeserializer<PKCS10CertificationRequest> {
+public class X509CertificateDeserializer extends JsonDeserializer<X509Certificate> {
 
     @Override
-    public PKCS10CertificationRequest deserialize(JsonParser json, DeserializationContext context) throws IOException {
+    public X509Certificate deserialize(JsonParser json, DeserializationContext context) throws IOException {
         String value = json.getValueAsString();
         if (value == null || value.isBlank()) {
             return null;
         }
-        return CsrUtils.convert(value);
+        return CertificateUtils.convert(value);
     }
 
 }

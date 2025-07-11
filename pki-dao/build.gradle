@@ -16,6 +16,7 @@ repositories {
 }
 
 dependencies {
+	implementation project(":pki-common")
 	implementation "org.apache.commons:commons-lang3:${commons_lang3}"
 
 	implementation "org.bouncycastle:bcprov-jdk15to18:${bouncycastle}"

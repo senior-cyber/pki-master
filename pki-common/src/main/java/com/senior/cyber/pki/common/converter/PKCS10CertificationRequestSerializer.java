@@ -11,11 +11,11 @@ import java.io.IOException;
 public class PKCS10CertificationRequestSerializer extends JsonSerializer<PKCS10CertificationRequest> {
 
     @Override
-    public void serialize(PKCS10CertificationRequest csr, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        if (csr == null) {
-            gen.writeNull();
+    public void serialize(PKCS10CertificationRequest object, JsonGenerator json, SerializerProvider provider) throws IOException {
+        if (object == null) {
+            json.writeNull();
         } else {
-            gen.writeString(CsrUtils.convert(csr));
+            json.writeString(CsrUtils.convert(object));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.dao.type;
 
+import com.senior.cyber.pki.common.x509.PublicKeyUtils;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -22,42 +23,12 @@ public class PublicKeyType implements AttributeConverter<PublicKey, String> {
 
     @Override
     public String convertToDatabaseColumn(PublicKey value) {
-        return convert(value);
+        return PublicKeyUtils.convert(value);
     }
 
     @Override
     public PublicKey convertToEntityAttribute(String value) {
-        return convert(value);
-    }
-
-    public static String convert(PublicKey value) {
-        StringWriter pem = new StringWriter();
-        try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
-            writer.writeObject(value);
-        } catch (IOException e) {
-            return null;
-        }
-        return pem.toString();
-    }
-
-    public static PublicKey convert(String value) {
-        try (PEMParser parser = new PEMParser(new StringReader(value))) {
-            Object object = parser.readObject();
-            if (object instanceof X509CertificateHolder holder) {
-                JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
-                converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-                X509Certificate certificate = converter.getCertificate(holder);
-                return certificate.getPublicKey();
-            } else if (object instanceof SubjectPublicKeyInfo holder) {
-                JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-                converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-                return converter.getPublicKey(holder);
-            } else {
-                throw new java.lang.UnsupportedOperationException(object.getClass().getName());
-            }
-        } catch (CertificateException | IOException e) {
-            return null;
-        }
+        return PublicKeyUtils.convert(value);
     }
 
 }

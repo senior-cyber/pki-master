@@ -50,7 +50,7 @@ public class RootService {
             key.setPrivateKey(x509.getPrivate());
             key.setCreatedDatetime(new Date());
             key.setUser(user);
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             rootKey = key;
         }
 
@@ -81,7 +81,7 @@ public class RootService {
         root.setStatus(CertificateStatusEnum.Good);
         root.setType(CertificateTypeEnum.Root);
         root.setUser(user);
-        certificateRepository.save(root);
+        this.certificateRepository.save(root);
 
         // crl
         Key crlKey = null;
@@ -93,7 +93,7 @@ public class RootService {
             key.setPublicKey(x509.getPublic());
             key.setCreatedDatetime(new Date());
             key.setUser(user);
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             crlKey = key;
         }
         X500Name crlSubject = SubjectUtils.generate(
@@ -125,7 +125,7 @@ public class RootService {
         crl.setStatus(CertificateStatusEnum.Good);
         crl.setType(CertificateTypeEnum.Crl);
         crl.setUser(user);
-        certificateRepository.save(crl);
+        this.certificateRepository.save(crl);
 
         // ocsp
         Key ocspKey = null;
@@ -137,7 +137,7 @@ public class RootService {
             key.setPublicKey(x509.getPublic());
             key.setCreatedDatetime(new Date());
             key.setUser(user);
-            keyRepository.save(key);
+            this.keyRepository.save(key);
             ocspKey = key;
         }
         X500Name ocspSubject = SubjectUtils.generate(
@@ -169,14 +169,13 @@ public class RootService {
         ocsp.setStatus(CertificateStatusEnum.Good);
         ocsp.setType(CertificateTypeEnum.Ocsp);
         ocsp.setUser(user);
-        certificateRepository.save(ocsp);
+        this.certificateRepository.save(ocsp);
 
         root.setCrlCertificate(crl);
         root.setOcspCertificate(ocsp);
-        certificateRepository.save(root);
+        this.certificateRepository.save(root);
 
         RootGenerateResponse response = new RootGenerateResponse();
-        response.setSerial(root.getSerial());
         response.setKeyId(rootKey.getId());
 
         return response;

@@ -5,10 +5,13 @@ import org.apache.commons.validator.routines.InetAddressValidator;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -19,6 +22,8 @@ import org.bouncycastle.pkcs.PKCSException;
 import org.joda.time.LocalDate;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -226,6 +231,39 @@ public class CertificateUtils {
         return new JcaX509CertificateConverter()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getCertificate(holder);
+    }
+
+    public static X509Certificate convert(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try (PEMParser parser = new PEMParser(new StringReader(value))) {
+            Object object = parser.readObject();
+            JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
+            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            if (object instanceof JcaX509CertificateHolder holder) {
+                return converter.getCertificate(holder);
+            } else if (object instanceof X509CertificateHolder holder) {
+                return converter.getCertificate(holder);
+            } else {
+                throw new UnsupportedOperationException(object.getClass().getName());
+            }
+        } catch (CertificateException | IOException e) {
+            return null;
+        }
+    }
+
+    public static String convert(X509Certificate value) {
+        if (value == null) {
+            return null;
+        }
+        StringWriter pem = new StringWriter();
+        try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
+            writer.writeObject(value);
+        } catch (IOException e) {
+            return null;
+        }
+        return pem.toString();
     }
 
 }
