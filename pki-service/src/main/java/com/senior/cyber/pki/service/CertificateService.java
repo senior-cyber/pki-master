@@ -280,8 +280,14 @@ public class CertificateService {
         if (request.getDns() != null) {
             DomainValidator validator = DomainValidator.getInstance(true);
             for (String dns : request.getDns()) {
-                if (!validator.isValid(dns)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                if (dns.startsWith("*.")) {
+                    if (!validator.isValid(dns.substring(2))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
+                } else {
+                    if (!validator.isValid(dns)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
                 }
             }
         }
@@ -348,9 +354,47 @@ public class CertificateService {
 
         CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
         response.setId(certificate.getId());
-        response.setCertificate(certificateCertificate);
-        response.setPrivateKey(certificateKey.getPrivateKey());
-        response.setPublicKey(certificateKey.getPublicKey());
+        response.setCert(certificateCertificate);
+        response.setPrivkey(certificateKey.getPrivateKey());
+
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(issuerCertificate.getCertificate());
+
+        Certificate temp = issuerCertificate;
+        while (true) {
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                chain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setChain(chain);
+
+        List<X509Certificate> fullchain = new ArrayList<>();
+        fullchain.add(certificate.getCertificate());
+        temp = certificate;
+        while (true) {
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                fullchain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setFullchain(fullchain);
 
         return response;
     }
