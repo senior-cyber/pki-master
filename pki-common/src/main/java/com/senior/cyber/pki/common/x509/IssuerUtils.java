@@ -117,7 +117,7 @@ public class IssuerUtils {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
 
-        String hex = String.format("%012X", issuerCertificate.getSerialNumber().intValueExact());
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
 
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();

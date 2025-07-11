@@ -90,7 +90,7 @@ public class CertificateUtils {
         builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment));
         builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}));
 
-        String hex = String.format("%012X", issuerCertificate.getSerialNumber().intValueExact());
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
 
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();
@@ -168,7 +168,7 @@ public class CertificateUtils {
         builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment));
         builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}));
 
-        String hex = String.format("%012X", issuerCertificate.getSerialNumber().intValueExact());
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
 
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();
