@@ -92,8 +92,6 @@ public class CrlController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
-
         Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
         if (_c == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
@@ -113,6 +111,7 @@ public class CrlController {
         builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(crlCertificate.getPublicKey()));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())));
 
+        List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
         for (Certificate certificate : certificates) {
             X509Certificate cert = certificate.getCertificate();
             if (certificate.getStatus() == CertificateStatusEnum.Good) {
