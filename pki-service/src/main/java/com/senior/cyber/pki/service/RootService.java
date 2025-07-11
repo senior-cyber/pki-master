@@ -14,6 +14,7 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCSException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class RootService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
         if (certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }

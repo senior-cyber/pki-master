@@ -8,9 +8,12 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCSException;
 import org.joda.time.LocalDate;
 
 import java.io.IOException;
@@ -36,11 +39,11 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
         return generate(issuerCertificate, issuerKey, csr, crlApi, aiaApi, System.currentTimeMillis());
     }
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, long serial) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException {
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, long serial) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         boolean basicConstraintsCritical = true;
@@ -62,6 +65,15 @@ public class IssuerUtils {
         PublicKey subjectPublicKey = new JcaPEMKeyConverter()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getPublicKey(csr.getSubjectPublicKeyInfo());
+
+        ContentVerifierProvider verifier =
+                new JcaContentVerifierProviderBuilder()
+                        .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                        .build(subjectPublicKey);
+
+        if (!csr.isSignatureValid(verifier)) {
+            throw new PKCSException("Signature verification failed");
+        }
 
         JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
         builder.addExtension(Extension.authorityKeyIdentifier, authorityKeyIdentifierCritical, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
