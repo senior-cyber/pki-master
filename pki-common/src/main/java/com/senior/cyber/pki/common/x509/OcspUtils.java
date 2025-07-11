@@ -68,40 +68,82 @@ public class OcspUtils {
         return urls;
     }
 
-    public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String ocspUri) throws OCSPException, OperatorCreationException, IOException, CertificateException, InterruptedException {
-        DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME).build();
-        CertificateID certificateID = new JcaCertificateID(digestCalculatorProvider.get(CertificateID.HASH_SHA1), issuerCertificate, certificate.getSerialNumber());
+    public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String ocspUri)
+            throws OCSPException, OperatorCreationException, IOException, CertificateException, InterruptedException {
+
+        // Step 1: Create CertificateID for OCSP request
+        DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder()
+                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                .build();
+
+        CertificateID certificateID = new JcaCertificateID(
+                digestCalculatorProvider.get(CertificateID.HASH_SHA1),
+                issuerCertificate,
+                certificate.getSerialNumber()
+        );
+
         OCSPReqBuilder ocspReqBuilder = new OCSPReqBuilder();
         ocspReqBuilder.addRequest(certificateID);
         OCSPReq ocspReq = ocspReqBuilder.build();
 
-        HttpClient client = HttpClient.newBuilder().build();
+        // Step 2: Send OCSP request to responder
+        try (HttpClient client = HttpClient.newBuilder().build()) {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(ocspUri))
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(ocspReq.getEncoded()))
+                    .header("Content-Type", "application/ocsp-request")
+                    .build();
 
-        HttpRequest request = HttpRequest.newBuilder(URI.create(ocspUri))
-                .POST(HttpRequest.BodyPublishers.ofByteArray(ocspReq.getEncoded()))
-                .header("Content-Type", "application/ocsp-request")
-                .build();
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            byte[] raw = response.body();
 
-        HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-        byte[] raw = response.body();
-        OCSPResp ocspResponse = new OCSPResp(raw);
+            // Step 3: Parse and validate OCSP response
+            OCSPResp ocspResponse = new OCSPResp(raw);
+            if (ocspResponse.getStatus() != OCSPResp.SUCCESSFUL) {
+                return false;
+            }
 
-        BasicOCSPResp basicOCSPResp = (BasicOCSPResp) ocspResponse.getResponseObject();
-        X509CertificateHolder[] certificateHolders = basicOCSPResp.getCerts();
-        X509Certificate signerCert = new JcaX509CertificateConverter()
-                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                .getCertificate(certificateHolders[0]);
-        JcaContentVerifierProviderBuilder jcaContentVerifierProviderBuilder = new JcaContentVerifierProviderBuilder();
-        jcaContentVerifierProviderBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-        ContentVerifierProvider contentVerifierProvider = jcaContentVerifierProviderBuilder.build(signerCert.getPublicKey());
-        if (basicOCSPResp.isSignatureValid(contentVerifierProvider)) {
-            SingleResp[] singleResps = basicOCSPResp.getResponses();
-            JcaX509CertificateHolder holder = new JcaX509CertificateHolder(issuerCertificate);
-            return singleResps[0].getCertID().matchesIssuer(holder, digestCalculatorProvider)
-                    && singleResps[0].getCertID().getSerialNumber().compareTo((certificate).getSerialNumber()) == 0
-                    && singleResps[0].getCertStatus() == null;
+            Object responseObject = ocspResponse.getResponseObject();
+            if (!(responseObject instanceof BasicOCSPResp basicOCSPResp)) {
+                return false;
+            }
+
+            // Step 4: Verify OCSP response signature
+            X509CertificateHolder[] certHolders = basicOCSPResp.getCerts();
+            if (certHolders.length == 0) {
+                return false;
+            }
+
+            X509Certificate signerCert = new JcaX509CertificateConverter()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .getCertificate(certHolders[0]);
+
+            ContentVerifierProvider contentVerifier = new JcaContentVerifierProviderBuilder()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .build(signerCert.getPublicKey());
+
+            if (!basicOCSPResp.isSignatureValid(contentVerifier)) {
+                return false;
+            }
+
+            // Step 5: Check OCSP response status for the certificate
+            SingleResp[] responses = basicOCSPResp.getResponses();
+            if (responses.length == 0) {
+                return false;
+            }
+
+            SingleResp singleResp = responses[0];
+
+            CertificateID responseCertId = singleResp.getCertID();
+            boolean issuerMatch = responseCertId.matchesIssuer(new JcaX509CertificateHolder(issuerCertificate), digestCalculatorProvider);
+            boolean serialMatch = responseCertId.getSerialNumber().equals(certificate.getSerialNumber());
+
+            if (!issuerMatch || !serialMatch) {
+                return false;
+            }
+
+            Object certStatus = singleResp.getCertStatus();
+            return certStatus == CertificateStatus.GOOD;
         }
-        return false;
     }
 
 }

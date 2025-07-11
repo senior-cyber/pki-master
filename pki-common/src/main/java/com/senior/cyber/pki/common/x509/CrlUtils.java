@@ -28,16 +28,52 @@ public class CrlUtils {
         }
     }
 
-    public static boolean validate(X509Certificate certificate, String crlUrl) throws IOException, CRLException, InterruptedException, CertificateException, NoSuchProviderException {
+    public static boolean validate(X509Certificate certificate, String crlUrl) throws CertificateException, IOException, NoSuchProviderException, CRLException, InterruptedException {
+        return validate(certificate, null, crlUrl);
+    }
+
+    public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String crlUrl)
+            throws IOException, CRLException, InterruptedException, CertificateException, NoSuchProviderException {
+
+        // Step 1: Validate input
+        if (certificate == null || crlUrl == null || crlUrl.isBlank()) {
+            throw new IllegalArgumentException("Certificate or CRL URL is missing.");
+        }
+
+        // Step 2: Fetch CRL data
         try (HttpClient client = HttpClient.newBuilder().build()) {
             HttpRequest request = HttpRequest.newBuilder(URI.create(crlUrl))
                     .GET()
+                    .header("Accept", "application/pkix-crl")
                     .build();
+
             HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            byte[] raw = response.body();
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509", BouncyCastleProvider.PROVIDER_NAME);
-            X509CRL crl = (X509CRL) certificateFactory.generateCRL(new ByteArrayInputStream(raw));
-            return !crl.isRevoked(certificate);
+            if (response.statusCode() != 200) {
+                throw new IOException("Failed to fetch CRL: HTTP status " + response.statusCode());
+            }
+
+            byte[] rawCrl = response.body();
+
+            // Step 3: Parse CRL using Bouncy Castle
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509", BouncyCastleProvider.PROVIDER_NAME);
+            X509CRL crl = (X509CRL) certFactory.generateCRL(new ByteArrayInputStream(rawCrl));
+
+            // Step 4: Optional - Verify the CRL's signature using the issuer certificate
+            if (issuerCertificate != null) {
+                try {
+                    crl.verify(issuerCertificate.getPublicKey(), BouncyCastleProvider.PROVIDER_NAME);
+                } catch (Exception e) {
+                    throw new CertificateException("CRL signature verification failed.", e);
+                }
+            }
+
+            // Step 5: Check if the certificate is revoked
+            boolean revoked = crl.isRevoked(certificate);
+            if (revoked) {
+                System.err.println("Certificate is revoked. Serial: " + certificate.getSerialNumber());
+            }
+
+            return !revoked;
         }
     }
 
