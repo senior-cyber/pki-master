@@ -1,8 +1,10 @@
 package com.senior.cyber.pki.api.aia.controller;
 
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -48,6 +50,9 @@ public class OcspController {
     @Autowired
     protected CertificateRepository certificateRepository;
 
+    @Autowired
+    protected KeyRepository keyRepository;
+
     @RequestMapping(path = "/ocsp/{serial}", method = RequestMethod.POST, consumes = "application/ocsp-request", produces = "application/ocsp-response")
     public ResponseEntity<byte[]> ocspSerial(RequestEntity<byte[]> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, OperatorCreationException, OCSPException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
@@ -64,8 +69,17 @@ public class OcspController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        X509Certificate ocspCertificate = issuerCertificate.getOcspCertificate().getCertificate();
-        PrivateKey ocspPrivateKey = issuerCertificate.getOcspCertificate().getKey().getPrivateKey();
+        Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
+        if (_c == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+        if (_k == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+
+        X509Certificate ocspCertificate = _c.getCertificate();
+        PrivateKey ocspPrivateKey = _k.getPrivateKey();
 
         byte[] requestBody = httpRequest.getBody();
         if (requestBody == null) {

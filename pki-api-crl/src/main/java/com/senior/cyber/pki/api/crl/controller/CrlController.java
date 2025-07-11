@@ -1,8 +1,10 @@
 package com.senior.cyber.pki.api.crl.controller;
 
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.bouncycastle.asn1.x509.CRLNumber;
 import org.bouncycastle.asn1.x509.CRLReason;
@@ -69,6 +71,9 @@ public class CrlController {
     @Autowired
     protected CertificateRepository certificateRepository;
 
+    @Autowired
+    protected KeyRepository keyRepository;
+
     @RequestMapping(path = "/crl/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
     public ResponseEntity<byte[]> crlSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, NoSuchAlgorithmException, OperatorCreationException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
@@ -82,15 +87,25 @@ public class CrlController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
         }
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(serial);
+        Certificate issuerCertificate = this.certificateRepository.findBySerial(serial);
         if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        List<Certificate> certificates = certificateRepository.findByIssuerCertificate(issuerCertificate);
+        List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
 
-        X509Certificate crlCertificate = issuerCertificate.getCrlCertificate().getCertificate();
-        PrivateKey crlPrivateKey = issuerCertificate.getCrlCertificate().getKey().getPrivateKey();
+        Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
+        if (_c == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+
+        Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
+        if (_k == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
+
+        X509Certificate crlCertificate = _c.getCertificate();
+        PrivateKey crlPrivateKey = _k.getPrivateKey();
 
         JcaX509v2CRLBuilder builder = new JcaX509v2CRLBuilder(crlCertificate, now.toDate());
         builder.setNextUpdate(now.plusWeeks(1).toDate());

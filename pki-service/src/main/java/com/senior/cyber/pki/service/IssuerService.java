@@ -12,7 +12,6 @@ import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -39,7 +34,7 @@ public class IssuerService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException {
+    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -77,8 +72,9 @@ public class IssuerService {
                 request.getProvince(),
                 request.getEmailAddress()
         );
+        long serial = System.currentTimeMillis();
         PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
-        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi);
+        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi, serial);
         Certificate issuing = new Certificate();
         issuing.setIssuerCertificate(issuerCertificate);
         issuing.setCountryCode(request.getCountry());
@@ -90,7 +86,7 @@ public class IssuerService {
         issuing.setEmailAddress(request.getEmailAddress());
         issuing.setKey(issuingKey);
         issuing.setCertificate(issuingCertificate);
-        issuing.setSerial(issuingCertificate.getSerialNumber().longValueExact());
+        issuing.setSerial(serial);
         issuing.setCreatedDatetime(new Date());
         issuing.setValidFrom(issuingCertificate.getNotBefore());
         issuing.setValidUntil(issuingCertificate.getNotAfter());
@@ -122,7 +118,7 @@ public class IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, System.currentTimeMillis() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingCertificate, issuingKey.getPrivateKey(), crlCsr, serial + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(issuing);
         crl.setCountryCode(request.getCountry());
@@ -166,7 +162,7 @@ public class IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, System.currentTimeMillis() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingCertificate, issuingKey.getPrivateKey(), ocspCsr, serial + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(issuing);
         ocsp.setCountryCode(request.getCountry());

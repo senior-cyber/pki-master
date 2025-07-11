@@ -24,7 +24,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 
 @RestController
@@ -45,7 +44,7 @@ public class CertificateController {
     protected UserService userService;
 
     @RequestMapping(path = "/certificate/common/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateCommonGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -56,7 +55,7 @@ public class CertificateController {
     }
 
     @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
         if (request == null) {

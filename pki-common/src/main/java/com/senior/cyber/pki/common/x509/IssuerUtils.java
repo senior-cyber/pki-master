@@ -42,7 +42,7 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi) {
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, long serial) {
         boolean basicConstraintsCritical = true;
         boolean keyUsageCritical = true;
         boolean basicConstraints = true;
@@ -90,7 +90,7 @@ public class IssuerUtils {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
 
-        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, BigInteger.valueOf(System.currentTimeMillis()), notBefore, notAfter, csr.getSubject(), subjectPublicKey);
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, BigInteger.valueOf(serial), notBefore, notAfter, csr.getSubject(), subjectPublicKey);
         try {
             builder.addExtension(Extension.authorityKeyIdentifier, authorityKeyIdentifierCritical, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
         } catch (CertIOException e) {
@@ -119,7 +119,7 @@ public class IssuerUtils {
 
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();
-            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + issuerCertificate.getSerialNumber().longValueExact() + ".crl"))), null, null));
+            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + serial + ".crl"))), null, null));
             try {
                 builder.addExtension(Extension.cRLDistributionPoints, crlDistributionPointsCritical, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
             } catch (CertIOException e) {
@@ -128,8 +128,8 @@ public class IssuerUtils {
         }
         if (aiaApi != null && !aiaApi.isEmpty()) {
             List<AccessDescription> accessDescriptions = new ArrayList<>();
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + issuerCertificate.getSerialNumber().longValueExact())));
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + issuerCertificate.getSerialNumber().longValueExact() + ".der")));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + serial)));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + serial + ".der")));
             try {
                 builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
             } catch (CertIOException e) {
