@@ -1,10 +1,8 @@
-api:
-  aia: http://aia.pki.khmer.name/api
-  crl: http://crl.pki.khmer.name/api
 server:
   port: 3003
   error:
     include-message: always
+  address: 0.0.0.0
 spring:
   jpa:
     show-sql: true
@@ -42,6 +40,9 @@ spring:
       table-name: tbl_cluster_SPRING_SESSION
       platform: mysql
       schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
+api:
+  aia: http://192.168.1.54:3001/api
+  crl: http://192.168.1.54:3002/api
 logging:
   file:
     path: ./

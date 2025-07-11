@@ -19,67 +19,125 @@
 
 ## Prerequisite
 
-```text
-JDK 17 - https://www.azul.com/downloads/?version=java-17-lts&os=ubuntu&architecture=x86-64-bit&package=jdk
-MySQL 8 - sudo apt-get install mysql-server
-```
-
 ## Compile / Build
 
 ```shell
-mkdir -p /opt/apps/github/ColorlibHQ/v3
-cd /opt/apps/github/ColorlibHQ/v3
-git clone https://github.com/ColorlibHQ/AdminLTE.git
-
-cd ~
-git clone https://github.com/senior-cyber/frmk-master.git
-cd frmk-master
-make build
-
 cd ~
 git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
-make build
+./gradlew assemble bootJar
 
-sudo service pki-root-web stop
 sudo service pki-root-api stop
-sudo service pki-issuer-web stop
 sudo service pki-issuer-api stop
 sudo service pki-api-aia stop
 sudo service pki-api-crl stop
-
-mkdir -p /opt/apps/pki-master/pki-root-web
-cp pki-root-web/build/libs/pki-root-web.jar /opt/apps/pki-master/pki-root-web
 
 mkdir -p /opt/apps/pki-master/pki-root-api
-cp pki-root-api/build/libs/pki-root-api.jar /opt/apps/pki-master/pki-root-api
-
-mkdir -p /opt/apps/pki-master/pki-issuer-web
-cp pki-issuer-web/build/libs/pki-issuer-web.jar /opt/apps/pki-master/pki-issuer-web
-
 mkdir -p /opt/apps/pki-master/pki-issuer-api
-cp pki-issuer-api/build/libs/pki-issuer-api.jar /opt/apps/pki-master/pki-issuer-api
-
 mkdir -p /opt/apps/pki-master/pki-api-aia
-cp pki-api-aia/build/libs/pki-api-aia.jar /opt/apps/pki-master/pki-api-aia
-
 mkdir -p /opt/apps/pki-master/pki-api-crl
-cp pki-api-crl/build/libs/pki-api-crl.jar /opt/apps/pki-master/pki-api-crl
 
-sudo service pki-root-web restart
-sudo service pki-root-api restart
-sudo service pki-issuer-web restart
-sudo service pki-issuer-api restart
+scp pki-api-aia/build/libs/pki-api-aia.jar       t460s:/opt/apps/pki-master/pki-api-aia
+scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
+scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
+scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
+
+sudo systemctl enable pki-api-aia.service
+sudo systemctl enable pki-api-crl.service
+sudo systemctl enable pki-root-api.service
+sudo systemctl enable pki-issuer-api.service
+
+sudo service pki-api-aia restart
 sudo service pki-api-crl restart
-sudo service pki-api-aia restart
-sudo service pki-api-aia restart
+sudo service pki-root-api restart
+sudo service pki-issuer-api restart
 
-
-sudo service pki-root-web stop
-sudo service pki-root-api stop
-sudo service pki-issuer-web stop
-sudo service pki-issuer-api stop
+sudo service pki-api-aia stop
 sudo service pki-api-crl stop
-sudo service pki-api-aia stop
-sudo service pki-api-aia stop
+sudo service pki-root-api stop
+sudo service pki-issuer-api stop
+```
+
+# sudo nano /etc/systemd/system/pki-api-aia.service
+
+```text
+[Unit]
+Description=pki-api-aia
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+User=socheat
+Group=socheat
+WorkingDirectory=/opt/apps/pki-master/pki-api-aia
+ExecStart=/opt/apps/pki-master/pki-api-aia/run.sh
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# sudo nano /etc/systemd/system/pki-api-crl.service
+
+```text
+[Unit]
+Description=pki-api-crl
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+User=socheat
+Group=socheat
+WorkingDirectory=/opt/apps/pki-master/pki-api-crl
+ExecStart=/opt/apps/pki-master/pki-api-crl/run.sh
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# sudo nano /etc/systemd/system/pki-root-api.service
+
+```text
+[Unit]
+Description=pki-root-api
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+User=socheat
+Group=socheat
+WorkingDirectory=/opt/apps/pki-master/pki-root-api
+ExecStart=/opt/apps/pki-master/pki-root-api/run.sh
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# sudo nano /etc/systemd/system/pki-issuer-api.service
+
+```text
+[Unit]
+Description=pki-issuer-api
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+User=socheat
+Group=socheat
+WorkingDirectory=/opt/apps/pki-master/pki-issuer-api
+ExecStart=/opt/apps/pki-master/pki-issuer-api/run.sh
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
 ```
