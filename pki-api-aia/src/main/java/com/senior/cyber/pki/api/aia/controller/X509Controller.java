@@ -31,7 +31,7 @@ public class X509Controller {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         long serial = -1;
         try {
-            serial = Long.parseLong(FilenameUtils.getBaseName(_serial));
+            serial = Long.parseLong(FilenameUtils.getBaseName(_serial), 16);
         } catch (NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
         }

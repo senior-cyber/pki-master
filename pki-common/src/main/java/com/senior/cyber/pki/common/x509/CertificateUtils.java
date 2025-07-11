@@ -90,15 +90,17 @@ public class CertificateUtils {
         builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment));
         builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}));
 
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().intValueExact());
+
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();
-            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + issuerCertificate.getSerialNumber().longValueExact() + ".crl"))), null, null));
+            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + hex + ".crl"))), null, null));
             builder.addExtension(Extension.cRLDistributionPoints, crlDistributionPointsCritical, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
         }
         if (aiaApi != null && !aiaApi.isEmpty()) {
             List<AccessDescription> accessDescriptions = new ArrayList<>();
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + issuerCertificate.getSerialNumber().longValueExact())));
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + issuerCertificate.getSerialNumber().longValueExact() + ".der")));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + hex)));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + hex + ".der")));
             builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
         }
 
@@ -166,15 +168,17 @@ public class CertificateUtils {
         builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement | KeyUsage.dataEncipherment));
         builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_emailProtection}));
 
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().intValueExact());
+
         if (crlApi != null && !crlApi.isEmpty()) {
             List<DistributionPoint> distributionPoints = new ArrayList<>();
-            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + issuerCertificate.getSerialNumber().longValueExact() + ".crl"))), null, null));
+            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + hex + ".crl"))), null, null));
             builder.addExtension(Extension.cRLDistributionPoints, crlDistributionPointsCritical, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
         }
         if (aiaApi != null && !aiaApi.isEmpty()) {
             List<AccessDescription> accessDescriptions = new ArrayList<>();
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + issuerCertificate.getSerialNumber().longValueExact())));
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + issuerCertificate.getSerialNumber().longValueExact() + ".der")));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + hex)));
+            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + hex + ".der")));
             builder.addExtension(Extension.authorityInfoAccess, authorityInfoAccessCritical, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
         }
 
