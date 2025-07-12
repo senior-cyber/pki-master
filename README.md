@@ -27,7 +27,6 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 ./gradlew assemble bootJar
 
-
 scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
 scp pki-api-aia/build/libs/pki-api-ocsp.jar      t460s:/opt/apps/pki-master/pki-api-ocsp
 scp pki-api-crl/build/libs/pki-api-x509.jar      t460s:/opt/apps/pki-master/pki-api-x509
