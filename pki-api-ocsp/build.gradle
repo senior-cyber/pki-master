@@ -41,6 +41,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-api-aia"
+    archiveBaseName = "pki-api-ocsp"
     archiveVersion = ""
 }

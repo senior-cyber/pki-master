@@ -40,8 +40,11 @@ public class IssuerController {
     @Value("${api.crl}")
     protected String crlApi;
 
-    @Value("${api.aia}")
-    protected String aiaApi;
+    @Value("${api.ocsp}")
+    protected String ocspApi;
+
+    @Value("${api.x509}")
+    protected String x509Api;
 
     @Autowired
     protected UserService userService;
@@ -69,7 +72,7 @@ public class IssuerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
 
-        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.aiaApi);
+        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
         return ResponseEntity.ok(response);
     }
 

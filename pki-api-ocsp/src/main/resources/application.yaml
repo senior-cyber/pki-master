@@ -1,11 +1,11 @@
 server:
-  port: 3101
+  port: 3002
   error:
     include-message: always
   address: 0.0.0.0
 spring:
   application:
-    name: RootCA
+    name: OCSP Signer
   jpa:
     show-sql: true
     hibernate:

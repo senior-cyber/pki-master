@@ -73,8 +73,14 @@ public class CrlController {
     @Autowired
     protected KeyRepository keyRepository;
 
-    @Value("${api.aia}")
-    protected String aiaApi;
+    @Value("${api.crl}")
+    protected String crlApi;
+
+    @Value("${api.ocsp}")
+    protected String ocspApi;
+
+    @Value("${api.x509}")
+    protected String x509Api;
 
     @RequestMapping(path = "/crl/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
     public ResponseEntity<byte[]> crlSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException, IOException, NoSuchAlgorithmException, OperatorCreationException {
@@ -116,7 +122,7 @@ public class CrlController {
         builder.setNextUpdate(now.plusWeeks(1).toDate());
         builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(_issuerKey.getPublicKey()));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())));
-        builder.addExtension(Extension.issuerAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, this.aiaApi + "/x509/" + hex + ".der")));
+        builder.addExtension(Extension.issuerAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, this.x509Api + "/x509/" + hex + ".der")));
 
         List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
         for (Certificate certificate : certificates) {

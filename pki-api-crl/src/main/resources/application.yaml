@@ -1,9 +1,11 @@
 server:
-  port: 3002
+  port: 3001
   error:
     include-message: always
   address: 0.0.0.0
 spring:
+  application:
+    name: CRL Signer
   jpa:
     show-sql: true
     hibernate:
@@ -40,6 +42,10 @@ spring:
       table-name: tbl_cluster_SPRING_SESSION
       platform: mysql
       schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
+api:
+  crl: http://192.168.1.54:3001/api
+  ocsp: http://192.168.1.54:3002/api
+  x509: http://192.168.1.54:3003/api
 logging:
   file:
     path: ./

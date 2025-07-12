@@ -3,8 +3,6 @@ package com.senior.cyber.pki.root.api.controller;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
 import org.slf4j.Logger;
@@ -23,12 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class RootController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RootController.class);
-
-    @Autowired
-    protected CertificateRepository certificateRepository;
-
-    @Autowired
-    protected KeyRepository keyRepository;
 
     @Autowired
     protected RootService rootService;

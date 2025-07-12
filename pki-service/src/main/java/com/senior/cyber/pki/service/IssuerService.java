@@ -34,7 +34,7 @@ public class IssuerService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String aiaApi) {
+    public IssuerGenerateResponse issuerGenerate(User user, IssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -74,7 +74,7 @@ public class IssuerService {
         );
         long serial = System.currentTimeMillis();
         PKCS10CertificationRequest issuingCsr = CsrUtils.generate(new KeyPair(issuingKey.getPublicKey(), issuingKey.getPrivateKey()), issuingSubject);
-        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, aiaApi, serial);
+        X509Certificate issuingCertificate = IssuerUtils.generate(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), issuingCsr, crlApi, ocspApi, x509Api, serial);
         Certificate issuing = new Certificate();
         issuing.setIssuerCertificate(issuerCertificate);
         issuing.setCountryCode(request.getCountry());

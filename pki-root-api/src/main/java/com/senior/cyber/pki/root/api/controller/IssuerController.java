@@ -3,7 +3,6 @@ package com.senior.cyber.pki.root.api.controller;
 import com.senior.cyber.pki.common.dto.IssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.UserService;
 import org.slf4j.Logger;
@@ -27,14 +26,14 @@ public class IssuerController {
     @Autowired
     protected IssuerService issuerService;
 
-    @Autowired
-    protected CertificateRepository certificateRepository;
-
     @Value("${api.crl}")
     protected String crlApi;
 
-    @Value("${api.aia}")
-    protected String aiaApi;
+    @Value("${api.ocsp}")
+    protected String ocspApi;
+
+    @Value("${api.x509}")
+    protected String x509Api;
 
     @Autowired
     protected UserService userService;
@@ -46,7 +45,7 @@ public class IssuerController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.aiaApi);
+        IssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
         return ResponseEntity.ok(response);
     }
 

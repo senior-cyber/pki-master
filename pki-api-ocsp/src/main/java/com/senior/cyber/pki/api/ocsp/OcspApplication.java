@@ -1,4 +1,4 @@
-package com.senior.cyber.pki.api.aia;
+package com.senior.cyber.pki.api.ocsp;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.util.password.PasswordEncryptor;
@@ -14,11 +14,11 @@ import java.security.Security;
 
 @SpringBootApplication(
         exclude = {LiquibaseAutoConfiguration.class},
-        scanBasePackages = {"com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.api.aia"}
+        scanBasePackages = {"com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.api.ocsp"}
 )
 @EnableJpaRepositories(basePackages = {"com.senior.cyber.pki.dao.repository"})
 @EntityScan("com.senior.cyber.pki.dao.entity")
-public class AiaApplication {
+public class OcspApplication {
 
     static {
         if (Security.getProperty(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -27,7 +27,7 @@ public class AiaApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(AiaApplication.class, args);
+        SpringApplication.run(OcspApplication.class, args);
     }
 
     @Bean

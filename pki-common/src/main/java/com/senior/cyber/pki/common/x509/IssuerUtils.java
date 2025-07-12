@@ -42,7 +42,7 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String aiaApi, long serial) {
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, long serial) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -118,10 +118,14 @@ public class IssuerUtils {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
             }
         }
-        if (aiaApi != null && !aiaApi.isEmpty()) {
+        if ((ocspApi != null && !ocspApi.isEmpty()) || (x509Api != null && !x509Api.isEmpty())) {
             List<AccessDescription> accessDescriptions = new ArrayList<>();
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/ocsp/" + hex)));
-            accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, aiaApi + "/x509/" + hex + ".der")));
+            if (ocspApi != null && !ocspApi.isEmpty()) {
+                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, ocspApi + "/ocsp/" + hex)));
+            }
+            if (x509Api != null && !x509Api.isEmpty()) {
+                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, x509Api + "/x509/" + hex + ".der")));
+            }
             try {
                 builder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
             } catch (CertIOException e) {

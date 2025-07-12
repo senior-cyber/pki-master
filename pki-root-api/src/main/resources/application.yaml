@@ -1,9 +1,11 @@
 server:
-  port: 3005
+  port: 3102
   error:
     include-message: always
   address: 0.0.0.0
 spring:
+  application:
+    name: CA
   jackson:
     serialization:
       indent_output: true
@@ -44,8 +46,9 @@ spring:
       platform: mysql
       schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
 api:
-  aia: http://192.168.1.54:3001/api
-  crl: http://192.168.1.54:3002/api
+  crl: http://192.168.1.54:3001/api
+  ocsp: http://192.168.1.54:3002/api
+  x509: http://192.168.1.54:3003/api
 logging:
   file:
     path: ./

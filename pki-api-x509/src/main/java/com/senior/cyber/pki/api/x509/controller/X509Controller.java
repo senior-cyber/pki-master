@@ -1,4 +1,4 @@
-package com.senior.cyber.pki.api.aia.controller;
+package com.senior.cyber.pki.api.x509.controller;
 
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
