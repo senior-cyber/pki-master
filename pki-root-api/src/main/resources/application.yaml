@@ -5,7 +5,7 @@ server:
   address: 0.0.0.0
 spring:
   application:
-    name: CA
+    name: RootCA
   jackson:
     serialization:
       indent_output: true

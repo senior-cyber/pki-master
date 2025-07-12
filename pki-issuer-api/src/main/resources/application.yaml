@@ -5,7 +5,7 @@ server:
   address: 0.0.0.0
 spring:
   application:
-    name: RootCA
+    name: CA
   jpa:
     show-sql: true
     hibernate:
