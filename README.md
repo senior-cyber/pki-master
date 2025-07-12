@@ -28,8 +28,8 @@ cd pki-master
 ./gradlew assemble bootJar
 
 scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
-scp pki-api-aia/build/libs/pki-api-ocsp.jar      t460s:/opt/apps/pki-master/pki-api-ocsp
-scp pki-api-crl/build/libs/pki-api-x509.jar      t460s:/opt/apps/pki-master/pki-api-x509
+scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     t460s:/opt/apps/pki-master/pki-api-ocsp
+scp pki-api-x509/build/libs/pki-api-x509.jar     t460s:/opt/apps/pki-master/pki-api-x509
 scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
 scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
 
