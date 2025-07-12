@@ -37,8 +37,11 @@ public class CertificateController {
     @Value("${api.crl}")
     protected String crlApi;
 
-    @Value("${api.aia}")
-    protected String aiaApi;
+    @Value("${api.ocsp}")
+    protected String ocspApi;
+
+    @Value("${api.x509}")
+    protected String x509Api;
 
     @Autowired
     protected UserService userService;
@@ -50,7 +53,7 @@ public class CertificateController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        CertificateCommonGenerateResponse response = this.certificateService.certificateCommonGenerate(user, request, this.crlApi, this.aiaApi);
+        CertificateCommonGenerateResponse response = this.certificateService.certificateCommonGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
         return ResponseEntity.ok(response);
     }
 
@@ -61,7 +64,7 @@ public class CertificateController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.aiaApi);
+        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
         return ResponseEntity.ok(response);
     }
 

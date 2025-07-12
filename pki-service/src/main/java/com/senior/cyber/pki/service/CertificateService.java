@@ -31,7 +31,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -49,7 +48,7 @@ public class CertificateService {
     protected KeyRepository keyRepository;
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateCommonCsrResponse certificateCommonGenerate(User user, CertificateCommonCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public CertificateCommonCsrResponse certificateCommonGenerate(User user, CertificateCommonCsrRequest request, String crlApi, String ocspApi, String x509Api) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
@@ -80,7 +79,7 @@ public class CertificateService {
 
         Map<ASN1ObjectIdentifier, String> subject = CsrUtils.parse(request.getCsr());
 
-        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, aiaApi, request.getSerial());
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, ocspApi, x509Api, request.getSerial());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(subject.get(BCStyle.C));
@@ -107,7 +106,7 @@ public class CertificateService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, NoSuchProviderException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String ocspApi, String x509Api) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         if (this.certificateRepository.findBySerial(request.getSerial()) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getSerial() + " is not available");
         }
@@ -154,7 +153,7 @@ public class CertificateService {
             }
         }
 
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, aiaApi, request.getIp(), request.getDns(), request.getSerial());
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), request.getCsr(), crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), request.getSerial());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(subject.get(BCStyle.C));
@@ -182,7 +181,7 @@ public class CertificateService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -218,7 +217,7 @@ public class CertificateService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, ocspApi, x509Api, System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -249,7 +248,7 @@ public class CertificateService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String aiaApi) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
+    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, IOException, PKCSException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -330,7 +329,7 @@ public class CertificateService {
         }
 
         PKCS10CertificationRequest certificateCsr = CsrUtils.generate(new KeyPair(certificateKey.getPublicKey(), certificateKey.getPrivateKey()), certificateSubject);
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, aiaApi, request.getIp(), request.getDns(), System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerCertificate.getKey().getPrivateKey(), certificateCsr, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
