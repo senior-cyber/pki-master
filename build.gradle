@@ -7,7 +7,7 @@ buildscript {
         spring_boot = '3.5.3' // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
         reflections = '0.10.2' // https://mvnrepository.com/artifact/org.reflections/reflections
         servlet = '6.1.0' // https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api
-        commons_lang3 = '3.17.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+        commons_lang3 = '3.18.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
         commons_text = '1.13.1' // https://mvnrepository.com/artifact/org.apache.commons/commons-text
         spring = '6.2.8' // https://mvnrepository.com/artifact/org.springframework/spring-context
         jooq = '3.20.5' // https://mvnrepository.com/artifact/org.jooq/jooq
