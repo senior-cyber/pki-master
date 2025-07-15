@@ -94,7 +94,7 @@ public class CertificateUtils {
         String format = "";
         if (issuerKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (issuerKey instanceof ECPrivateKey) {
+        } else if (issuerKey instanceof ECPrivateKey || "EC".equals(issuerKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (issuerKey instanceof DSAPrivateKey) {
             format = "DSA";
@@ -218,7 +218,7 @@ public class CertificateUtils {
         String format = "";
         if (issuerKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (issuerKey instanceof ECPrivateKey) {
+        } else if (issuerKey instanceof ECPrivateKey || "EC".equals(issuerKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (issuerKey instanceof DSAPrivateKey) {
             format = "DSA";

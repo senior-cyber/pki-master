@@ -86,7 +86,7 @@ public class OcspController {
         String format = "";
         if (ocspPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (ocspPrivateKey instanceof ECPrivateKey) {
+        } else if (ocspPrivateKey instanceof ECPrivateKey || "EC".equals(ocspPrivateKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (ocspPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";

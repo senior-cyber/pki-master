@@ -141,7 +141,7 @@ public class CrlController {
         String format = "";
         if (crlPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (crlPrivateKey instanceof ECPrivateKey) {
+        } else if (crlPrivateKey instanceof ECPrivateKey || "EC".equals(crlPrivateKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (crlPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";

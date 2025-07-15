@@ -100,7 +100,7 @@ public class RootUtils {
         String format = "";
         if (privateKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (privateKey instanceof ECPrivateKey) {
+        } else if (privateKey instanceof ECPrivateKey || "EC".equals(privateKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (privateKey instanceof DSAPrivateKey) {
             format = "DSA";
@@ -164,7 +164,7 @@ public class RootUtils {
         String format = "";
         if (issuerPrivateKey instanceof RSAPrivateKey) {
             format = "RSA";
-        } else if (issuerPrivateKey instanceof ECPrivateKey) {
+        } else if (issuerPrivateKey instanceof ECPrivateKey || "EC".equals(issuerPrivateKey.getAlgorithm())) {
             format = "ECDSA";
         } else if (issuerPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";

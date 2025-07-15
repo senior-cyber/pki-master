@@ -90,7 +90,7 @@ public class CsrUtils {
         String format = "";
         if (key.getPublic() instanceof RSAPublicKey) {
             format = "RSA";
-        } else if (key.getPublic() instanceof ECPublicKey) {
+        } else if (key.getPublic() instanceof ECPublicKey || "EC".equals(key.getPublic().getAlgorithm())) {
             format = "ECDSA";
         } else if (key.getPublic() instanceof DSAPublicKey) {
             format = "DSA";
