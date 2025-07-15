@@ -94,7 +94,10 @@ public class CsrUtils {
             format = "ECDSA";
         } else if (key.getPublic() instanceof DSAPublicKey) {
             format = "DSA";
+        } else {
+            format = key.getPublic().getAlgorithm();
         }
+
         JcaPKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, key.getPublic());
         JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
         csBuilder.setProvider(new BouncyCastleProvider());

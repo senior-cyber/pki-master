@@ -145,6 +145,8 @@ public class CrlController {
             format = "ECDSA";
         } else if (crlPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = crlPrivateKey.getAlgorithm();
         }
 
         int shaSize = 256;

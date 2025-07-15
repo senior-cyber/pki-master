@@ -168,6 +168,8 @@ public class RootUtils {
             format = "ECDSA";
         } else if (issuerPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = issuerPrivateKey.getAlgorithm();
         }
 
         int shaSize = 256;

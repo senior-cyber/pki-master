@@ -90,6 +90,8 @@ public class OcspController {
             format = "ECDSA";
         } else if (ocspPrivateKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = ocspPrivateKey.getAlgorithm();
         }
 
         Date now = LocalDate.now().toDate();

@@ -105,6 +105,8 @@ public class IssuerUtils {
             format = "ECDSA";
         } else if (issuerKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = issuerKey.getAlgorithm();
         }
 
         int shaSize = 256;
@@ -201,6 +203,8 @@ public class IssuerUtils {
             format = "ECDSA";
         } else if (issuerKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = issuerKey.getAlgorithm();
         }
 
         int shaSize = 256;
@@ -302,6 +306,8 @@ public class IssuerUtils {
             format = "ECDSA";
         } else if (issuerKey instanceof DSAPrivateKey) {
             format = "DSA";
+        } else {
+            format = issuerKey.getAlgorithm();
         }
 
         int shaSize = 256;
