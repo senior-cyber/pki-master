@@ -22,7 +22,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
-import java.security.*;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPrivateKey;
@@ -54,7 +57,6 @@ public class IssuerUtils {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
         try {
-            // builder.addExtension(Extension.keyUsage, keyUsageCritical, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.cRLSign | KeyUsage.keyCertSign));
             builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign));
         } catch (CertIOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
@@ -117,7 +119,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(provider);
+        certificateConverter.setProvider(new BouncyCastleProvider());
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
@@ -213,7 +215,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(provider);
+        certificateConverter.setProvider(new BouncyCastleProvider());
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
@@ -314,7 +316,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(provider);
+        certificateConverter.setProvider(new BouncyCastleProvider());
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {

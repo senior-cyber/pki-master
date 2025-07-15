@@ -9,6 +9,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
@@ -119,7 +120,7 @@ public class RootUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(provider);
+        certificateConverter.setProvider(new BouncyCastleProvider());
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
@@ -181,7 +182,7 @@ public class RootUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(provider);
+        certificateConverter.setProvider(new BouncyCastleProvider());
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
