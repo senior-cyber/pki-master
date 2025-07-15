@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -62,11 +63,13 @@ public class CertificateServiceImpl implements CertificateService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
+        Provider issuerProvider = null;
         PrivateKey issuerPrivateKey = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            issuerProvider = new BouncyCastleProvider();
             issuerPrivateKey = issuerKey.getPrivateKey();
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            Provider issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
+            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
             KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
             issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
         }
@@ -110,7 +113,7 @@ public class CertificateServiceImpl implements CertificateService {
                 request.getEmailAddress()
         );
 
-        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateCommon(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -161,11 +164,13 @@ public class CertificateServiceImpl implements CertificateService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
+        Provider issuerProvider = null;
         PrivateKey issuerPrivateKey = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            issuerProvider = new BouncyCastleProvider();
             issuerPrivateKey = issuerKey.getPrivateKey();
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            Provider issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
+            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
             KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
             issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
         }
@@ -252,7 +257,7 @@ public class CertificateServiceImpl implements CertificateService {
             }
         }
 
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());

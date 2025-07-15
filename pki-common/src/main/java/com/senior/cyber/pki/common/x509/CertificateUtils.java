@@ -37,13 +37,11 @@ import java.util.List;
 
 public class CertificateUtils {
 
-    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) {
-        return generateCommon(issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
+    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) {
+        return generateCommon(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
-        Provider provider = new BouncyCastleProvider();
-
+    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -117,19 +115,18 @@ public class CertificateUtils {
 
         try {
             return new JcaX509CertificateConverter()
-                    .setProvider(provider)
+                    .setProvider(new BouncyCastleProvider())
                     .getCertificate(holder);
         } catch (CertificateException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
-        return generateTls(issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
+    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
+        return generateTls(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
-        Provider provider = new BouncyCastleProvider();
+    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -242,7 +239,7 @@ public class CertificateUtils {
 
         try {
             return new JcaX509CertificateConverter()
-                    .setProvider(provider)
+                    .setProvider(new BouncyCastleProvider())
                     .getCertificate(holder);
         } catch (CertificateException e) {
             throw new RuntimeException(e);
