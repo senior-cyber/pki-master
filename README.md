@@ -22,7 +22,7 @@
 ### Yubico Integration
 
 ```shell
-sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib-devel
+sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib1g-dev
 sudo apt install opensc-pkcs11 pcscd opensc
 
 git clone https://github.com/Yubico/yubico-piv-tool.git
