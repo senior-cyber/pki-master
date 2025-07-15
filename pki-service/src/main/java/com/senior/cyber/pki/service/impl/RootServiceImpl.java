@@ -39,11 +39,13 @@ public class RootServiceImpl implements RootService {
     @Autowired
     protected KeyRepository keyRepository;
 
+    @Override
     @Transactional(rollbackFor = Throwable.class)
     public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request) {
         Provider provider = new BouncyCastleProvider();
         // root
         Key rootKey = null;
+        PrivateKey rootPrivateKey = null;
         {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
@@ -54,6 +56,7 @@ public class RootServiceImpl implements RootService {
             key.setUser(user);
             this.keyRepository.save(key);
             rootKey = key;
+            rootPrivateKey = x509.getPrivate();
         }
 
         X500Name rootSubject = SubjectUtils.generate(
@@ -65,7 +68,7 @@ public class RootServiceImpl implements RootService {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        X509Certificate rootCertificate = RootUtils.generate(provider, rootKey.getPrivateKey(), rootKey.getPublicKey(), rootSubject);
+        X509Certificate rootCertificate = RootUtils.generate(provider, rootPrivateKey, rootKey.getPublicKey(), rootSubject);
         Certificate root = new Certificate();
         root.setCountryCode(request.getCountry());
         root.setOrganization(request.getOrganization());
@@ -108,7 +111,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootKey.getPrivateKey(), crlCsr, root.getSerial() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(root);
         crl.setCountryCode(request.getCountry());
@@ -152,7 +155,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootKey.getPrivateKey(), ocspCsr, root.getSerial() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(root);
         ocsp.setCountryCode(request.getCountry());
@@ -181,7 +184,7 @@ public class RootServiceImpl implements RootService {
         response.setId(root.getId());
         response.setCertificate(rootCertificate);
         response.setPublicKey(rootKey.getPublicKey());
-        response.setPrivateKey(rootKey.getPrivateKey());
+        response.setPrivateKey(rootPrivateKey);
         response.setOcspCertificate(ocspCertificate);
         response.setOcspPublicKey(ocspCertificate.getPublicKey());
         response.setOcspPrivateKey(ocspKey.getPrivateKey());
@@ -193,6 +196,7 @@ public class RootServiceImpl implements RootService {
     }
 
     @Override
+    @Transactional(rollbackFor = Throwable.class)
     public YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, YubicoPivSlotEnum pivSlot) {
         Provider provider = YubicoProviderUtils.lookProvider(request.getUsbSlot());
         KeyStore keyStore = YubicoProviderUtils.lookupKeyStore(provider, request.getPin());
@@ -202,17 +206,17 @@ public class RootServiceImpl implements RootService {
 
         // root
         Key rootKey = null;
+        PrivateKey rootPrivateKey = null;
         {
             KeyPair x509 = new KeyPair(publicKey, privateKey);
             Key key = new Key();
             key.setType(KeyTypeEnum.ServerKeyYubico);
             key.setPublicKey(x509.getPublic());
-            key.setPrivateKey(null);
             key.setCreatedDatetime(new Date());
             key.setUser(user);
             this.keyRepository.save(key);
-            key.setPrivateKey(privateKey);
             rootKey = key;
+            rootPrivateKey = x509.getPrivate();
         }
 
         X500Name rootSubject = SubjectUtils.generate(
@@ -224,7 +228,7 @@ public class RootServiceImpl implements RootService {
                 request.getProvince(),
                 request.getEmailAddress()
         );
-        X509Certificate rootCertificate = RootUtils.generate(provider, rootKey.getPrivateKey(), rootKey.getPublicKey(), rootSubject);
+        X509Certificate rootCertificate = RootUtils.generate(provider, rootPrivateKey, rootKey.getPublicKey(), rootSubject);
         Certificate root = new Certificate();
         root.setCountryCode(request.getCountry());
         root.setOrganization(request.getOrganization());
@@ -267,7 +271,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootKey.getPrivateKey(), crlCsr, root.getSerial() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(root);
         crl.setCountryCode(request.getCountry());
@@ -311,7 +315,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootKey.getPrivateKey(), ocspCsr, root.getSerial() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(root);
         ocsp.setCountryCode(request.getCountry());
