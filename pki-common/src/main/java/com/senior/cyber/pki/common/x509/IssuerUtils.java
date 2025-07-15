@@ -37,9 +37,7 @@ import java.util.List;
 
 public class IssuerUtils {
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
-        Provider provider = new BouncyCastleProvider();
-
+    public static X509Certificate generate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
