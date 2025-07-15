@@ -32,6 +32,26 @@ cmake ..
 make
 sudo make install
 sudo ldconfig
+
+sudo addgroup scard
+sudo usermod -aG scard "$USER"
+```
+
+### sudo nano /etc/polkit-1/rules.d/49-pcscd.rules
+
+```text
+// Allow members of "scard" (or "plugdev") to use pcscd
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
+         action.id == "org.debian.pcsc-lite.access_card") &&
+        subject.isInGroup("scard")) {
+        return polkit.Result.YES;
+    }
+});
+```
+
+```shell
+sudo systemctl restart pcscd
 ```
 
 ## Compile / Build
