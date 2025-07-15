@@ -21,10 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Security;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPrivateKey;
@@ -36,13 +33,9 @@ import java.util.List;
 
 public class IssuerUtils {
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
     public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, long serial) {
+        Provider provider = new BouncyCastleProvider();
+
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -54,7 +47,7 @@ public class IssuerUtils {
         Date notAfter = LocalDate.now().plusYears(5).toDate();
 
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        subjectPublicKeyConverter.setProvider(provider);
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -63,7 +56,7 @@ public class IssuerUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        verifierBuilder.setProvider(provider);
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
@@ -144,7 +137,7 @@ public class IssuerUtils {
 
         int shaSize = 256;
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        contentSignerBuilder.setProvider(provider);
         ContentSigner contentSigner = null;
         try {
             contentSigner = contentSignerBuilder.build(issuerKey);
@@ -154,7 +147,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        certificateConverter.setProvider(provider);
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
@@ -167,6 +160,8 @@ public class IssuerUtils {
     }
 
     public static X509Certificate generateCrlCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
+        Provider provider = new BouncyCastleProvider();
+
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -180,7 +175,7 @@ public class IssuerUtils {
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        subjectPublicKeyConverter.setProvider(provider);
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -189,7 +184,7 @@ public class IssuerUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        verifierBuilder.setProvider(provider);
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
@@ -238,7 +233,7 @@ public class IssuerUtils {
 
         int shaSize = 256;
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        contentSignerBuilder.setProvider(provider);
         ContentSigner contentSigner = null;
         try {
             contentSigner = contentSignerBuilder.build(issuerKey);
@@ -248,7 +243,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        certificateConverter.setProvider(provider);
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
@@ -261,6 +256,8 @@ public class IssuerUtils {
     }
 
     public static X509Certificate generateOcspCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
+        Provider provider = new BouncyCastleProvider();
+
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -274,7 +271,7 @@ public class IssuerUtils {
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        subjectPublicKeyConverter.setProvider(provider);
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -283,7 +280,7 @@ public class IssuerUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        verifierBuilder.setProvider(provider);
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
@@ -337,7 +334,7 @@ public class IssuerUtils {
 
         int shaSize = 256;
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        contentSignerBuilder.setProvider(provider);
         ContentSigner contentSigner = null;
         try {
             contentSigner = contentSignerBuilder.build(issuerKey);
@@ -347,7 +344,7 @@ public class IssuerUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        certificateConverter.setProvider(provider);
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {

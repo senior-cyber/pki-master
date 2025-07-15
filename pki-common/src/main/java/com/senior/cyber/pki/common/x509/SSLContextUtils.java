@@ -1,7 +1,5 @@
 package com.senior.cyber.pki.common.x509;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,12 +9,6 @@ import java.security.*;
 import java.security.cert.CertificateException;
 
 public class SSLContextUtils {
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
 
     public static SSLServerSocketFactory createSSLServerSocketFactory(X509TrustManager trustManager, X509KeyManager keyManager) {
         try {

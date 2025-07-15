@@ -4,15 +4,12 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 
 public class KeyUtils {
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
 
     public static KeyPair generate() {
         return generate(KeyFormat.EC);
@@ -31,10 +28,11 @@ public class KeyUtils {
     }
 
     public static KeyPair generate(KeyFormat format, int keySize) {
+        Provider provider = new BouncyCastleProvider();
         KeyPairGenerator generator = null;
         try {
-            generator = KeyPairGenerator.getInstance(format.name(), BouncyCastleProvider.PROVIDER_NAME);
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            generator = KeyPairGenerator.getInstance(format.name(), provider);
+        } catch (NoSuchAlgorithmException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
         generator.initialize(keySize);

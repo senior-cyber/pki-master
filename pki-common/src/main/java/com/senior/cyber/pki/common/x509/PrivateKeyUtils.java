@@ -28,12 +28,6 @@ import java.util.Base64;
 
 public class PrivateKeyUtils {
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
     public static String signText(PrivateKey privateKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = null;
         if (privateKey instanceof RSAPrivateKey) {
@@ -55,12 +49,13 @@ public class PrivateKeyUtils {
             byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text));
             return new String(textData, StandardCharsets.UTF_8);
         } else if (privateKey instanceof ECPrivateKey) {
+            Provider provider = new BouncyCastleProvider();
             int dotIndex = text.indexOf('.');
             byte[] iv = Base64.getDecoder().decode(text.substring(0, dotIndex));
             byte[] derivation = iv.clone();
             byte[] encoding = iv.clone();
             int length = iv.length;
-            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", BouncyCastleProvider.PROVIDER_NAME);
+            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", provider);
             cipher.init(Cipher.DECRYPT_MODE, privateKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
             byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text.substring(dotIndex + 1)));
             return new String(textData, StandardCharsets.UTF_8);
@@ -73,10 +68,11 @@ public class PrivateKeyUtils {
         if (value == null || value.isEmpty()) {
             return null;
         }
+        Provider provider = new BouncyCastleProvider();
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
             Object objectHolder = parser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            converter.setProvider(provider);
             if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
                 throw new IllegalArgumentException("Encrypted private key is not supported");
             } else if (objectHolder instanceof PEMKeyPair holder) {
@@ -92,9 +88,10 @@ public class PrivateKeyUtils {
     }
 
     public static PrivateKey convert(String value, String password) throws OperatorCreationException {
+        Provider provider = new BouncyCastleProvider();
         InputDecryptorProvider _decryptor = null;
         JceOpenSSLPKCS8DecryptorProviderBuilder decryptorBuilder = new JceOpenSSLPKCS8DecryptorProviderBuilder();
-        decryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        decryptorBuilder.setProvider(provider);
         _decryptor = decryptorBuilder.build(password.toCharArray());
 
         if (value == null || value.isEmpty()) {
@@ -103,7 +100,7 @@ public class PrivateKeyUtils {
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
             Object objectHolder = parser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+            converter.setProvider(provider);
             if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
                 PrivateKeyInfo info = holder.decryptPrivateKeyInfo(_decryptor);
                 return converter.getPrivateKey(info);
@@ -133,9 +130,11 @@ public class PrivateKeyUtils {
     }
 
     public static String convert(PrivateKey value, String password) throws OperatorCreationException {
+        Provider provider = new BouncyCastleProvider();
+
         OutputEncryptor _encryptor = null;
         JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PKCS8Generator.AES_256_CBC);
-        encryptorBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        encryptorBuilder.setProvider(provider);
         encryptorBuilder.setRandom(new SecureRandom());
         encryptorBuilder.setPassword(password.toCharArray());
         encryptorBuilder.setIterationCount(10000);

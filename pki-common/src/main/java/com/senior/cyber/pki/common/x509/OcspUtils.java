@@ -20,19 +20,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.Security;
+import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OcspUtils {
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
 
     public static List<String> lookupUrl(X509Certificate certificate) throws IOException {
         byte[] bytes = certificate.getExtensionValue(Extension.authorityInfoAccess.getId());
@@ -70,10 +64,11 @@ public class OcspUtils {
 
     public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String ocspUri)
             throws OCSPException, OperatorCreationException, IOException, CertificateException, InterruptedException {
+        Provider provider = new BouncyCastleProvider();
 
         // Step 1: Create CertificateID for OCSP request
         DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder()
-                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                .setProvider(provider)
                 .build();
 
         CertificateID certificateID = new JcaCertificateID(
@@ -114,11 +109,11 @@ public class OcspUtils {
             }
 
             X509Certificate signerCert = new JcaX509CertificateConverter()
-                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .setProvider(provider)
                     .getCertificate(certHolders[0]);
 
             ContentVerifierProvider contentVerifier = new JcaContentVerifierProviderBuilder()
-                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .setProvider(provider)
                     .build(signerCert.getPublicKey());
 
             if (!basicOCSPResp.isSignatureValid(contentVerifier)) {

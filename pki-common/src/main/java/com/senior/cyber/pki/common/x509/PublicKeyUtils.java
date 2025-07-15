@@ -26,13 +26,7 @@ import java.util.Base64;
 
 public class PublicKeyUtils {
 
-    private static final SecureRandom RANDOM = new SecureRandom();
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
+    private static final SecureRandom RANDOM = new SecureRandom(); 
 
     public boolean verifyText(PublicKey publicKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = null;
@@ -50,8 +44,9 @@ public class PublicKeyUtils {
     }
 
     public static String encryptText(PublicKey publicKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        Provider provider = new BouncyCastleProvider();
         if (publicKey instanceof RSAPublicKey) {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING", BouncyCastleProvider.PROVIDER_NAME);
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING", provider);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] cipherData = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(cipherData);
@@ -60,7 +55,7 @@ public class PublicKeyUtils {
             byte[] iv = RANDOM.generateSeed(length);
             byte[] derivation = iv.clone();
             byte[] encoding = iv.clone();
-            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", BouncyCastleProvider.PROVIDER_NAME);
+            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", provider);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
             byte[] cipherData = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(iv) + "." + Base64.getEncoder().encodeToString(cipherData);
@@ -81,15 +76,16 @@ public class PublicKeyUtils {
 
     public static PublicKey convert(String value) {
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
+            Provider provider = new BouncyCastleProvider();
             Object object = parser.readObject();
             if (object instanceof X509CertificateHolder holder) {
                 JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
-                converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+                converter.setProvider(provider);
                 X509Certificate certificate = converter.getCertificate(holder);
                 return certificate.getPublicKey();
             } else if (object instanceof SubjectPublicKeyInfo holder) {
                 JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-                converter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+                converter.setProvider(provider);
                 return converter.getPublicKey(holder);
             } else {
                 throw new java.lang.UnsupportedOperationException(object.getClass().getName());

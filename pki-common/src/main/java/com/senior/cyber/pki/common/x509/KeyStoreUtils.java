@@ -11,12 +11,6 @@ import java.util.Map;
 
 public class KeyStoreUtils {
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
     /**
      * for Trusted Manager Store
      *

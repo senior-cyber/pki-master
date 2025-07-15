@@ -32,12 +32,6 @@ import java.util.Map;
 
 public class CsrUtils {
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
     public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject) {
         int shaSize = 256;
         return generate(key, subject, shaSize);
@@ -54,7 +48,7 @@ public class CsrUtils {
         }
         JcaPKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, key.getPublic());
         JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        csBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        csBuilder.setProvider(new BouncyCastleProvider());
         ContentSigner contentSigner = null;
         try {
             contentSigner = csBuilder.build(key.getPrivate());
