@@ -156,7 +156,7 @@ public class IssuerUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(provider);
+        verifierBuilder.setProvider(new BouncyCastleProvider());
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
@@ -252,7 +252,7 @@ public class IssuerUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(provider);
+        verifierBuilder.setProvider(new BouncyCastleProvider());
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
