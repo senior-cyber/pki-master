@@ -2,6 +2,7 @@ package com.senior.cyber.pki.common.x509;
 
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -10,17 +11,11 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.bouncycastle.pkcs.PKCSException;
 import org.joda.time.LocalDate;
 
 import java.io.IOException;
@@ -42,11 +37,11 @@ import java.util.List;
 
 public class CertificateUtils {
 
-    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api) {
-        return generateCommon(issuerCertificate, issuerKey, csr, crlApi, ocspApi, x509Api, System.currentTimeMillis());
+    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) {
+        return generateCommon(issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, long serial) {
+    public static X509Certificate generateCommon(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         Provider provider = new BouncyCastleProvider();
 
         BigInteger _serial = BigInteger.valueOf(serial);
@@ -61,40 +56,13 @@ public class CertificateUtils {
         Date notBefore = LocalDate.now().toDate();
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
-        PublicKey subjectPublicKey = null;
-        try {
-            subjectPublicKey = new JcaPEMKeyConverter()
-                    .setProvider(provider)
-                    .getPublicKey(csr.getSubjectPublicKeyInfo());
-        } catch (PEMException e) {
-            throw new RuntimeException(e);
-        }
-
-        ContentVerifierProvider verifier = null;
-        try {
-            verifier =
-                    new JcaContentVerifierProviderBuilder()
-                            .setProvider(provider)
-                            .build(subjectPublicKey);
-        } catch (OperatorCreationException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            if (!csr.isSignatureValid(verifier)) {
-                throw new PKCSException("Signature verification failed");
-            }
-        } catch (PKCSException e) {
-            throw new RuntimeException(e);
-        }
-
-        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, subject, publicKey);
         try {
             builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
             builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
             builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth}));
             builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
-            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(subjectPublicKey));
+            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
         } catch (CertIOException e) {
             throw new RuntimeException(e);
         }
@@ -154,11 +122,11 @@ public class CertificateUtils {
         }
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
-        return generateTls(issuerCertificate, issuerKey, csr, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
+    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
+        return generateTls(issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
+    public static X509Certificate generateTls(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
         Provider provider = new BouncyCastleProvider();
         BigInteger _serial = BigInteger.valueOf(serial);
 
@@ -172,40 +140,13 @@ public class CertificateUtils {
         Date notBefore = LocalDate.now().toDate();
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
-        PublicKey subjectPublicKey = null;
-        try {
-            subjectPublicKey = new JcaPEMKeyConverter()
-                    .setProvider(provider)
-                    .getPublicKey(csr.getSubjectPublicKeyInfo());
-        } catch (PEMException e) {
-            throw new RuntimeException(e);
-        }
-
-        ContentVerifierProvider verifier = null;
-        try {
-            verifier =
-                    new JcaContentVerifierProviderBuilder()
-                            .setProvider(provider)
-                            .build(subjectPublicKey);
-        } catch (OperatorCreationException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            if (!csr.isSignatureValid(verifier)) {
-                throw new PKCSException("Signature verification failed");
-            }
-        } catch (PKCSException e) {
-            throw new RuntimeException(e);
-        }
-
-        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, csr.getSubject(), subjectPublicKey);
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, subject, publicKey);
         try {
             builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
             builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
             builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth}));
             builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
-            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(subjectPublicKey));
+            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
         } catch (CertIOException e) {
             throw new RuntimeException(e);
         }

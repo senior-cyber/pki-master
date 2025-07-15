@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.x509;
 
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -33,7 +34,7 @@ import java.util.List;
 
 public class IssuerUtils {
 
-    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, String crlApi, String ocspApi, String x509Api, long serial) {
+    public static X509Certificate generate(X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         Provider provider = new BouncyCastleProvider();
 
         JcaX509ExtensionUtils utils = null;
@@ -46,33 +47,7 @@ public class IssuerUtils {
         Date notBefore = LocalDate.now().toDate();
         Date notAfter = LocalDate.now().plusYears(5).toDate();
 
-        JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(provider);
-        PublicKey subjectPublicKey = null;
-        try {
-            subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
-        } catch (PEMException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        }
-
-        JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(provider);
-        ContentVerifierProvider verifier = null;
-        try {
-            verifier = verifierBuilder.build(subjectPublicKey);
-        } catch (OperatorCreationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        }
-
-        try {
-            if (!csr.isSignatureValid(verifier)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CSR signature does not match root public key");
-            }
-        } catch (PKCSException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        }
-
-        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, BigInteger.valueOf(serial), notBefore, notAfter, csr.getSubject(), subjectPublicKey);
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, BigInteger.valueOf(serial), notBefore, notAfter, subject, publicKey);
         try {
             builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
         } catch (CertIOException e) {
@@ -90,15 +65,10 @@ public class IssuerUtils {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
         try {
-            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(subjectPublicKey));
+            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
         } catch (CertIOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-//        try {
-//            builder.addExtension(Extension.extendedKeyUsage, extendedKeyUsageCritical, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
-//        } catch (CertIOException e) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-//        }
 
         String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
 

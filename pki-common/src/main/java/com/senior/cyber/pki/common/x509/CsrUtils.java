@@ -9,12 +9,17 @@ import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,7 +28,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.security.KeyPair;
-import java.security.Security;
+import java.security.Provider;
+import java.security.PublicKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
@@ -35,6 +41,49 @@ public class CsrUtils {
     public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject) {
         int shaSize = 256;
         return generate(key, subject, shaSize);
+    }
+
+    public static PublicKey lookupPublicKey(PKCS10CertificationRequest csr) {
+        Provider provider = new BouncyCastleProvider();
+        JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
+        subjectPublicKeyConverter.setProvider(provider);
+        PublicKey subjectPublicKey = null;
+        try {
+            subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
+        } catch (PEMException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+        return subjectPublicKey;
+    }
+
+    public static boolean isValid(PKCS10CertificationRequest csr) {
+        Provider provider = new BouncyCastleProvider();
+        JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
+        subjectPublicKeyConverter.setProvider(provider);
+        PublicKey subjectPublicKey = null;
+        try {
+            subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
+        } catch (PEMException e) {
+            return false;
+        }
+
+        JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
+        verifierBuilder.setProvider(provider);
+        ContentVerifierProvider verifier = null;
+        try {
+            verifier = verifierBuilder.build(subjectPublicKey);
+        } catch (OperatorCreationException e) {
+            return false;
+        }
+
+        try {
+            if (!csr.isSignatureValid(verifier)) {
+                return false;
+            }
+        } catch (PKCSException e) {
+            return false;
+        }
+        return true;
     }
 
     public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject, int shaSize) {

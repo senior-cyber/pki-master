@@ -6,10 +6,6 @@ import com.senior.cyber.pki.dao.entity.rbac.User;
 
 public interface CertificateService {
 
-    CertificateCommonCsrResponse certificateCommonGenerate(User user, CertificateCommonCsrRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot);
-
-    CertificateTlsCsrResponse certificateTlsGenerate(User user, CertificateTlsCsrRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot);
-
     CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot);
 
     CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot);

@@ -1,8 +1,13 @@
 package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestDeserializer;
+import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestSerializer;
 import lombok.Getter;
 import lombok.Setter;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 import java.io.Serializable;
 
