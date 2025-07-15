@@ -129,13 +129,11 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generateCrlCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
-        return generateCrlCertificate(issuerCertificate, issuerKey, csr, System.currentTimeMillis());
+    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
+        return generateCrlCertificate(provider, issuerCertificate, issuerKey, csr, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateCrlCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
-        Provider provider = new BouncyCastleProvider();
-
+    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -149,7 +147,7 @@ public class IssuerUtils {
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(provider);
+        subjectPublicKeyConverter.setProvider(new BouncyCastleProvider());
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -227,13 +225,11 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generateOcspCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
-        return generateOcspCertificate(issuerCertificate, issuerKey, csr, System.currentTimeMillis());
+    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
+        return generateOcspCertificate(provider, issuerCertificate, issuerKey, csr, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateOcspCertificate(X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
-        Provider provider = new BouncyCastleProvider();
-
+    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -247,7 +243,7 @@ public class IssuerUtils {
         Date notAfter = LocalDate.now().plusYears(1).toDate();
 
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(provider);
+        subjectPublicKeyConverter.setProvider(new BouncyCastleProvider());
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());

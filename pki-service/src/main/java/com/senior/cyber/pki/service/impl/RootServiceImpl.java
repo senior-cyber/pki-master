@@ -111,7 +111,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(provider, rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(root);
         crl.setCountryCode(request.getCountry());
@@ -155,7 +155,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(provider, rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(root);
         ocsp.setCountryCode(request.getCountry());
@@ -271,7 +271,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(provider, rootCertificate, rootPrivateKey, crlCsr, root.getSerial() + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(root);
         crl.setCountryCode(request.getCountry());
@@ -315,7 +315,7 @@ public class RootServiceImpl implements RootService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(provider, rootCertificate, rootPrivateKey, ocspCsr, root.getSerial() + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(root);
         ocsp.setCountryCode(request.getCountry());

@@ -73,5 +73,4 @@ sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
 sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
-
 ```

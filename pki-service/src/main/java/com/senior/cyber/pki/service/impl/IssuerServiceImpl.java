@@ -16,6 +16,7 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,11 +58,13 @@ public class IssuerServiceImpl implements IssuerService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
+        Provider issuerProvider = null;
         PrivateKey issuerPrivateKey = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            issuerProvider = new BouncyCastleProvider();
             issuerPrivateKey = issuerKey.getPrivateKey();
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            Provider issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
+            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
             KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
             issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
         }
@@ -137,7 +140,7 @@ public class IssuerServiceImpl implements IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuerProvider, issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(issuing);
         crl.setCountryCode(request.getCountry());
@@ -181,7 +184,7 @@ public class IssuerServiceImpl implements IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuerProvider, issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(issuing);
         ocsp.setCountryCode(request.getCountry());
@@ -242,11 +245,14 @@ public class IssuerServiceImpl implements IssuerService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
+
+        Provider issuerProvider = null;
         PrivateKey issuerPrivateKey = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            issuerProvider = new BouncyCastleProvider();
             issuerPrivateKey = issuerKey.getPrivateKey();
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            Provider issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
+            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
             KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
             issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
         }
@@ -326,7 +332,7 @@ public class IssuerServiceImpl implements IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuerProvider, issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
         Certificate crl = new Certificate();
         crl.setIssuerCertificate(issuing);
         crl.setCountryCode(request.getCountry());
@@ -370,7 +376,7 @@ public class IssuerServiceImpl implements IssuerService {
                 request.getEmailAddress()
         );
         PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuerProvider, issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(issuing);
         ocsp.setCountryCode(request.getCountry());
