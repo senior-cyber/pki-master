@@ -8,7 +8,19 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class RootGenerateRequest implements Serializable {
+public class YubicoRootGenerateRequest implements Serializable {
+
+    @JsonProperty("usbSlot")
+    private String usbSlot;
+
+    @JsonProperty("pivSlot")
+    private String pivSlot;
+
+    @JsonProperty("pin")
+    private String pin;
+
+    @JsonProperty("managementKey")
+    private String managementKey;
 
     @JsonProperty("locality")
     private String locality;

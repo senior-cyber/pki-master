@@ -12,9 +12,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-@Getter
 @Setter
-public class IssuerGenerateResponse implements Serializable {
+@Getter
+public class YubicoRootGenerateResponse implements Serializable {
 
     @JsonProperty("id")
     private String id;
@@ -29,10 +29,8 @@ public class IssuerGenerateResponse implements Serializable {
     @JsonProperty("publicKey")
     private PublicKey publicKey;
 
-    @JsonSerialize(using = PrivateKeySerializer.class)
-    @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privateKey")
-    private PrivateKey privateKey;
+    @JsonProperty("pivSlot")
+    private String pivSlot;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

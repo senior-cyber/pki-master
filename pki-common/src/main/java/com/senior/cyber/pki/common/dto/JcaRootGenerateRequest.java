@@ -8,19 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class CertificateCommonGenerateRequest implements Serializable {
-
-    @JsonProperty("issuerId")
-    private String issuerId;
-
-    @JsonProperty("issuerUsbSlot")
-    private String issuerUsbSlot;
-
-    @JsonProperty("issuerPivSlot")
-    private String issuerPivSlot;
-
-    @JsonProperty("issuerPin")
-    private String issuerPin;
+public class JcaRootGenerateRequest implements Serializable {
 
     @JsonProperty("locality")
     private String locality;

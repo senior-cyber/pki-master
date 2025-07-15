@@ -1,6 +1,10 @@
 package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestDeserializer;
+import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestSerializer;
 import lombok.Getter;
 import lombok.Setter;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
@@ -12,13 +16,21 @@ import java.util.List;
 @Getter
 public class CertificateTlsCsrRequest implements Serializable {
 
-    @JsonProperty("issuerSerial")
-    private long issuerSerial;
+    @JsonProperty("issuerId")
+    private String issuerId;
 
-    @JsonProperty("serial")
-    private long serial;
+    @JsonProperty("issuerUsbSlot")
+    private String issuerUsbSlot;
 
-    @JsonProperty("serial")
+    @JsonProperty("issuerPivSlot")
+    private String issuerPivSlot;
+
+    @JsonProperty("issuerPin")
+    private String issuerPin;
+
+    @JsonSerialize(using = PKCS10CertificationRequestSerializer.class)
+    @JsonDeserialize(using = PKCS10CertificationRequestDeserializer.class)
+    @JsonProperty("csr")
     private PKCS10CertificationRequest csr;
 
     @JsonProperty("ip")

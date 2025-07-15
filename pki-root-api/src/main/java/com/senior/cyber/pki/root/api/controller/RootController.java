@@ -1,7 +1,10 @@
 package com.senior.cyber.pki.root.api.controller;
 
-import com.senior.cyber.pki.common.dto.RootGenerateRequest;
-import com.senior.cyber.pki.common.dto.RootGenerateResponse;
+import com.senior.cyber.pki.common.dto.JcaRootGenerateRequest;
+import com.senior.cyber.pki.common.dto.JcaRootGenerateResponse;
+import com.senior.cyber.pki.common.dto.YubicoRootGenerateRequest;
+import com.senior.cyber.pki.common.dto.YubicoRootGenerateResponse;
+import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
@@ -28,14 +31,50 @@ public class RootController {
     @Autowired
     protected UserService userService;
 
-    @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) {
+    @RequestMapping(path = "/root/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-        RootGenerateRequest request = httpRequest.getBody();
+        JcaRootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        RootGenerateResponse response = this.rootService.rootGenerate(user, request);
+        JcaRootGenerateResponse response = this.rootService.rootGenerate(user, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(path = "/root/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<YubicoRootGenerateResponse> yubicoRootGenerate(RequestEntity<YubicoRootGenerateRequest> httpRequest) {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        YubicoRootGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        if (request.getUsbSlot() == null || request.getUsbSlot().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        YubicoPivSlotEnum pivSlot = null;
+        if (request.getPivSlot() == null || request.getPivSlot().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        } else {
+            for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
+                if (slot.getSlotName().equalsIgnoreCase(request.getPivSlot())) {
+                    pivSlot = slot;
+                    break;
+                }
+            }
+            request.setPivSlot(null);
+        }
+        if (pivSlot == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        if (request.getPin() == null || request.getPin().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        if (request.getManagementKey() == null || request.getManagementKey().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        YubicoRootGenerateResponse response = this.rootService.rootGenerate(user, request, pivSlot);
         return ResponseEntity.ok(response);
     }
 

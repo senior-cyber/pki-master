@@ -26,11 +26,13 @@ dependencies {
     implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot}"
-//
-//    implementation "com.yubico.yubikit:piv:${yubikit}"
-//
+    implementation "org.apache.commons:commons-exec:${commons_exec}"
+    implementation "joda-time:joda-time:${joda_time}"
+
+    implementation "com.yubico.yubikit:piv:${yubikit}"
+
     implementation "org.jasypt:jasypt:${jasypt}"
-//
+
     implementation "org.flywaydb:flyway-core:${flyway}"
     implementation "org.flywaydb:flyway-mysql:${flyway}"
     implementation "com.mysql:mysql-connector-j:${mysql}"

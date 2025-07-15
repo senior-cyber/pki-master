@@ -15,11 +15,17 @@ import java.io.Serializable;
 @Getter
 public class CertificateCommonCsrRequest implements Serializable {
 
-    @JsonProperty("issuerSerial")
-    private long issuerSerial;
+    @JsonProperty("issuerId")
+    private String issuerId;
 
-    @JsonProperty("serial")
-    private long serial;
+    @JsonProperty("issuerUsbSlot")
+    private String issuerUsbSlot;
+
+    @JsonProperty("issuerPivSlot")
+    private String issuerPivSlot;
+
+    @JsonProperty("issuerPin")
+    private String issuerPin;
 
     @JsonSerialize(using = PKCS10CertificationRequestSerializer.class)
     @JsonDeserialize(using = PKCS10CertificationRequestDeserializer.class)

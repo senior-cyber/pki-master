@@ -6,9 +6,9 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
-@Setter
 @Getter
-public class CertificateCommonGenerateRequest implements Serializable {
+@Setter
+public class YubicoIssuerGenerateRequest implements Serializable {
 
     @JsonProperty("issuerId")
     private String issuerId;
@@ -21,6 +21,18 @@ public class CertificateCommonGenerateRequest implements Serializable {
 
     @JsonProperty("issuerPin")
     private String issuerPin;
+
+    @JsonProperty("usbSlot")
+    private String usbSlot;
+
+    @JsonProperty("pivSlot")
+    private String pivSlot;
+
+    @JsonProperty("pin")
+    private String pin;
+
+    @JsonProperty("managementKey")
+    private String managementKey;
 
     @JsonProperty("locality")
     private String locality;

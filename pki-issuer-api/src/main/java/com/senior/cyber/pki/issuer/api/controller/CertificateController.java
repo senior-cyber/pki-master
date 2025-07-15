@@ -4,11 +4,20 @@ import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
+import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.UserService;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCSException;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Date;
 
 @RestController
 public class CertificateController {
@@ -44,6 +54,12 @@ public class CertificateController {
     protected String x509Api;
 
     @Autowired
+    protected CertificateRepository certificateRepository;
+
+    @Autowired
+    protected KeyRepository keyRepository;
+
+    @Autowired
     protected UserService userService;
 
     @RequestMapping(path = "/certificate/common/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -53,7 +69,49 @@ public class CertificateController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        CertificateCommonGenerateResponse response = this.certificateService.certificateCommonGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+        }
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        YubicoPivSlotEnum issuerPivSlot = null;
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            } else {
+                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
+                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                        issuerPivSlot = slot;
+                        break;
+                    }
+                }
+                request.setIssuerPivSlot(null);
+            }
+            if (issuerPivSlot == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPin() == null || request.getIssuerPin().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        CertificateCommonGenerateResponse response = this.certificateService.certificateCommonGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
         return ResponseEntity.ok(response);
     }
 
@@ -64,7 +122,49 @@ public class CertificateController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+        }
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        YubicoPivSlotEnum issuerPivSlot = null;
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            } else {
+                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
+                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                        issuerPivSlot = slot;
+                        break;
+                    }
+                }
+                request.setIssuerPivSlot(null);
+            }
+            if (issuerPivSlot == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPin() == null || request.getIssuerPin().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
         return ResponseEntity.ok(response);
     }
 

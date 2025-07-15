@@ -9,7 +9,6 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
@@ -34,15 +33,9 @@ import java.util.Date;
 
 public class RootUtils {
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
-    public static X509Certificate generate(KeyPair rootKey, PKCS10CertificationRequest csr) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
+    public static X509Certificate generate(Provider provider, KeyPair rootKey, PKCS10CertificationRequest csr) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
         PublicKey subjectPublicKey = new JcaPEMKeyConverter()
-                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                .setProvider(provider)
                 .getPublicKey(csr.getSubjectPublicKeyInfo());
 
         if (!rootKey.getPublic().equals(subjectPublicKey)) {
@@ -51,17 +44,17 @@ public class RootUtils {
 
         ContentVerifierProvider verifier =
                 new JcaContentVerifierProviderBuilder()
-                        .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                        .setProvider(provider)
                         .build(subjectPublicKey);
 
         if (!csr.isSignatureValid(verifier)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CSR signature does not match root public key");
         }
 
-        return generate(rootKey.getPrivate(), rootKey.getPublic(), csr.getSubject());
+        return generate(provider, rootKey.getPrivate(), rootKey.getPublic(), csr.getSubject());
     }
 
-    public static X509Certificate generate(PrivateKey privateKey, PublicKey publicKey, X500Name subject) {
+    public static X509Certificate generate(Provider provider, PrivateKey privateKey, PublicKey publicKey, X500Name subject) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -106,7 +99,7 @@ public class RootUtils {
 
         int shaSize = 256;
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        contentSignerBuilder.setProvider(provider);
         ContentSigner contentSigner = null;
         try {
             contentSigner = contentSignerBuilder.build(privateKey);
@@ -116,7 +109,7 @@ public class RootUtils {
         X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
-        certificateConverter.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+        certificateConverter.setProvider(provider);
         try {
             return certificateConverter.getCertificate(holder);
         } catch (CertificateException e) {
