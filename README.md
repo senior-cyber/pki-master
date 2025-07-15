@@ -19,6 +19,20 @@
 
 ## Prerequisite
 
+### Yubico Integration
+
+```shell
+sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib-devel
+sudo apt install opensc-pkcs11 pcscd opensc
+
+git clone https://github.com/Yubico/yubico-piv-tool.git
+cd yubico-piv-tool
+mkdir build; cd build
+cmake ..
+make
+sudo make install
+```
+
 ## Compile / Build
 
 ```shell
