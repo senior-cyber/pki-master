@@ -9,6 +9,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
@@ -21,7 +22,6 @@ import org.joda.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -33,22 +33,36 @@ import java.util.Date;
 
 public class RootUtils {
 
-    public static X509Certificate generate(Provider provider, KeyPair rootKey, PKCS10CertificationRequest csr) throws NoSuchAlgorithmException, IOException, OperatorCreationException, CertificateException, PKCSException {
-        PublicKey subjectPublicKey = new JcaPEMKeyConverter()
-                .setProvider(provider)
-                .getPublicKey(csr.getSubjectPublicKeyInfo());
+    public static X509Certificate generate(Provider provider, KeyPair rootKey, PKCS10CertificationRequest csr) {
+        PublicKey subjectPublicKey = null;
+        try {
+            subjectPublicKey = new JcaPEMKeyConverter()
+                    .setProvider(provider)
+                    .getPublicKey(csr.getSubjectPublicKeyInfo());
+        } catch (PEMException e) {
+            throw new RuntimeException(e);
+        }
 
         if (!rootKey.getPublic().equals(subjectPublicKey)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CSR public key does not match root public key");
         }
 
-        ContentVerifierProvider verifier =
-                new JcaContentVerifierProviderBuilder()
-                        .setProvider(provider)
-                        .build(subjectPublicKey);
+        ContentVerifierProvider verifier = null;
+        try {
+            verifier =
+                    new JcaContentVerifierProviderBuilder()
+                            .setProvider(provider)
+                            .build(subjectPublicKey);
+        } catch (OperatorCreationException e) {
+            throw new RuntimeException(e);
+        }
 
-        if (!csr.isSignatureValid(verifier)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CSR signature does not match root public key");
+        try {
+            if (!csr.isSignatureValid(verifier)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CSR signature does not match root public key");
+            }
+        } catch (PKCSException e) {
+            throw new RuntimeException(e);
         }
 
         return generate(provider, rootKey.getPrivate(), rootKey.getPublic(), csr.getSubject());
