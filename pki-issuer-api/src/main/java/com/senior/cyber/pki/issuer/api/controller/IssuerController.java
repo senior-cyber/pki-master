@@ -67,13 +67,13 @@ public class IssuerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
+        Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer && issuerCertificate.getType() != CertificateTypeEnum.Root) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -146,13 +146,13 @@ public class IssuerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
         if (issuerCertificate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
+        Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer && issuerCertificate.getType() != CertificateTypeEnum.Root) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
