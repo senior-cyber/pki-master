@@ -40,7 +40,7 @@ public class YubicoController {
                 .get();
         exec.setWatchdog(watchdog);
         exec.setStreamHandler(streams);
-        exec.setExitValue(0);
+        exec.setExitValues(new int[]{0, 1});
 
         int exit = exec.execute(cmd);
         LOGGER.info("exit [{}]", exit);
