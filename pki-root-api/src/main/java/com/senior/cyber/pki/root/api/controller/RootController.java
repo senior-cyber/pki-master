@@ -32,7 +32,7 @@ public class RootController {
     protected UserService userService;
 
     @RequestMapping(path = "/root/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) {
+    public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) throws InterruptedException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         JcaRootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -43,7 +43,7 @@ public class RootController {
     }
 
     @RequestMapping(path = "/root/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoRootGenerateResponse> yubicoRootGenerate(RequestEntity<YubicoRootGenerateRequest> httpRequest) {
+    public ResponseEntity<YubicoRootGenerateResponse> yubicoRootGenerate(RequestEntity<YubicoRootGenerateRequest> httpRequest) throws InterruptedException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         YubicoRootGenerateRequest request = httpRequest.getBody();
         if (request == null) {

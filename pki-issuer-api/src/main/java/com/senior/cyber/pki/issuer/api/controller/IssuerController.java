@@ -60,7 +60,7 @@ public class IssuerController {
 
     @Transactional(rollbackFor = Throwable.class)
     @RequestMapping(path = "/issuer/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) {
+    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) throws InterruptedException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         JcaIssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -114,7 +114,7 @@ public class IssuerController {
 
     @Transactional(rollbackFor = Throwable.class)
     @RequestMapping(path = "/issuer/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoIssuerGenerateResponse> yubicoIssuerGenerate(RequestEntity<YubicoIssuerGenerateRequest> httpRequest) {
+    public ResponseEntity<YubicoIssuerGenerateResponse> yubicoIssuerGenerate(RequestEntity<YubicoIssuerGenerateRequest> httpRequest) throws InterruptedException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         YubicoIssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {

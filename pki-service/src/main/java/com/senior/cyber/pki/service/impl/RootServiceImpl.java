@@ -41,7 +41,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request) {
+    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request) throws InterruptedException {
         Provider provider = new BouncyCastleProvider();
         // root
         Key rootKey = null;
@@ -197,7 +197,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, YubicoPivSlotEnum pivSlot) {
+    public YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, YubicoPivSlotEnum pivSlot) throws InterruptedException {
         Provider provider = YubicoProviderUtils.lookProvider(request.getUsbSlot());
         KeyStore keyStore = YubicoProviderUtils.lookupKeyStore(provider, request.getPin());
         PrivateKey privateKey = YubicoProviderUtils.lookupPrivateKey(keyStore, pivSlot, null);
