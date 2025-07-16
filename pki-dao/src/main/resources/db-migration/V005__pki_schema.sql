@@ -15,7 +15,6 @@ CREATE TABLE tbl_iban
 CREATE TABLE tbl_key
 (
     key_id           VARCHAR(36) NOT NULL,
-    serial           BIGINT      NOT NULL,
     user_id          VARCHAR(36) NOT NULL,
     private_key_pem  TEXT NULL,
     public_key_pem   TEXT        NOT NULL,
@@ -23,7 +22,6 @@ CREATE TABLE tbl_key
     created_datetime DATETIME    NOT NULL,
     INDEX (created_datetime),
     INDEX (user_id),
-    UNIQUE KEY (serial),
     PRIMARY KEY (key_id)
 );
 

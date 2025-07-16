@@ -72,30 +72,4 @@ public class User implements Serializable {
     @MapKeyColumn(name = "deny_role_id")
     private Map<String, Role> denyRoles;
 
-    // SftpS
-
-    @Column(name = "home_directory")
-    private String homeDirectory;
-
-    @Column(name = "admin")
-    private boolean admin;
-
-    @Column(name = "dek")
-    private String dek;
-
-    @Column(name = "secret")
-    private String secret;
-
-    @Column(name = "webhook_enabled")
-    private boolean webhookEnabled;
-
-    @Column(name = "webhook_url")
-    private String webhookUrl;
-
-    @Column(name = "webhook_secret")
-    private String webhookSecret;
-
-    @Column(name = "encrypt_at_rest")
-    private boolean encryptAtRest;
-
 }

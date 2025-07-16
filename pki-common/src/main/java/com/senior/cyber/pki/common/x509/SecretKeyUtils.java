@@ -16,14 +16,9 @@ public class SecretKeyUtils {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
-
     public static SecretKey extractSecretKey(ECPrivateKey privateKey, ECPublicKey publicKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {
-        KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", BouncyCastleProvider.PROVIDER_NAME);
+        Provider provider = new BouncyCastleProvider();
+        KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", provider);
         keyAgreement.init(privateKey);
         keyAgreement.doPhase(publicKey, true);
         byte[] secretData = keyAgreement.generateSecret();
@@ -48,7 +43,6 @@ public class SecretKeyUtils {
 
     /**
      * AES_256/GCM/NoPadding
-     *
      */
     public static String encryptText(SecretKey secretKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         int length = 16;

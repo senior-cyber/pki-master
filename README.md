@@ -19,67 +19,58 @@
 
 ## Prerequisite
 
+### Yubico Integration
+
+```shell
+sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib1g-dev build-essential
+sudo apt-get install opensc-pkcs11 pcscd opensc
+
+git clone https://github.com/Yubico/yubico-piv-tool.git
+cd yubico-piv-tool
+mkdir build; cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig
+
+sudo addgroup scard
+sudo usermod -aG scard "$USER"
+```
+
+### sudo nano /etc/polkit-1/rules.d/49-pcscd.rules
+
 ```text
-JDK 17 - https://www.azul.com/downloads/?version=java-17-lts&os=ubuntu&architecture=x86-64-bit&package=jdk
-MySQL 8 - sudo apt-get install mysql-server
+// Allow members of "scard" (or "plugdev") to use pcscd
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
+         action.id == "org.debian.pcsc-lite.access_card") &&
+        subject.isInGroup("scard")) {
+        return polkit.Result.YES;
+    }
+});
+```
+
+```shell
+sudo systemctl restart pcscd
 ```
 
 ## Compile / Build
 
 ```shell
-mkdir -p /opt/apps/github/ColorlibHQ/v3
-cd /opt/apps/github/ColorlibHQ/v3
-git clone https://github.com/ColorlibHQ/AdminLTE.git
-
-cd ~
-git clone https://github.com/senior-cyber/frmk-master.git
-cd frmk-master
-make build
-
 cd ~
 git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
-make build
+./gradlew assemble bootJar
 
-sudo service pki-root-web stop
-sudo service pki-root-api stop
-sudo service pki-issuer-web stop
-sudo service pki-issuer-api stop
-sudo service pki-api-aia stop
-sudo service pki-api-crl stop
+scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
+scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     t460s:/opt/apps/pki-master/pki-api-ocsp
+scp pki-api-x509/build/libs/pki-api-x509.jar     t460s:/opt/apps/pki-master/pki-api-x509
+scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
+scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
 
-mkdir -p /opt/apps/pki-master/pki-root-web
-cp pki-root-web/build/libs/pki-root-web.jar /opt/apps/pki-master/pki-root-web
-
-mkdir -p /opt/apps/pki-master/pki-root-api
-cp pki-root-api/build/libs/pki-root-api.jar /opt/apps/pki-master/pki-root-api
-
-mkdir -p /opt/apps/pki-master/pki-issuer-web
-cp pki-issuer-web/build/libs/pki-issuer-web.jar /opt/apps/pki-master/pki-issuer-web
-
-mkdir -p /opt/apps/pki-master/pki-issuer-api
-cp pki-issuer-api/build/libs/pki-issuer-api.jar /opt/apps/pki-master/pki-issuer-api
-
-mkdir -p /opt/apps/pki-master/pki-api-aia
-cp pki-api-aia/build/libs/pki-api-aia.jar /opt/apps/pki-master/pki-api-aia
-
-mkdir -p /opt/apps/pki-master/pki-api-crl
-cp pki-api-crl/build/libs/pki-api-crl.jar /opt/apps/pki-master/pki-api-crl
-
-sudo service pki-root-web restart
-sudo service pki-root-api restart
-sudo service pki-issuer-web restart
+sudo service pki-api-crl    restart
+sudo service pki-api-ocsp   restart
+sudo service pki-api-x509   restart
+sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
-sudo service pki-api-crl restart
-sudo service pki-api-aia restart
-sudo service pki-api-aia restart
-
-
-sudo service pki-root-web stop
-sudo service pki-root-api stop
-sudo service pki-issuer-web stop
-sudo service pki-issuer-api stop
-sudo service pki-api-crl stop
-sudo service pki-api-aia stop
-sudo service pki-api-aia stop
 ```

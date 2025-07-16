@@ -27,7 +27,7 @@ public class UserService {
         if (authorization == null || authorization.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
         }
-        if (!Strings.CI.startsWith(authorization, "Basic ")) {
+        if (!Strings.CS.startsWith(authorization, "Basic ")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
         }
         String loginAndPassword = new String(BaseEncoding.base64().decode(authorization.substring("Basic ".length())), StandardCharsets.UTF_8);
@@ -45,9 +45,12 @@ public class UserService {
         }
 
         try {
-            if (!this.passwordEncryptor.checkPassword(password, user.getPassword())) {
+            if (!Strings.CS.equals(user.getPassword(), password)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
             }
+//            if (!this.passwordEncryptor.checkPassword(password, user.getPassword())) {
+//                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
+//            }
         } catch (EncryptionOperationNotPossibleException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "access denied");
         }

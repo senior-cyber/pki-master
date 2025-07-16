@@ -1,19 +1,17 @@
 # pki-api-crl
 
-#### nano /opt/apps/pki-master/pki-api-crl/application-external.yaml
+#### nano /opt/apps/pki-master/pki-api-crl/run.sh
 
-```yaml
-override:
-  server:
-    port: 7012
-  datasource:
-    username: root
-    password: password
-    url: jdbc:mysql://localhost:3306/pki_master
-  logging:
-    file:
-      path: /opt/apps/pki-master/pki-api-crl/
-      name: pki-api-crl.log
+```text
+#!/usr/bin/env bash
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+export JAVA_HOME="/opt/apps/java/21"
+
+cd $DIR
+
+$JAVA_HOME/bin/java -jar pki-api-crl.jar --spring.config.location=file:./
 ```
 
 #### sudo nano /etc/systemd/system/pki-api-crl.service
@@ -26,11 +24,11 @@ After=network-online.target
 [Service]
 Type=simple
 Restart=always
-RestartSec=1
-User=root
-Group=root
+RestartSec=15
+User=socheat
+Group=socheat
 WorkingDirectory=/opt/apps/pki-master/pki-api-crl
-ExecStart=/opt/apps/java/17.0.8/bin/java -jar pki-api-crl.jar --spring.config.location=file:./,classpath:/ --spring.profiles.active=external
+ExecStart=/opt/apps/pki-master/pki-api-crl/run.sh
 StartLimitInterval=0
 
 [Install]
@@ -43,12 +41,4 @@ sudo systemctl enable pki-api-crl
 sudo systemctl daemon-reload
 sudo systemctl start pki-api-crl
 sudo systemctl status pki-api-crl
-```
-
-#### Default Credential
-
-```text
-http://${IP}:${WEB-PORT}
-UID : admin
-PWD : admin
 ```
