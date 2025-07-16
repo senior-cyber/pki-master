@@ -245,6 +245,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
+            CertificateTlsGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 try (PivSession session = new PivSession(connection)) {
                     try {
@@ -256,12 +257,15 @@ public class CertificateServiceImpl implements CertificateService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    return issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
-                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                    throw new RuntimeException(e);
+                    response = issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    return response;
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                if (response != null) {
+                    return response;
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");

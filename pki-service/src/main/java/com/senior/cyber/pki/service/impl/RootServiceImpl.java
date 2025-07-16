@@ -16,7 +16,6 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
-import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.core.smartcard.SmartCardConnection;
@@ -369,6 +368,8 @@ public class RootServiceImpl implements RootService {
                 root.setOcspCertificate(ocsp);
                 this.certificateRepository.save(root);
 
+                session.putCertificate(pivSlot, rootCertificate);
+
                 response = new YubicoRootGenerateResponse();
                 response.setId(root.getId());
                 response.setCertificate(rootCertificate);
@@ -381,14 +382,10 @@ public class RootServiceImpl implements RootService {
                 response.setCrlCertificate(crlCertificate);
                 response.setCrlPublicKey(crlKey.getPublicKey());
                 response.setCrlPrivateKey(crlKey.getPrivateKey());
-
-                session.putCertificate(pivSlot, rootCertificate);
                 return response;
-            } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                throw new RuntimeException(e);
             }
         } catch (Exception e) {
-            if (e instanceof java.lang.IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+            if (response != null) {
                 return response;
             } else {
                 throw new RuntimeException(e);

@@ -16,7 +16,6 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
-import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.core.smartcard.SmartCardConnection;
@@ -92,11 +91,9 @@ public class IssuerServiceImpl implements IssuerService {
 
                     response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
                     return response;
-                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                    throw new RuntimeException(e);
                 }
             } catch (Exception e) {
-                if (e instanceof java.lang.IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                if (response != null) {
                     return response;
                 } else {
                     throw new RuntimeException(e);
@@ -304,12 +301,10 @@ public class IssuerServiceImpl implements IssuerService {
                         throw new RuntimeException(e);
                     }
                     response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
-                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                    throw new RuntimeException(e);
+                    return response;
                 }
-                return response;
             } catch (Exception e) {
-                if (e instanceof IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                if (response != null) {
                     return response;
                 } else {
                     throw new RuntimeException(e);
@@ -334,11 +329,9 @@ public class IssuerServiceImpl implements IssuerService {
 
                     response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
                     return response;
-                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                    throw new RuntimeException(e);
                 }
             } catch (Exception e) {
-                if (e instanceof IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                if (response != null) {
                     return response;
                 } else {
                     throw new RuntimeException(e);
