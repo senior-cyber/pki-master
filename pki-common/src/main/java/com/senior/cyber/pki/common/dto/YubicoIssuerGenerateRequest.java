@@ -13,20 +13,23 @@ public class YubicoIssuerGenerateRequest implements Serializable {
     @JsonProperty("issuerId")
     private String issuerId;
 
-    @JsonProperty("issuerUsbSlot")
-    private String issuerUsbSlot;
+    @JsonProperty("issuerSerialNumber")
+    private String issuerSerialNumber;
 
-    @JsonProperty("issuerPivSlot")
-    private String issuerPivSlot;
+    @JsonProperty("issuerManagementKey")
+    private String issuerManagementKey;
+
+    @JsonProperty("issuerSlot")
+    private String issuerSlot;
 
     @JsonProperty("issuerPin")
     private String issuerPin;
 
-    @JsonProperty("usbSlot")
-    private String usbSlot;
+    @JsonProperty("serialNumber")
+    private String serialNumber;
 
-    @JsonProperty("pivSlot")
-    private String pivSlot;
+    @JsonProperty("slot")
+    private String slot;
 
     @JsonProperty("pin")
     private String pin;

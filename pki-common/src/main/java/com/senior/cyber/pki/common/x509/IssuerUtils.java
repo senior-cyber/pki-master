@@ -37,7 +37,7 @@ import java.util.List;
 
 public class IssuerUtils {
 
-    public static X509Certificate generate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) throws InterruptedException {
+    public static X509Certificate generate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -116,21 +116,8 @@ public class IssuerUtils {
         } catch (OperatorCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
+
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
         certificateConverter.setProvider(new BouncyCastleProvider());
         try {
@@ -140,11 +127,11 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) throws InterruptedException {
+    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
         return generateCrlCertificate(provider, issuerCertificate, issuerKey, csr, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) throws InterruptedException {
+    public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -225,21 +212,8 @@ public class IssuerUtils {
         } catch (OperatorCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
+
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
         certificateConverter.setProvider(new BouncyCastleProvider());
         try {
@@ -249,11 +223,11 @@ public class IssuerUtils {
         }
     }
 
-    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) throws InterruptedException {
+    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) {
         return generateOcspCertificate(provider, issuerCertificate, issuerKey, csr, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) throws InterruptedException {
+    public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -339,21 +313,8 @@ public class IssuerUtils {
         } catch (OperatorCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
+
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
         certificateConverter.setProvider(new BouncyCastleProvider());
         try {

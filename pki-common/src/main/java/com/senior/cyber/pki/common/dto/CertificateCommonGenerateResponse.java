@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 @Setter
 @Getter
@@ -21,17 +22,20 @@ public class CertificateCommonGenerateResponse implements Serializable {
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
-    @JsonProperty("certificate")
-    private X509Certificate certificate;
-
-    @JsonSerialize(using = PublicKeySerializer.class)
-    @JsonDeserialize(using = PublicKeyDeserializer.class)
-    @JsonProperty("publicKey")
-    private PublicKey publicKey;
+    @JsonProperty("cert")
+    private X509Certificate cert;
 
     @JsonSerialize(using = PrivateKeySerializer.class)
     @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privateKey")
-    private PrivateKey privateKey;
+    @JsonProperty("privkey")
+    private PrivateKey privkey;
+
+    @JsonSerialize(using = X509CertificatesSerializer.class)
+    @JsonDeserialize(using = X509CertificatesDeserializer.class)
+    private List<X509Certificate> chain;
+
+    @JsonSerialize(using = X509CertificatesSerializer.class)
+    @JsonDeserialize(using = X509CertificatesDeserializer.class)
+    private List<X509Certificate> fullchain;
 
 }

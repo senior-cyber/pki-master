@@ -1,16 +1,13 @@
 package com.senior.cyber.pki.service;
 
-import com.senior.cyber.pki.common.dto.JcaIssuerGenerateRequest;
-import com.senior.cyber.pki.common.dto.JcaIssuerGenerateResponse;
-import com.senior.cyber.pki.common.dto.YubicoIssuerGenerateRequest;
-import com.senior.cyber.pki.common.dto.YubicoIssuerGenerateResponse;
-import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.yubico.yubikit.piv.Slot;
 
 public interface IssuerService {
 
-    JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot) throws InterruptedException;
+    JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot);
 
-    YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot, YubicoPivSlotEnum pivSlot) throws InterruptedException;
+    YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot, Slot pivSlot);
 
 }

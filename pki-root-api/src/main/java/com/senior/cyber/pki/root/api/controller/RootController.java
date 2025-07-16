@@ -4,10 +4,10 @@ import com.senior.cyber.pki.common.dto.JcaRootGenerateRequest;
 import com.senior.cyber.pki.common.dto.JcaRootGenerateResponse;
 import com.senior.cyber.pki.common.dto.YubicoRootGenerateRequest;
 import com.senior.cyber.pki.common.dto.YubicoRootGenerateResponse;
-import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
+import com.yubico.yubikit.piv.Slot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class RootController {
     protected UserService userService;
 
     @RequestMapping(path = "/root/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         JcaRootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -43,27 +43,27 @@ public class RootController {
     }
 
     @RequestMapping(path = "/root/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoRootGenerateResponse> yubicoRootGenerate(RequestEntity<YubicoRootGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<YubicoRootGenerateResponse> yubicoRootGenerate(RequestEntity<YubicoRootGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         YubicoRootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        if (request.getUsbSlot() == null || request.getUsbSlot().isBlank()) {
+        if (request.getSerialNumber() == null || request.getSerialNumber().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoPivSlotEnum pivSlot = null;
-        if (request.getPivSlot() == null || request.getPivSlot().isBlank()) {
+        Slot pivSlot = null;
+        if (request.getSlot() == null || request.getSlot().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         } else {
-            for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                if (slot.getSlotName().equalsIgnoreCase(request.getPivSlot())) {
+            for (Slot slot : Slot.values()) {
+                if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
                     pivSlot = slot;
                     break;
                 }
             }
-            request.setPivSlot(null);
+            request.setSlot(null);
         }
         if (pivSlot == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

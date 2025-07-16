@@ -34,7 +34,7 @@ import java.util.Date;
 
 public class RootUtils {
 
-    public static X509Certificate generate(Provider provider, KeyPair rootKey, PKCS10CertificationRequest csr) throws InterruptedException {
+    public static X509Certificate generate(Provider provider, KeyPair rootKey, PKCS10CertificationRequest csr) {
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = new JcaPEMKeyConverter()
@@ -69,7 +69,7 @@ public class RootUtils {
         return generate(provider, rootKey.getPrivate(), rootKey.getPublic(), csr.getSubject());
     }
 
-    public static X509Certificate generate(Provider provider, PrivateKey privateKey, PublicKey publicKey, X500Name subject) throws InterruptedException {
+    public static X509Certificate generate(Provider provider, PrivateKey privateKey, PublicKey publicKey, X500Name subject) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -117,21 +117,7 @@ public class RootUtils {
         } catch (OperatorCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
         certificateConverter.setProvider(new BouncyCastleProvider());
@@ -142,7 +128,7 @@ public class RootUtils {
         }
     }
 
-    public static X509Certificate generateCrossRoot(Provider provider, PrivateKey issuerPrivateKey, PublicKey issuerPublicKey, X500Name issuerSubject, PublicKey publicKey, X500Name subject) throws InterruptedException {
+    public static X509Certificate generateCrossRoot(Provider provider, PrivateKey issuerPrivateKey, PublicKey issuerPublicKey, X500Name issuerSubject, PublicKey publicKey, X500Name subject) {
         JcaX509ExtensionUtils utils = null;
         try {
             utils = new JcaX509ExtensionUtils();
@@ -195,21 +181,7 @@ public class RootUtils {
         } catch (OperatorCreationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
 
         JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
         certificateConverter.setProvider(new BouncyCastleProvider());

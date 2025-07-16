@@ -22,8 +22,9 @@ dependencies {
 	implementation "org.bouncycastle:bcprov-jdk15to18:${bouncycastle}"
 	implementation "org.bouncycastle:bcpkix-jdk15to18:${bouncycastle}"
 	implementation "org.bouncycastle:bcpg-jdk15to18:${bouncycastle}"
-	implementation "com.yubico.yubikit:piv:2.8.1"
-	implementation "com.yubico.yubikit:desktop:2.8.1"
+	implementation "com.yubico.yubikit:piv:${yubikit}"
+	implementation "com.yubico.yubikit:desktop:${yubikit}"
+	implementation "com.yubico.yubikit:management:${yubikit}"
 
 	implementation "org.springframework.boot:spring-boot-starter-json:${spring_boot}"
 

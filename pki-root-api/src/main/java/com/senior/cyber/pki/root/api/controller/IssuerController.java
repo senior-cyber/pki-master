@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.dto.JcaIssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.JcaIssuerGenerateResponse;
 import com.senior.cyber.pki.common.dto.YubicoIssuerGenerateRequest;
 import com.senior.cyber.pki.common.dto.YubicoIssuerGenerateResponse;
-import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
@@ -15,6 +14,7 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.UserService;
+import com.yubico.yubikit.piv.Slot;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ public class IssuerController {
     protected UserService userService;
 
     @RequestMapping(path = "/issuer/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         JcaIssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -82,21 +82,21 @@ public class IssuerController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        YubicoPivSlotEnum issuerPivSlot = null;
+        Slot issuerPivSlot = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
-            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             } else {
-                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
                         issuerPivSlot = slot;
                         break;
                     }
                 }
-                request.setIssuerPivSlot(null);
+                request.setIssuerSlot(null);
             }
             if (issuerPivSlot == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -111,27 +111,27 @@ public class IssuerController {
     }
 
     @RequestMapping(path = "/issuer/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoIssuerGenerateResponse> yubicoIssuerGenerate(RequestEntity<YubicoIssuerGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<YubicoIssuerGenerateResponse> yubicoIssuerGenerate(RequestEntity<YubicoIssuerGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         YubicoIssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        if (request.getUsbSlot() == null || request.getUsbSlot().isBlank()) {
+        if (request.getSerialNumber() == null || request.getSerialNumber().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        YubicoPivSlotEnum pivSlot = null;
-        if (request.getPivSlot() == null || request.getPivSlot().isBlank()) {
+        Slot pivSlot = null;
+        if (request.getSlot() == null || request.getSlot().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         } else {
-            for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                if (slot.getSlotName().equalsIgnoreCase(request.getPivSlot())) {
+            for (Slot slot : Slot.values()) {
+                if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
                     pivSlot = slot;
                     break;
                 }
             }
-            request.setPivSlot(null);
+            request.setSlot(null);
         }
         if (pivSlot == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -160,21 +160,21 @@ public class IssuerController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        YubicoPivSlotEnum issuerPivSlot = null;
+        Slot issuerPivSlot = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
-            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             } else {
-                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
                         issuerPivSlot = slot;
                         break;
                     }
                 }
-                request.setIssuerPivSlot(null);
+                request.setIssuerSlot(null);
             }
             if (issuerPivSlot == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

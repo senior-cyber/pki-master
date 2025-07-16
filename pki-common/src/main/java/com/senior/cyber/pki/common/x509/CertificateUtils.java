@@ -37,11 +37,11 @@ import java.util.List;
 
 public class CertificateUtils {
 
-    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) throws InterruptedException {
+    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) {
         return generateCommon(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) throws InterruptedException {
+    public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -111,21 +111,7 @@ public class CertificateUtils {
         } catch (OperatorCreationException e) {
             throw new RuntimeException(e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
 
         try {
             return new JcaX509CertificateConverter()
@@ -136,11 +122,11 @@ public class CertificateUtils {
         }
     }
 
-    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) throws InterruptedException {
+    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
         return generateTls(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
     }
 
-    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) throws InterruptedException {
+    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -249,21 +235,8 @@ public class CertificateUtils {
         } catch (OperatorCreationException e) {
             throw new RuntimeException(e);
         }
-        X509CertificateHolder holder = null;
-        int loop = 0;
-        while (true) {
-            try {
-                loop++;
-                holder = builder.build(contentSigner);
-                break;
-            } catch (RuntimeException e) {
-                if (loop >= 5) {
-                    throw e;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        }
+        X509CertificateHolder holder = builder.build(contentSigner);
+
         try {
             return new JcaX509CertificateConverter()
                     .setProvider(new BouncyCastleProvider())

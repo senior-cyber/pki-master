@@ -30,6 +30,8 @@ dependencies {
     implementation "joda-time:joda-time:${joda_time}"
 
     implementation "com.yubico.yubikit:piv:${yubikit}"
+    implementation "com.yubico.yubikit:desktop:${yubikit}"
+    implementation "com.yubico.yubikit:management:${yubikit}"
 
     implementation "org.jasypt:jasypt:${jasypt}"
 

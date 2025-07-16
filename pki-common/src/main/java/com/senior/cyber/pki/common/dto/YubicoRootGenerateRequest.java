@@ -10,11 +10,11 @@ import java.io.Serializable;
 @Getter
 public class YubicoRootGenerateRequest implements Serializable {
 
-    @JsonProperty("usbSlot")
-    private String usbSlot;
+    @JsonProperty("serialNumber")
+    private String serialNumber;
 
-    @JsonProperty("pivSlot")
-    private String pivSlot;
+    @JsonProperty("slot")
+    private String slot;
 
     @JsonProperty("pin")
     private String pin;

@@ -15,6 +15,14 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
+import com.yubico.yubikit.core.YubiKeyDevice;
+import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
+import com.yubico.yubikit.core.smartcard.ApduException;
+import com.yubico.yubikit.core.smartcard.SmartCardConnection;
+import com.yubico.yubikit.piv.PivSession;
+import com.yubico.yubikit.piv.Slot;
+import com.yubico.yubikit.piv.jca.PivProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -27,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -44,7 +53,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot) throws InterruptedException {
+    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -63,17 +72,41 @@ public class CertificateServiceImpl implements CertificateService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
-        Provider issuerProvider = null;
-        PrivateKey issuerPrivateKey = null;
-        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-            issuerProvider = new BouncyCastleProvider();
-            issuerPrivateKey = issuerKey.getPrivateKey();
-        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
-            KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
-            issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
-        }
 
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            Provider issuerProvider = new BouncyCastleProvider();
+            PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
+            return issuingCommonCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
+            if (device == null) {
+                throw new IllegalArgumentException("device not found");
+            }
+            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                try (PivSession session = new PivSession(connection)) {
+                    try {
+                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                    } catch (IOException | ApduException | BadResponseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Provider issuerProvider = new PivProvider(session);
+                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                    return issuingCommonCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
+                    throw new RuntimeException(e);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+    }
+
+    @Transactional
+    protected CertificateCommonGenerateResponse issuingCommonCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
         Key certificateKey = null;
         PublicKey publicKey = null;
         if (request.getCsr() != null) {
@@ -136,16 +169,54 @@ public class CertificateServiceImpl implements CertificateService {
 
         CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
         response.setId(certificate.getId());
-        response.setCertificate(certificateCertificate);
-        response.setPrivateKey(certificateKey.getPrivateKey());
-        response.setPublicKey(certificateKey.getPublicKey());
+        response.setCert(certificateCertificate);
+        response.setPrivkey(certificateKey.getPrivateKey());
+
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(issuerCertificate.getCertificate());
+
+        Certificate temp = issuerCertificate;
+        while (true) {
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                chain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setChain(chain);
+
+        List<X509Certificate> fullchain = new ArrayList<>();
+        fullchain.add(certificate.getCertificate());
+        temp = certificate;
+        while (true) {
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                fullchain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setFullchain(fullchain);
 
         return response;
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, YubicoPivSlotEnum issuerPivSlot) throws InterruptedException {
+    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -164,17 +235,41 @@ public class CertificateServiceImpl implements CertificateService {
         if (issuerKey == null) {
             throw new IllegalArgumentException("issuerKey not found");
         }
-        Provider issuerProvider = null;
-        PrivateKey issuerPrivateKey = null;
-        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-            issuerProvider = new BouncyCastleProvider();
-            issuerPrivateKey = issuerKey.getPrivateKey();
-        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            issuerProvider = YubicoProviderUtils.lookProvider(request.getIssuerUsbSlot());
-            KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider, request.getIssuerPin());
-            issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, null);
-        }
 
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            Provider issuerProvider = new BouncyCastleProvider();
+            PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
+            return issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
+            if (device == null) {
+                throw new IllegalArgumentException("device not found");
+            }
+            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                try (PivSession session = new PivSession(connection)) {
+                    try {
+                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                    } catch (IOException | ApduException | BadResponseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Provider issuerProvider = new PivProvider(session);
+                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                    return issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
+                    throw new RuntimeException(e);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+    }
+
+    @Transactional
+    protected CertificateTlsGenerateResponse issuingTlsCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
         if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
         }

@@ -29,8 +29,11 @@ public class YubicoRootGenerateResponse implements Serializable {
     @JsonProperty("publicKey")
     private PublicKey publicKey;
 
-    @JsonProperty("pivSlot")
-    private String pivSlot;
+    @JsonProperty("serialNumber")
+    private String serialNumber;
+
+    @JsonProperty("slot")
+    private String slot;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

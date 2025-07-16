@@ -23,7 +23,7 @@
 
 ```shell
 sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib1g-dev build-essential
-sudo apt-get install opensc-pkcs11 pcscd opensc
+sudo apt-get install opensc-pkcs11 pcscd opensc libusb-dev
 
 git clone https://github.com/Yubico/yubico-piv-tool.git
 cd yubico-piv-tool
@@ -73,4 +73,10 @@ sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
 sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
+```
+
+```shell
+yubico-piv-tool -a verify-pin --sign -s 9c -A RSA2048 -H SHA256 -i data.txt -o data.sig
+yubico-piv-tool -a set-touch -S 9c -T never -k 010203040506070801020304050607080102030405060708
+ykman piv keys set-touch "9c" never
 ```

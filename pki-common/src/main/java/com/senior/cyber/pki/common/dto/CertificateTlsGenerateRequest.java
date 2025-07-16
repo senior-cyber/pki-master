@@ -19,14 +19,17 @@ public class CertificateTlsGenerateRequest implements Serializable {
     @JsonProperty("issuerId")
     private String issuerId;
 
-    @JsonProperty("issuerUsbSlot")
-    private String issuerUsbSlot;
+    @JsonProperty("issuerSerialNumber")
+    private String issuerSerialNumber;
 
-    @JsonProperty("issuerPivSlot")
-    private String issuerPivSlot;
+    @JsonProperty("issuerSlot")
+    private String issuerSlot;
 
     @JsonProperty("issuerPin")
     private String issuerPin;
+
+    @JsonProperty("issuerManagementKey")
+    private String issuerManagementKey;
 
     @JsonSerialize(using = PKCS10CertificationRequestSerializer.class)
     @JsonDeserialize(using = PKCS10CertificationRequestDeserializer.class)

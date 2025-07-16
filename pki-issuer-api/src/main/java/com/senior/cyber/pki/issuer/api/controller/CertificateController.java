@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
-import com.senior.cyber.pki.common.x509.YubicoPivSlotEnum;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
@@ -15,6 +14,7 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.UserService;
+import com.yubico.yubikit.piv.Slot;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ public class CertificateController {
     protected UserService userService;
 
     @RequestMapping(path = "/certificate/common/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<CertificateCommonGenerateResponse> certificateCommonGenerate(RequestEntity<CertificateCommonGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateCommonGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -82,21 +82,21 @@ public class CertificateController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        YubicoPivSlotEnum issuerPivSlot = null;
+        Slot issuerPivSlot = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
-            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             } else {
-                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
                         issuerPivSlot = slot;
                         break;
                     }
                 }
-                request.setIssuerPivSlot(null);
+                request.setIssuerSlot(null);
             }
             if (issuerPivSlot == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -111,7 +111,7 @@ public class CertificateController {
     }
 
     @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) throws InterruptedException {
+    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -135,21 +135,21 @@ public class CertificateController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        YubicoPivSlotEnum issuerPivSlot = null;
+        Slot issuerPivSlot = null;
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            if (request.getIssuerUsbSlot() == null || request.getIssuerUsbSlot().isBlank()) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
-            if (request.getIssuerPivSlot() == null || request.getIssuerPivSlot().isBlank()) {
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             } else {
-                for (YubicoPivSlotEnum slot : YubicoPivSlotEnum.values()) {
-                    if (slot.getSlotName().equalsIgnoreCase(request.getIssuerPivSlot())) {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
                         issuerPivSlot = slot;
                         break;
                     }
                 }
-                request.setIssuerPivSlot(null);
+                request.setIssuerSlot(null);
             }
             if (issuerPivSlot == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
