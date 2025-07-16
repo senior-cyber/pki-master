@@ -24,7 +24,7 @@ public class YubicoController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(YubicoController.class);
 
-    @RequestMapping(path = "/yubico/info", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
+    @RequestMapping(path = "/yubico/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Map<String, String>>> rootInfo(RequestEntity<JcaRootGenerateRequest> httpRequest) throws IOException {
         YubiKitManager manager = new YubiKitManager();
         List<Map<String, String>> devices = new ArrayList<>();

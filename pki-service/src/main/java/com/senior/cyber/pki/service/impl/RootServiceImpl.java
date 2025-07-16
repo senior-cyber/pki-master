@@ -212,6 +212,7 @@ public class RootServiceImpl implements RootService {
         if (device == null) {
             throw new RuntimeException("Device not found");
         }
+        YubicoRootGenerateResponse response = null;
         try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
             try (PivSession session = new PivSession(connection)) {
                 try {
@@ -368,7 +369,7 @@ public class RootServiceImpl implements RootService {
                 root.setOcspCertificate(ocsp);
                 this.certificateRepository.save(root);
 
-                YubicoRootGenerateResponse response = new YubicoRootGenerateResponse();
+                response = new YubicoRootGenerateResponse();
                 response.setId(root.getId());
                 response.setCertificate(rootCertificate);
                 response.setPublicKey(rootKey.getPublicKey());
@@ -387,7 +388,11 @@ public class RootServiceImpl implements RootService {
                 throw new RuntimeException(e);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            if (e instanceof java.lang.IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                return response;
+            } else {
+                throw new RuntimeException(e);
+            }
         }
     }
 
