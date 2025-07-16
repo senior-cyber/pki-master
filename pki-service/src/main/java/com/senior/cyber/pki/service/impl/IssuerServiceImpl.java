@@ -78,6 +78,7 @@ public class IssuerServiceImpl implements IssuerService {
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
+            JcaIssuerGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 try (PivSession session = new PivSession(connection)) {
                     try {
@@ -89,12 +90,17 @@ public class IssuerServiceImpl implements IssuerService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    return issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    return response;
                 } catch (IOException | ApduException | ApplicationNotAvailableException e) {
                     throw new RuntimeException(e);
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                if (e instanceof java.lang.IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                    return response;
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             throw new IllegalArgumentException("issuerKey not found");
