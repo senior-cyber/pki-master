@@ -290,12 +290,37 @@ public class IssuerServiceImpl implements IssuerService {
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
             Provider issuerProvider = new BouncyCastleProvider();
             PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
-            return issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+
+            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
+            if (device == null) {
+                throw new IllegalArgumentException("device not found");
+            }
+            YubicoIssuerGenerateResponse response = null;
+            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                try (PivSession session = new PivSession(connection)) {
+                    try {
+                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
+                    } catch (IOException | ApduException | BadResponseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+                } catch (IOException | ApduException | ApplicationNotAvailableException e) {
+                    throw new RuntimeException(e);
+                }
+                return response;
+            } catch (Exception e) {
+                if (e instanceof IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                    return response;
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
             YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
+            YubicoIssuerGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 try (PivSession session = new PivSession(connection)) {
                     try {
@@ -307,12 +332,17 @@ public class IssuerServiceImpl implements IssuerService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    return issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+                    return response;
                 } catch (IOException | ApduException | ApplicationNotAvailableException e) {
                     throw new RuntimeException(e);
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                if (e instanceof IllegalStateException && "Exclusive access not assigned to current Thread".equals(e.getMessage())) {
+                    return response;
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
@@ -320,186 +350,171 @@ public class IssuerServiceImpl implements IssuerService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    protected YubicoIssuerGenerateResponse issuingIssuer(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api) {
-        YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
-        if (device == null) {
-            throw new IllegalArgumentException("device not found");
+    protected YubicoIssuerGenerateResponse issuingIssuer(PivSession session, Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api) {
+        PublicKey publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
+
+        Provider issuingProvider = new PivProvider(session);
+        KeyStore keyStore = YubicoProviderUtils.lookupKeyStore(issuingProvider);
+        PrivateKey privateKey = YubicoProviderUtils.lookupPrivateKey(keyStore, pivSlot, request.getPin());
+
+
+        // issuing
+        Key issuingKey = null;
+        PrivateKey issuingPrivateKey = privateKey;
+        {
+            KeyPair x509 = new KeyPair(publicKey, privateKey);
+            Key key = new Key();
+            key.setType(KeyTypeEnum.ServerKeyYubico);
+            key.setPublicKey(x509.getPublic());
+            key.setCreatedDatetime(new Date());
+            key.setUser(user);
+            this.keyRepository.save(key);
+            issuingKey = key;
         }
 
-        try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-            try (PivSession session = new PivSession(connection)) {
-                try {
-                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
-                } catch (IOException | ApduException | BadResponseException e) {
-                    throw new RuntimeException(e);
-                }
+        X500Name issuingSubject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName(),
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+        long serial = System.currentTimeMillis();
+        X509Certificate issuingCertificate = IssuerUtils.generate(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, issuingKey.getPublicKey(), issuingSubject, crlApi, ocspApi, x509Api, serial);
+        Certificate issuing = new Certificate();
+        issuing.setIssuerCertificate(issuerCertificate);
+        issuing.setCountryCode(request.getCountry());
+        issuing.setOrganization(request.getOrganization());
+        issuing.setOrganizationalUnit(request.getOrganizationalUnit());
+        issuing.setCommonName(request.getCommonName());
+        issuing.setLocalityName(request.getLocality());
+        issuing.setStateOrProvinceName(request.getProvince());
+        issuing.setEmailAddress(request.getEmailAddress());
+        issuing.setKey(issuingKey);
+        issuing.setCertificate(issuingCertificate);
+        issuing.setSerial(serial);
+        issuing.setCreatedDatetime(new Date());
+        issuing.setValidFrom(issuingCertificate.getNotBefore());
+        issuing.setValidUntil(issuingCertificate.getNotAfter());
+        issuing.setStatus(CertificateStatusEnum.Good);
+        issuing.setType(CertificateTypeEnum.Issuer);
+        issuing.setUser(user);
+        this.certificateRepository.save(issuing);
 
-                PublicKey publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
+        // crl
+        Key crlKey = null;
+        {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setType(KeyTypeEnum.ServerKeyJCE);
+            key.setUser(user);
+            key.setPrivateKey(x509.getPrivate());
+            key.setPublicKey(x509.getPublic());
+            key.setCreatedDatetime(new Date());
+            this.keyRepository.save(key);
+            crlKey = key;
+        }
+        X500Name crlSubject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName(),
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+        PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
+        X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingProvider, issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
+        Certificate crl = new Certificate();
+        crl.setIssuerCertificate(issuing);
+        crl.setCountryCode(request.getCountry());
+        crl.setOrganization(request.getOrganization());
+        crl.setOrganizationalUnit(request.getOrganizationalUnit());
+        crl.setCommonName(request.getCommonName());
+        crl.setLocalityName(request.getLocality());
+        crl.setStateOrProvinceName(request.getProvince());
+        crl.setEmailAddress(request.getEmailAddress());
+        crl.setKey(crlKey);
+        crl.setCertificate(crlCertificate);
+        crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
+        crl.setCreatedDatetime(new Date());
+        crl.setValidFrom(crlCertificate.getNotBefore());
+        crl.setValidUntil(crlCertificate.getNotAfter());
+        crl.setStatus(CertificateStatusEnum.Good);
+        crl.setType(CertificateTypeEnum.Crl);
+        crl.setUser(user);
+        this.certificateRepository.save(crl);
 
-                Provider issuingProvider = new PivProvider(session);
-                KeyStore keyStore = YubicoProviderUtils.lookupKeyStore(issuingProvider);
-                PrivateKey privateKey = YubicoProviderUtils.lookupPrivateKey(keyStore, pivSlot, request.getPin());
+        // ocsp
+        Key ocspKey = null;
+        {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setUser(user);
+            key.setType(KeyTypeEnum.ServerKeyJCE);
+            key.setPrivateKey(x509.getPrivate());
+            key.setPublicKey(x509.getPublic());
+            key.setCreatedDatetime(new Date());
+            this.keyRepository.save(key);
+            ocspKey = key;
+        }
+        X500Name ocspSubject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName() + " OCSP",
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+        PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
+        X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingProvider, issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
+        Certificate ocsp = new Certificate();
+        ocsp.setIssuerCertificate(issuing);
+        ocsp.setCountryCode(request.getCountry());
+        ocsp.setOrganization(request.getOrganization());
+        ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
+        ocsp.setCommonName(request.getCommonName() + " OCSP");
+        ocsp.setLocalityName(request.getLocality());
+        ocsp.setStateOrProvinceName(request.getProvince());
+        ocsp.setEmailAddress(request.getEmailAddress());
+        ocsp.setKey(ocspKey);
+        ocsp.setCertificate(ocspCertificate);
+        ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
+        ocsp.setCreatedDatetime(new Date());
+        ocsp.setValidFrom(ocspCertificate.getNotBefore());
+        ocsp.setValidUntil(ocspCertificate.getNotAfter());
+        ocsp.setStatus(CertificateStatusEnum.Good);
+        ocsp.setType(CertificateTypeEnum.Ocsp);
+        ocsp.setUser(user);
+        this.certificateRepository.save(ocsp);
 
+        issuing.setCrlCertificate(crl);
+        issuing.setOcspCertificate(ocsp);
+        this.certificateRepository.save(issuing);
 
-                // issuing
-                Key issuingKey = null;
-                PrivateKey issuingPrivateKey = privateKey;
-                {
-                    KeyPair x509 = new KeyPair(publicKey, privateKey);
-                    Key key = new Key();
-                    key.setType(KeyTypeEnum.ServerKeyYubico);
-                    key.setPublicKey(x509.getPublic());
-                    key.setCreatedDatetime(new Date());
-                    key.setUser(user);
-                    this.keyRepository.save(key);
-                    issuingKey = key;
-                }
+        YubicoIssuerGenerateResponse response = new YubicoIssuerGenerateResponse();
+        response.setId(issuing.getId());
+        response.setCertificate(issuingCertificate);
+        response.setPublicKey(issuingKey.getPublicKey());
+        response.setSlot(pivSlot.getStringAlias());
+        response.setSerialNumber(request.getSerialNumber());
+        response.setOcspCertificate(ocspCertificate);
+        response.setOcspPublicKey(ocspCertificate.getPublicKey());
+        response.setOcspPrivateKey(ocspKey.getPrivateKey());
+        response.setCrlCertificate(crlCertificate);
+        response.setCrlPublicKey(crlKey.getPublicKey());
+        response.setCrlPrivateKey(crlKey.getPrivateKey());
 
-                X500Name issuingSubject = SubjectUtils.generate(
-                        request.getCountry(),
-                        request.getOrganization(),
-                        request.getOrganizationalUnit(),
-                        request.getCommonName(),
-                        request.getLocality(),
-                        request.getProvince(),
-                        request.getEmailAddress()
-                );
-                long serial = System.currentTimeMillis();
-                X509Certificate issuingCertificate = IssuerUtils.generate(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, issuingKey.getPublicKey(), issuingSubject, crlApi, ocspApi, x509Api, serial);
-                Certificate issuing = new Certificate();
-                issuing.setIssuerCertificate(issuerCertificate);
-                issuing.setCountryCode(request.getCountry());
-                issuing.setOrganization(request.getOrganization());
-                issuing.setOrganizationalUnit(request.getOrganizationalUnit());
-                issuing.setCommonName(request.getCommonName());
-                issuing.setLocalityName(request.getLocality());
-                issuing.setStateOrProvinceName(request.getProvince());
-                issuing.setEmailAddress(request.getEmailAddress());
-                issuing.setKey(issuingKey);
-                issuing.setCertificate(issuingCertificate);
-                issuing.setSerial(serial);
-                issuing.setCreatedDatetime(new Date());
-                issuing.setValidFrom(issuingCertificate.getNotBefore());
-                issuing.setValidUntil(issuingCertificate.getNotAfter());
-                issuing.setStatus(CertificateStatusEnum.Good);
-                issuing.setType(CertificateTypeEnum.Issuer);
-                issuing.setUser(user);
-                this.certificateRepository.save(issuing);
-
-                // crl
-                Key crlKey = null;
-                {
-                    KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                    Key key = new Key();
-                    key.setType(KeyTypeEnum.ServerKeyJCE);
-                    key.setUser(user);
-                    key.setPrivateKey(x509.getPrivate());
-                    key.setPublicKey(x509.getPublic());
-                    key.setCreatedDatetime(new Date());
-                    this.keyRepository.save(key);
-                    crlKey = key;
-                }
-                X500Name crlSubject = SubjectUtils.generate(
-                        request.getCountry(),
-                        request.getOrganization(),
-                        request.getOrganizationalUnit(),
-                        request.getCommonName(),
-                        request.getLocality(),
-                        request.getProvince(),
-                        request.getEmailAddress()
-                );
-                PKCS10CertificationRequest crlCsr = CsrUtils.generate(new KeyPair(crlKey.getPublicKey(), crlKey.getPrivateKey()), crlSubject);
-                X509Certificate crlCertificate = IssuerUtils.generateCrlCertificate(issuingProvider, issuingCertificate, issuingPrivateKey, crlCsr, serial + 1);
-                Certificate crl = new Certificate();
-                crl.setIssuerCertificate(issuing);
-                crl.setCountryCode(request.getCountry());
-                crl.setOrganization(request.getOrganization());
-                crl.setOrganizationalUnit(request.getOrganizationalUnit());
-                crl.setCommonName(request.getCommonName());
-                crl.setLocalityName(request.getLocality());
-                crl.setStateOrProvinceName(request.getProvince());
-                crl.setEmailAddress(request.getEmailAddress());
-                crl.setKey(crlKey);
-                crl.setCertificate(crlCertificate);
-                crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
-                crl.setCreatedDatetime(new Date());
-                crl.setValidFrom(crlCertificate.getNotBefore());
-                crl.setValidUntil(crlCertificate.getNotAfter());
-                crl.setStatus(CertificateStatusEnum.Good);
-                crl.setType(CertificateTypeEnum.Crl);
-                crl.setUser(user);
-                this.certificateRepository.save(crl);
-
-                // ocsp
-                Key ocspKey = null;
-                {
-                    KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                    Key key = new Key();
-                    key.setUser(user);
-                    key.setType(KeyTypeEnum.ServerKeyJCE);
-                    key.setPrivateKey(x509.getPrivate());
-                    key.setPublicKey(x509.getPublic());
-                    key.setCreatedDatetime(new Date());
-                    this.keyRepository.save(key);
-                    ocspKey = key;
-                }
-                X500Name ocspSubject = SubjectUtils.generate(
-                        request.getCountry(),
-                        request.getOrganization(),
-                        request.getOrganizationalUnit(),
-                        request.getCommonName() + " OCSP",
-                        request.getLocality(),
-                        request.getProvince(),
-                        request.getEmailAddress()
-                );
-                PKCS10CertificationRequest ocspCsr = CsrUtils.generate(new KeyPair(ocspKey.getPublicKey(), ocspKey.getPrivateKey()), ocspSubject);
-                X509Certificate ocspCertificate = IssuerUtils.generateOcspCertificate(issuingProvider, issuingCertificate, issuingPrivateKey, ocspCsr, serial + 2);
-                Certificate ocsp = new Certificate();
-                ocsp.setIssuerCertificate(issuing);
-                ocsp.setCountryCode(request.getCountry());
-                ocsp.setOrganization(request.getOrganization());
-                ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
-                ocsp.setCommonName(request.getCommonName() + " OCSP");
-                ocsp.setLocalityName(request.getLocality());
-                ocsp.setStateOrProvinceName(request.getProvince());
-                ocsp.setEmailAddress(request.getEmailAddress());
-                ocsp.setKey(ocspKey);
-                ocsp.setCertificate(ocspCertificate);
-                ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
-                ocsp.setCreatedDatetime(new Date());
-                ocsp.setValidFrom(ocspCertificate.getNotBefore());
-                ocsp.setValidUntil(ocspCertificate.getNotAfter());
-                ocsp.setStatus(CertificateStatusEnum.Good);
-                ocsp.setType(CertificateTypeEnum.Ocsp);
-                ocsp.setUser(user);
-                this.certificateRepository.save(ocsp);
-
-                issuing.setCrlCertificate(crl);
-                issuing.setOcspCertificate(ocsp);
-                this.certificateRepository.save(issuing);
-
-                YubicoIssuerGenerateResponse response = new YubicoIssuerGenerateResponse();
-                response.setId(issuing.getId());
-                response.setCertificate(issuingCertificate);
-                response.setPublicKey(issuingKey.getPublicKey());
-                response.setSlot(pivSlot.getStringAlias());
-                response.setSerialNumber(request.getSerialNumber());
-                response.setOcspCertificate(ocspCertificate);
-                response.setOcspPublicKey(ocspCertificate.getPublicKey());
-                response.setOcspPrivateKey(ocspKey.getPrivateKey());
-                response.setCrlCertificate(crlCertificate);
-                response.setCrlPublicKey(crlKey.getPublicKey());
-                response.setCrlPrivateKey(crlKey.getPrivateKey());
-
-                session.putCertificate(pivSlot, issuingCertificate);
-
-                return response;
-            } catch (IOException | ApduException | ApplicationNotAvailableException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (Exception e) {
+        try {
+            session.putCertificate(pivSlot, issuingCertificate);
+        } catch (IOException | ApduException e) {
             throw new RuntimeException(e);
         }
+        return response;
+
     }
 
 }
