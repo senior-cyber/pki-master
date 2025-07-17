@@ -17,6 +17,12 @@
 | 13 | Swift            |
 | 14 | Objective-C      |
 
+## Convert private key PKCS#1 to PKCS#8
+
+```shell
+openssl pkcs8 -topk8 -inform PEM -outform PEM -in input.pem -out output.pem -nocrypt
+```
+
 ## Prerequisite
 
 ### Yubico Integration
