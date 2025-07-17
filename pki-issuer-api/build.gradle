@@ -30,6 +30,7 @@ dependencies {
     implementation "com.yubico.yubikit:piv:${yubikit}"
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"
+    implementation "org.apache.sshd:sshd-core:${sshd_common}"
 
     implementation "org.jasypt:jasypt:${jasypt}"
 

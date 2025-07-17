@@ -1,9 +1,6 @@
 package com.senior.cyber.pki.issuer.api.controller;
 
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
@@ -216,6 +213,60 @@ public class CertificateController {
         }
 
         CertificateTlsGenerateResponse response = this.certificateService.certificateTlsClientGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(path = "/certificate/ssh/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificateSshGenerateResponse> certificateSshGenerate(RequestEntity<CertificateSshGenerateRequest> httpRequest) {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        CertificateSshGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+        }
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        Slot issuerPivSlot = null;
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            } else {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
+                        issuerPivSlot = slot;
+                        break;
+                    }
+                }
+                request.setIssuerSlot(null);
+            }
+            if (issuerPivSlot == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPin() == null || request.getIssuerPin().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        CertificateSshGenerateResponse response = this.certificateService.certificateSshGenerate(user, request, issuerPivSlot);
         return ResponseEntity.ok(response);
     }
 

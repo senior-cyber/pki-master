@@ -1,9 +1,6 @@
 package com.senior.cyber.pki.service.impl;
 
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateCommonGenerateResponse;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateRequest;
-import com.senior.cyber.pki.common.dto.CertificateTlsGenerateResponse;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -25,6 +22,8 @@ import com.yubico.yubikit.piv.jca.PivProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.apache.sshd.certificate.OpenSshCertificateBuilder;
+import org.apache.sshd.common.config.keys.OpenSshCertificate;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.joda.time.LocalDate;
@@ -36,8 +35,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -659,4 +662,134 @@ public class CertificateServiceImpl implements CertificateService {
         return response;
     }
 
+    @Override
+    public CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request, Slot issuerPivSlot) {
+//        // generate public key if not present
+//        // convert into java pem
+//        // load public key
+//
+//        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+//        if (issuerCertificate == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+//        }
+//        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+//                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+//                issuerCertificate.getValidFrom().after(now) ||
+//                issuerCertificate.getValidUntil().before(now)
+//        ) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+//        }
+//
+//        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+//        if (issuerKey == null) {
+//            throw new IllegalArgumentException("issuerKey not found");
+//        }
+//
+//        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+//            Provider issuerProvider = new BouncyCastleProvider();
+//            PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
+//            return issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+//        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+//            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
+//            if (device == null) {
+//                throw new IllegalArgumentException("device not found");
+//            }
+//            CertificateTlsGenerateResponse response = null;
+//            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+//                try (PivSession session = new PivSession(connection)) {
+//                    try {
+//                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+//                    } catch (IOException | ApduException | BadResponseException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                    Provider issuerProvider = new PivProvider(session);
+//                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+//                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+//
+//                    response = issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+//                    return response;
+//                }
+//            } catch (Exception e) {
+//                if (response != null) {
+//                    return response;
+//                } else {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        } else {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+//        }
+        return null;
+    }
+
+    public void pp() throws Exception {
+
+//        PublicKey publicKey = null;
+//        KeyPair caKeypair = null;
+
+        KeyPairGenerator userKpg = KeyPairGenerator.getInstance("RSA");
+        userKpg.initialize(2048);
+        KeyPair userKeyPair = userKpg.generateKeyPair();
+
+        // Generate CA key pair (certificate authority)
+        KeyPairGenerator caKpg = KeyPairGenerator.getInstance("RSA");
+        caKpg.initialize(2048);
+        KeyPair caKeyPair = caKpg.generateKeyPair();
+
+        PublicKey publicKey = caKeyPair.getPublic();
+
+        OpenSshCertificateBuilder openSshCertificateBuilder = OpenSshCertificateBuilder.userCertificate();
+//        openSshCertificateBuilder.criticalOptions()
+//        openSshCertificateBuilder.extensions()
+        openSshCertificateBuilder.id("test-id");
+        openSshCertificateBuilder.serial(System.currentTimeMillis());
+        // openSshCertificateBuilder.nonce()
+        openSshCertificateBuilder.principals(List.of("socheat"));
+        openSshCertificateBuilder.publicKey(publicKey);
+        openSshCertificateBuilder.validAfter(Instant.now());
+        openSshCertificateBuilder.validBefore(Instant.now());
+        OpenSshCertificate cert = openSshCertificateBuilder.sign(caKeyPair, "SHA256withRSA");
+
+
+        String certType = cert.getKeyType(); // e.g., ssh-rsa-cert-v01@openssh.com
+        byte[] encoded = cert.getEncoded(); // binary format
+        String base64 = Base64.getEncoder().encodeToString(encoded);
+
+        // Write to file: <type> <base64> <comment>
+        String comment = "user@example.com-cert";
+        String line = certType + " " + base64 + " " + comment + "\n";
+
+        Path output = Path.of("id_rsa-cert.pub");
+        Files.writeString(output, line);
+
+        System.out.println("Written OpenSSH certificate to: " + output.toAbsolutePath());
+
+
+//        X509Certificate certificateCertificate = CertificateUtils.generateTlsClient(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+//        Certificate certificate = new Certificate();
+//        certificate.setIssuerCertificate(issuerCertificate);
+//        certificate.setCountryCode(request.getCountry());
+//        certificate.setOrganization(request.getOrganization());
+//        certificate.setOrganizationalUnit(request.getOrganizationalUnit());
+//        certificate.setCommonName(request.getCommonName());
+//        certificate.setLocalityName(request.getLocality());
+//        certificate.setStateOrProvinceName(request.getProvince());
+//        certificate.setEmailAddress(request.getEmailAddress());
+//        certificate.setKey(certificateKey);
+//        certificate.setSan(StringUtils.join(sans, ", "));
+//        certificate.setCertificate(certificateCertificate);
+//        certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
+//        certificate.setCreatedDatetime(new Date());
+//        certificate.setValidFrom(certificateCertificate.getNotBefore());
+//        certificate.setValidUntil(certificateCertificate.getNotAfter());
+//        certificate.setStatus(CertificateStatusEnum.Good);
+//        certificate.setType(CertificateTypeEnum.Certificate);
+//        certificate.setUser(user);
+//        this.certificateRepository.save(certificate);
+//
+//        CertificateSshGenerateResponse response = new CertificateSshGenerateResponse();
+//
+//
+//        return response;
+    }
 }
