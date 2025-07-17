@@ -24,10 +24,16 @@ public class CertificateTlsGenerateResponse implements Serializable {
     @JsonProperty("cert")
     private X509Certificate cert;
 
+    @JsonProperty("certBase64")
+    private String certBase64;
+
     @JsonSerialize(using = PrivateKeySerializer.class)
     @JsonDeserialize(using = PrivateKeyDeserializer.class)
     @JsonProperty("privkey")
     private PrivateKey privkey;
+
+    @JsonProperty("privkeyBase64")
+    private String privkeyBase64;
 
     @JsonSerialize(using = X509CertificatesSerializer.class)
     @JsonDeserialize(using = X509CertificatesDeserializer.class)

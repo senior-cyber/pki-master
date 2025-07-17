@@ -71,7 +71,8 @@ public class CertificateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -124,7 +125,8 @@ public class CertificateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                issuerCertificate.getType() != CertificateTypeEnum.Issuer ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {

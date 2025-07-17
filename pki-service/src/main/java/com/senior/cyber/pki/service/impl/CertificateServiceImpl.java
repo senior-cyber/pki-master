@@ -35,9 +35,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
@@ -173,7 +175,9 @@ public class CertificateServiceImpl implements CertificateService {
         CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
         response.setId(certificate.getId());
         response.setCert(certificateCertificate);
+        response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
         response.setPrivkey(certificateKey.getPrivateKey());
+        response.setPrivkeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(certificateKey.getPrivateKey()).getBytes(StandardCharsets.UTF_8)));
 
         List<X509Certificate> chain = new ArrayList<>();
         chain.add(issuerCertificate.getCertificate());
@@ -384,7 +388,9 @@ public class CertificateServiceImpl implements CertificateService {
         CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
         response.setId(certificate.getId());
         response.setCert(certificateCertificate);
+        response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
         response.setPrivkey(certificateKey.getPrivateKey());
+        response.setPrivkeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(certificateKey.getPrivateKey()).getBytes(StandardCharsets.UTF_8)));
 
         List<X509Certificate> chain = new ArrayList<>();
         chain.add(issuerCertificate.getCertificate());

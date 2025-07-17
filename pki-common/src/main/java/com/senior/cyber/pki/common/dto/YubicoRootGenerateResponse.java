@@ -24,6 +24,9 @@ public class YubicoRootGenerateResponse implements Serializable {
     @JsonProperty("certificate")
     private X509Certificate certificate;
 
+    @JsonProperty("certificateBase64")
+    private String certificateBase64;
+
     @JsonSerialize(using = PublicKeySerializer.class)
     @JsonDeserialize(using = PublicKeyDeserializer.class)
     @JsonProperty("publicKey")

@@ -24,6 +24,9 @@ public class JcaRootGenerateResponse implements Serializable {
     @JsonProperty("certificate")
     private X509Certificate certificate;
 
+    @JsonProperty("certificateBase64")
+    private String certificateBase64;
+
     @JsonSerialize(using = PublicKeySerializer.class)
     @JsonDeserialize(using = PublicKeyDeserializer.class)
     @JsonProperty("publicKey")
@@ -33,6 +36,9 @@ public class JcaRootGenerateResponse implements Serializable {
     @JsonDeserialize(using = PrivateKeyDeserializer.class)
     @JsonProperty("privateKey")
     private PrivateKey privateKey;
+
+    @JsonProperty("privateKeyBase64")
+    private String privateKeyBase64;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

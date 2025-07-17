@@ -34,8 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -250,8 +252,10 @@ public class IssuerServiceImpl implements IssuerService {
         JcaIssuerGenerateResponse response = new JcaIssuerGenerateResponse();
         response.setId(issuing.getId());
         response.setCertificate(issuingCertificate);
+        response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(issuingCertificate).getBytes(StandardCharsets.UTF_8)));
         response.setPublicKey(issuingKey.getPublicKey());
         response.setPrivateKey(issuingPrivateKey);
+        response.setPrivateKeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(issuingPrivateKey).getBytes(StandardCharsets.UTF_8)));
         response.setOcspCertificate(ocspCertificate);
         response.setOcspPublicKey(ocspCertificate.getPublicKey());
         response.setOcspPrivateKey(ocspKey.getPrivateKey());
@@ -491,6 +495,7 @@ public class IssuerServiceImpl implements IssuerService {
         YubicoIssuerGenerateResponse response = new YubicoIssuerGenerateResponse();
         response.setId(issuing.getId());
         response.setCertificate(issuingCertificate);
+        response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(issuingCertificate).getBytes(StandardCharsets.UTF_8)));
         response.setPublicKey(issuingKey.getPublicKey());
         response.setSlot(pivSlot.getStringAlias());
         response.setSerialNumber(request.getSerialNumber());

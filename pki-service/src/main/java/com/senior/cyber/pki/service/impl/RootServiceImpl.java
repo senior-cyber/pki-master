@@ -33,8 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -192,8 +194,10 @@ public class RootServiceImpl implements RootService {
         JcaRootGenerateResponse response = new JcaRootGenerateResponse();
         response.setId(root.getId());
         response.setCertificate(rootCertificate);
+        response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(rootCertificate).getBytes(StandardCharsets.UTF_8)));
         response.setPublicKey(rootKey.getPublicKey());
         response.setPrivateKey(rootPrivateKey);
+        response.setPrivateKeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(rootPrivateKey).getBytes(StandardCharsets.UTF_8)));
         response.setOcspCertificate(ocspCertificate);
         response.setOcspPublicKey(ocspCertificate.getPublicKey());
         response.setOcspPrivateKey(ocspKey.getPrivateKey());
@@ -373,6 +377,7 @@ public class RootServiceImpl implements RootService {
                 response = new YubicoRootGenerateResponse();
                 response.setId(root.getId());
                 response.setCertificate(rootCertificate);
+                response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(rootCertificate).getBytes(StandardCharsets.UTF_8)));
                 response.setPublicKey(rootKey.getPublicKey());
                 response.setSlot(pivSlot.getStringAlias());
                 response.setSerialNumber(request.getSerialNumber());
