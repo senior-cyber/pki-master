@@ -33,6 +33,8 @@ dependencies {
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"
 
+    implementation "org.apache.sshd:sshd-core:${sshd_common}"
+
     implementation "org.jasypt:jasypt:${jasypt}"
 
     implementation "org.flywaydb:flyway-core:${flyway}"

@@ -17,10 +17,19 @@
 | 13 | Swift            |
 | 14 | Objective-C      |
 
-## Convert private key PKCS#1 to PKCS#8
+## Convert PKCS#1 to PKCS#8
 
 ```shell
 openssl pkcs8 -topk8 -inform PEM -outform PEM -in input.pem -out output.pem -nocrypt
+```
+
+## Convert PKCS#8 to OpenSSH Format
+
+```shell
+ssh-keygen -f public_key.pem -i -m PKCS8 > id_rsa.pub
+ssh-keygen -y -f private_key.pem > id_rsa.pub
+
+ssh-keygen -i -f private_key.pem -m PKCS8 > openssh_private.key
 ```
 
 ## Prerequisite
