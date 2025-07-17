@@ -223,7 +223,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+    public CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -246,7 +246,7 @@ public class CertificateServiceImpl implements CertificateService {
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
             Provider issuerProvider = new BouncyCastleProvider();
             PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
-            return issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+            return issuingTlsClientCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
             YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
             if (device == null) {
@@ -264,7 +264,65 @@ public class CertificateServiceImpl implements CertificateService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    response = issuingTlsCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    response = issuingTlsClientCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    return response;
+                }
+            } catch (Exception e) {
+                if (response != null) {
+                    return response;
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public CertificateTlsGenerateResponse certificateTlsServerGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+        Date now = LocalDate.now().toDate();
+
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+        }
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            Provider issuerProvider = new BouncyCastleProvider();
+            PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
+            return issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
+            if (device == null) {
+                throw new IllegalArgumentException("device not found");
+            }
+            CertificateTlsGenerateResponse response = null;
+            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                try (PivSession session = new PivSession(connection)) {
+                    try {
+                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                    } catch (IOException | ApduException | BadResponseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Provider issuerProvider = new PivProvider(session);
+                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                    response = issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
                     return response;
                 }
             } catch (Exception e) {
@@ -280,7 +338,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateTlsGenerateResponse issuingTlsCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
+    protected CertificateTlsGenerateResponse issuingTlsServerCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
         if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
         }
@@ -363,7 +421,168 @@ public class CertificateServiceImpl implements CertificateService {
             }
         }
 
-        X509Certificate certificateCertificate = CertificateUtils.generateTls(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateTlsServer(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        Certificate certificate = new Certificate();
+        certificate.setIssuerCertificate(issuerCertificate);
+        certificate.setCountryCode(request.getCountry());
+        certificate.setOrganization(request.getOrganization());
+        certificate.setOrganizationalUnit(request.getOrganizationalUnit());
+        certificate.setCommonName(request.getCommonName());
+        certificate.setLocalityName(request.getLocality());
+        certificate.setStateOrProvinceName(request.getProvince());
+        certificate.setEmailAddress(request.getEmailAddress());
+        certificate.setKey(certificateKey);
+        certificate.setSan(StringUtils.join(sans, ", "));
+        certificate.setCertificate(certificateCertificate);
+        certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
+        certificate.setCreatedDatetime(new Date());
+        certificate.setValidFrom(certificateCertificate.getNotBefore());
+        certificate.setValidUntil(certificateCertificate.getNotAfter());
+        certificate.setStatus(CertificateStatusEnum.Good);
+        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setUser(user);
+        this.certificateRepository.save(certificate);
+
+        CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
+        response.setId(certificate.getId());
+        response.setCert(certificateCertificate);
+        response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
+        response.setPrivkey(certificateKey.getPrivateKey());
+        response.setPrivkeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(certificateKey.getPrivateKey()).getBytes(StandardCharsets.UTF_8)));
+
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(issuerCertificate.getCertificate());
+
+        Certificate temp = issuerCertificate;
+        while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                chain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setChain(chain);
+
+        List<X509Certificate> fullchain = new ArrayList<>();
+        fullchain.add(certificate.getCertificate());
+        temp = certificate;
+        while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                fullchain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setFullchain(fullchain);
+
+        return response;
+    }
+
+    @Transactional
+    protected CertificateTlsGenerateResponse issuingTlsClientCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
+        if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
+        }
+
+        if (request.getIp() != null) {
+            InetAddressValidator validator = InetAddressValidator.getInstance();
+            for (String ip : request.getIp()) {
+                if (!validator.isValid(ip)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + ip);
+                }
+            }
+        }
+
+        if (request.getDns() != null) {
+            DomainValidator validator = DomainValidator.getInstance(true);
+            for (String dns : request.getDns()) {
+                if (dns.startsWith("*.")) {
+                    if (!validator.isValid(dns.substring(2))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
+                } else {
+                    if (!validator.isValid(dns)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
+                }
+            }
+        }
+
+        Key certificateKey = null;
+        PublicKey publicKey = null;
+        if (request.getCsr() != null) {
+            if (!CsrUtils.isValid(request.getCsr())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "csr is invalid");
+            }
+            publicKey = CsrUtils.lookupPublicKey(request.getCsr());
+            // certificate
+            certificateKey = new Key();
+            certificateKey.setType(KeyTypeEnum.ClientKey);
+            certificateKey.setPublicKey(publicKey);
+            certificateKey.setCreatedDatetime(new Date());
+            certificateKey.setUser(user);
+            this.keyRepository.save(certificateKey);
+        } else {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            publicKey = x509.getPublic();
+
+            // certificate
+            certificateKey = new Key();
+            certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
+            certificateKey.setPublicKey(x509.getPublic());
+            certificateKey.setPrivateKey(x509.getPrivate());
+            certificateKey.setCreatedDatetime(new Date());
+            certificateKey.setUser(user);
+            this.keyRepository.save(certificateKey);
+        }
+
+        X500Name subject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName(),
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+
+        List<String> sans = new ArrayList<>();
+        if (request.getIp() != null) {
+            for (String ip : request.getIp()) {
+                if (!sans.contains(ip)) {
+                    sans.add(ip);
+                }
+            }
+        }
+        if (request.getDns() != null) {
+            for (String dns : request.getDns()) {
+                if (!sans.contains(dns)) {
+                    sans.add(dns);
+                }
+            }
+        }
+
+        X509Certificate certificateCertificate = CertificateUtils.generateTlsClient(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());

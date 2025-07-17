@@ -111,8 +111,8 @@ public class CertificateController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/certificate/tls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerate(RequestEntity<CertificateTlsGenerateRequest> httpRequest) {
+    @RequestMapping(path = "/certificate/tls/generate/server", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerateServer(RequestEntity<CertificateTlsGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         CertificateTlsGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -161,7 +161,61 @@ public class CertificateController {
             }
         }
 
-        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
+        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsServerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(path = "/certificate/tls/generate/client", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificateTlsGenerateResponse> certificateTlsGenerateClient(RequestEntity<CertificateTlsGenerateRequest> httpRequest) {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        CertificateTlsGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
+        if (issuerCertificate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
+        }
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Issuer &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        Slot issuerPivSlot = null;
+        if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            } else {
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
+                        issuerPivSlot = slot;
+                        break;
+                    }
+                }
+                request.setIssuerSlot(null);
+            }
+            if (issuerPivSlot == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            if (request.getIssuerPin() == null || request.getIssuerPin().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        CertificateTlsGenerateResponse response = this.certificateService.certificateTlsClientGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
         return ResponseEntity.ok(response);
     }
 

@@ -122,11 +122,7 @@ public class CertificateUtils {
         }
     }
 
-    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns) {
-        return generateTls(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, ip, dns, System.currentTimeMillis());
-    }
-
-    public static X509Certificate generateTls(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
+    public static X509Certificate generateTlsClient(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
         BigInteger _serial = BigInteger.valueOf(serial);
 
         JcaX509ExtensionUtils utils = null;
@@ -143,7 +139,127 @@ public class CertificateUtils {
         try {
             builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
             builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
-            builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
+            builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_clientAuth}));
+            builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
+            builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
+        } catch (CertIOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
+
+        if (crlApi != null && !crlApi.isEmpty()) {
+            List<DistributionPoint> distributionPoints = new ArrayList<>();
+            distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlApi + "/crl/" + hex + ".crl"))), null, null));
+            try {
+                builder.addExtension(Extension.cRLDistributionPoints, false, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
+            } catch (CertIOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if ((ocspApi != null && !ocspApi.isEmpty()) || (x509Api != null && !x509Api.isEmpty())) {
+            List<AccessDescription> accessDescriptions = new ArrayList<>();
+            if (ocspApi != null && !ocspApi.isEmpty()) {
+                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, ocspApi + "/ocsp/" + hex)));
+            }
+            if (x509Api != null && !x509Api.isEmpty()) {
+                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, x509Api + "/x509/" + hex + ".der")));
+            }
+            try {
+                builder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
+            } catch (CertIOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        List<String> ips = new ArrayList<>();
+        List<String> dnses = new ArrayList<>();
+
+        if (
+                (ip != null && !ip.isEmpty()) || (dns != null && dns.isEmpty())
+        ) {
+            List<GeneralName> generalNames = new ArrayList<>();
+            if (ip != null && !ip.isEmpty()) {
+                InetAddressValidator validator = InetAddressValidator.getInstance();
+                for (String p : ip) {
+                    if (validator.isValid(p)) {
+                        if (!ips.contains(p)) {
+                            generalNames.add(new GeneralName(GeneralName.iPAddress, p));
+                            ips.add(p);
+                        }
+                    }
+                }
+            }
+            if (dns != null && !dns.isEmpty()) {
+                DomainValidator validator = DomainValidator.getInstance(true);
+                for (String p : dns) {
+                    if (validator.isValid(p)) {
+                        if (!dnses.contains(p)) {
+                            generalNames.add(new GeneralName(GeneralName.dNSName, p));
+                            dnses.add(p);
+                        }
+                    }
+                }
+            }
+            if (!generalNames.isEmpty()) {
+                GeneralNames subjectAlternativeName = new GeneralNames(generalNames.toArray(new GeneralName[0]));
+                try {
+                    builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeName);
+                } catch (CertIOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        String format = "";
+        if (issuerKey instanceof RSAPrivateKey) {
+            format = "RSA";
+        } else if (issuerKey instanceof ECPrivateKey || "EC".equals(issuerKey.getAlgorithm())) {
+            format = "ECDSA";
+        } else if (issuerKey instanceof DSAPrivateKey) {
+            format = "DSA";
+        } else {
+            format = issuerKey.getAlgorithm();
+        }
+
+        int shaSize = 256;
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
+        contentSignerBuilder.setProvider(provider);
+        ContentSigner contentSigner = null;
+        try {
+            contentSigner = contentSignerBuilder.build(issuerKey);
+        } catch (OperatorCreationException e) {
+            throw new RuntimeException(e);
+        }
+        X509CertificateHolder holder = builder.build(contentSigner);
+
+        try {
+            return new JcaX509CertificateConverter()
+                    .setProvider(new BouncyCastleProvider())
+                    .getCertificate(holder);
+        } catch (CertificateException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static X509Certificate generateTlsServer(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> ip, List<String> dns, long serial) {
+        BigInteger _serial = BigInteger.valueOf(serial);
+
+        JcaX509ExtensionUtils utils = null;
+        try {
+            utils = new JcaX509ExtensionUtils();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        Date notBefore = LocalDate.now().toDate();
+        Date notAfter = LocalDate.now().plusYears(1).toDate();
+
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerCertificate, _serial, notBefore, notAfter, subject, publicKey);
+        try {
+            builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
+            builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+            builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth}));
             builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerCertificate.getPublicKey()));
             builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
         } catch (CertIOException e) {
