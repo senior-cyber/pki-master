@@ -792,4 +792,166 @@ public class CertificateServiceImpl implements CertificateService {
 //
 //        return response;
     }
+
+    @Transactional
+    protected CertificateTlsGenerateResponse issuingSshCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
+        // TODO:
+        if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
+        }
+
+        if (request.getIp() != null) {
+            InetAddressValidator validator = InetAddressValidator.getInstance();
+            for (String ip : request.getIp()) {
+                if (!validator.isValid(ip)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + ip);
+                }
+            }
+        }
+
+        if (request.getDns() != null) {
+            DomainValidator validator = DomainValidator.getInstance(true);
+            for (String dns : request.getDns()) {
+                if (dns.startsWith("*.")) {
+                    if (!validator.isValid(dns.substring(2))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
+                } else {
+                    if (!validator.isValid(dns)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
+                    }
+                }
+            }
+        }
+
+        Key certificateKey = null;
+        PublicKey publicKey = null;
+        if (request.getCsr() != null) {
+            if (!CsrUtils.isValid(request.getCsr())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "csr is invalid");
+            }
+            publicKey = CsrUtils.lookupPublicKey(request.getCsr());
+            // certificate
+            certificateKey = new Key();
+            certificateKey.setType(KeyTypeEnum.ClientKey);
+            certificateKey.setPublicKey(publicKey);
+            certificateKey.setCreatedDatetime(new Date());
+            certificateKey.setUser(user);
+            this.keyRepository.save(certificateKey);
+        } else {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            publicKey = x509.getPublic();
+
+            // certificate
+            certificateKey = new Key();
+            certificateKey.setType(KeyTypeEnum.ServerKeyJCE);
+            certificateKey.setPublicKey(x509.getPublic());
+            certificateKey.setPrivateKey(x509.getPrivate());
+            certificateKey.setCreatedDatetime(new Date());
+            certificateKey.setUser(user);
+            this.keyRepository.save(certificateKey);
+        }
+
+        X500Name subject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName(),
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+
+        List<String> sans = new ArrayList<>();
+        if (request.getIp() != null) {
+            for (String ip : request.getIp()) {
+                if (!sans.contains(ip)) {
+                    sans.add(ip);
+                }
+            }
+        }
+        if (request.getDns() != null) {
+            for (String dns : request.getDns()) {
+                if (!sans.contains(dns)) {
+                    sans.add(dns);
+                }
+            }
+        }
+
+        X509Certificate certificateCertificate = CertificateUtils.generateTlsServer(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        Certificate certificate = new Certificate();
+        certificate.setIssuerCertificate(issuerCertificate);
+        certificate.setCountryCode(request.getCountry());
+        certificate.setOrganization(request.getOrganization());
+        certificate.setOrganizationalUnit(request.getOrganizationalUnit());
+        certificate.setCommonName(request.getCommonName());
+        certificate.setLocalityName(request.getLocality());
+        certificate.setStateOrProvinceName(request.getProvince());
+        certificate.setEmailAddress(request.getEmailAddress());
+        certificate.setKey(certificateKey);
+        certificate.setSan(StringUtils.join(sans, ", "));
+        certificate.setCertificate(certificateCertificate);
+        certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
+        certificate.setCreatedDatetime(new Date());
+        certificate.setValidFrom(certificateCertificate.getNotBefore());
+        certificate.setValidUntil(certificateCertificate.getNotAfter());
+        certificate.setStatus(CertificateStatusEnum.Good);
+        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setUser(user);
+        this.certificateRepository.save(certificate);
+
+        CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
+        response.setId(certificate.getId());
+        response.setCert(certificateCertificate);
+        response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
+        response.setPrivkey(certificateKey.getPrivateKey());
+        response.setPrivkeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(certificateKey.getPrivateKey()).getBytes(StandardCharsets.UTF_8)));
+
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(issuerCertificate.getCertificate());
+
+        Certificate temp = issuerCertificate;
+        while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                chain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setChain(chain);
+
+        List<X509Certificate> fullchain = new ArrayList<>();
+        fullchain.add(certificate.getCertificate());
+        temp = certificate;
+        while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
+            String id = temp.getIssuerCertificate().getId();
+            Certificate cert = this.certificateRepository.findById(id).orElse(null);
+            if (cert == null) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Root) {
+                break;
+            }
+            if (cert.getType() == CertificateTypeEnum.Issuer) {
+                fullchain.add(cert.getCertificate());
+                temp = cert;
+            }
+        }
+        response.setFullchain(fullchain);
+
+        return response;
+    }
 }
