@@ -26,10 +26,12 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -in input.pem -out output.pem -noc
 ## Convert PKCS#8 to OpenSSH Format
 
 ```shell
-ssh-keygen -f public_key.pem -i -m PKCS8 > id_rsa.pub
-ssh-keygen -y -f private_key.pem > id_rsa.pub
 
-ssh-keygen -i -f private_key.pem -m PKCS8 > openssh_private.key
+# Public Key ==> OpenSSH Public Key
+ssh-keygen -f mykey -i -m PKCS8 > id_rsa.pub
+
+# Private Key ==> OpenSSH Public Key
+ssh-keygen -y -f mykey > id_rsa.pub
 ```
 
 ## Convert PKCS#8 to OpenSSH Format vi-versa
@@ -54,6 +56,67 @@ ssh-keygen -p -f mykey -m PEM -m PKCS8 -N ""
 
 # Convert Any Key ==> OPENSSH PRIVATE KEY
 ssh-keygen -p -f mykey -N ""
+```
+
+### OpenSSH CA
+```shell
+
+1. 🔐 Generate Root CA Key
+ssh-keygen -t rsa -b 4096 -f ssh_ca
+# Creates:
+# - ssh_ca        (private key)
+# - ssh_ca.pub    (public key to copy to server)
+
+2. 🔐 Generate User Key Pair
+ssh-keygen -t rsa -b 4096 -f id_rsa_user
+# Creates:
+# - id_rsa_user        (user private key)
+# - id_rsa_user.pub    (user public key)
+
+3. 🖋️ Sign User Public Key with CA to Create SSH Certificate
+ssh-keygen -s ssh_ca -I user-cert-id -n socheat -V +52w id_ed25519_sk.pub
+# Flags:
+# -s ssh_ca             : CA private key
+# -I user-cert-id       : Certificate identity
+# -n socheat            : Valid principal (username to match at login)
+# -V +52w               : Valid for 52 weeks
+This will generate id_rsa_user-cert.pub which is the signed certificate.
+
+
+4. 🖥️ SSH Server Configuration (on the remote server)
+4.1 Copy the CA public key to /etc/ssh/trusted-user-ca-keys.pem:
+sudo cp ssh_ca.pub /etc/ssh/trusted-user-ca-keys.pem
+
+4.2 Edit /etc/ssh/sshd_config:
+# Add or uncomment the following line:
+TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
+
+Then restart SSH:
+sudo systemctl restart sshd
+
+5. 🔐 Login Using Certificate
+
+Ensure these files are in your ~/.ssh on the client:
+~/.ssh/id_rsa_user             <- private key
+~/.ssh/id_rsa_user-cert.pub    <- certificate
+
+Ensure permissions are correct:
+chmod 600 ~/.ssh/id_rsa_user
+chmod 644 ~/.ssh/id_rsa_user-cert.pub
+
+Then login:
+ssh -i ~/.ssh/id_rsa_user socheat@your.server.ip
+ssh -i ~/.ssh/id_rsa_user -o CertificateFile=/absolute/path/to/id_rsa_user-cert.pub socheat@host.example.com
+
+/opt/homebrew/Cellar/openssh/9.9p2/bin/ssh-keygen -t ed25519-sk -C "`basename \`pwd\``-yubico" -f `pwd`/id_ed25519_sk
+```
+
+```text
+Host myserver
+  HostName your.server.ip
+  User socheat
+  IdentityFile ~/.ssh/id_rsa_user
+  CertificateFile ~/.ssh/custom-cert.pub
 ```
 
 ## Prerequisite
