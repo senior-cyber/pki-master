@@ -32,6 +32,30 @@ ssh-keygen -y -f private_key.pem > id_rsa.pub
 ssh-keygen -i -f private_key.pem -m PKCS8 > openssh_private.key
 ```
 
+## Convert PKCS#8 to OpenSSH Format vi-versa
+```shell
+# Generate RSA as RSA PRIVATE KEY
+ssh-keygen -t rsa -b 1024 -m PEM -f mykey
+
+# Generate RSA as OPENSSH PRIVATE KEY
+ssh-keygen -t rsa -b 1024 -f mykey
+
+# Generate EC as EC PRIVATE KEY
+ssh-keygen -t ecdsa -b 256 -m PEM -f mykey
+
+# Generate EC as OPENSSH PRIVATE KEY
+ssh-keygen -t ecdsa -b 256 -f mykey
+
+# Convert Any Key ==> EC PRIVATE KEY or RSA PRIVATE KEY (According to its format)
+ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
+
+# Convert Any Key ==> PRIVATE KEY 
+ssh-keygen -p -f mykey -m PEM -m PKCS8 -N ""
+
+# Convert Any Key ==> OPENSSH PRIVATE KEY
+ssh-keygen -p -f mykey -N ""
+```
+
 ## Prerequisite
 
 ### Yubico Integration
