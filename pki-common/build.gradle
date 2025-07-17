@@ -26,6 +26,8 @@ dependencies {
 	implementation "com.yubico.yubikit:desktop:${yubikit}"
 	implementation "com.yubico.yubikit:management:${yubikit}"
 
+	implementation "org.apache.sshd:sshd-core:${sshd_common}"
+
 	implementation "org.springframework.boot:spring-boot-starter-json:${spring_boot}"
 
 	compileOnly "org.projectlombok:lombok:${lombok}"
