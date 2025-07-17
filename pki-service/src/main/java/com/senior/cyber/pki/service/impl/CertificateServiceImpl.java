@@ -397,6 +397,9 @@ public class CertificateServiceImpl implements CertificateService {
 
         Certificate temp = issuerCertificate;
         while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
             String id = temp.getIssuerCertificate().getId();
             Certificate cert = this.certificateRepository.findById(id).orElse(null);
             if (cert == null) {
@@ -416,6 +419,9 @@ public class CertificateServiceImpl implements CertificateService {
         fullchain.add(certificate.getCertificate());
         temp = certificate;
         while (true) {
+            if (temp.getIssuerCertificate() == null) {
+                break;
+            }
             String id = temp.getIssuerCertificate().getId();
             Certificate cert = this.certificateRepository.findById(id).orElse(null);
             if (cert == null) {
