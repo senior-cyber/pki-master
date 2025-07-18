@@ -28,7 +28,8 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -in input.pem -out output.pem -noc
 ```shell
 
 # Public Key ==> OpenSSH Public Key
-ssh-keygen -f mykey -i -m PKCS8 > id_rsa.pub
+ssh-keygen -f mykey -i -m PKCS8 > mykey.pub
+ssh-keygen -f mykey -e -m RFC4716 > mykey.pem
 
 # Private Key ==> OpenSSH Public Key
 ssh-keygen -y -f mykey > id_rsa.pub
@@ -40,7 +41,7 @@ ssh-keygen -y -f mykey > id_rsa.pub
 ssh-keygen -t rsa -b 1024 -m PEM -f mykey
 
 # Generate RSA as OPENSSH PRIVATE KEY
-ssh-keygen -t rsa -b 1024 -f mykey
+ssh-keygen -t rsa -b 1024 -f pk
 
 # Generate EC as EC PRIVATE KEY
 ssh-keygen -t ecdsa -b 256 -m PEM -f mykey
@@ -49,6 +50,7 @@ ssh-keygen -t ecdsa -b 256 -m PEM -f mykey
 ssh-keygen -t ecdsa -b 256 -f mykey
 
 # Convert Any Key ==> EC PRIVATE KEY or RSA PRIVATE KEY (According to its format)
+ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
 ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
 
 # Convert Any Key ==> PRIVATE KEY 
@@ -74,7 +76,7 @@ ssh-keygen -t rsa -b 4096 -f id_rsa_user
 # - id_rsa_user.pub    (user public key)
 
 3. 🖋️ Sign User Public Key with CA to Create SSH Certificate
-ssh-keygen -s ssh_ca -I user-cert-id -n socheat -V +52w id_ed25519_sk.pub
+ssh-keygen -s ssh_ca -I user-cert-id -n socheat -V +52w id_rsa_user.pub
 # Flags:
 # -s ssh_ca             : CA private key
 # -I user-cert-id       : Certificate identity
@@ -86,6 +88,7 @@ This will generate id_rsa_user-cert.pub which is the signed certificate.
 4. 🖥️ SSH Server Configuration (on the remote server)
 4.1 Copy the CA public key to /etc/ssh/trusted-user-ca-keys.pem:
 sudo cp ssh_ca.pub /etc/ssh/trusted-user-ca-keys.pem
+# sudo wget http://192.168.1.53:3003/api/openssh/1981b9cb5e6.pub -O /etc/ssh/trusted-user-ca-keys.pem
 
 4.2 Edit /etc/ssh/sshd_config:
 # Add or uncomment the following line:

@@ -1,30 +1,32 @@
 package com.senior.cyber.pki.api.x509.controller;
 
-import com.senior.cyber.pki.common.x509.PublicKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.sshd.common.config.keys.impl.*;
+import org.apache.sshd.common.config.keys.u2f.SkED25519PublicKey;
+import org.apache.sshd.common.config.keys.u2f.SkEcdsaPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.List;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
 
 @RestController
 public class OpenSSHController {
@@ -38,7 +40,7 @@ public class OpenSSHController {
     protected KeyRepository keyRepository;
 
     @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException {
+    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws IOException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         if (!"pub".equals(FilenameUtils.getExtension(_serial))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, _serial + " is invalid");
@@ -60,29 +62,24 @@ public class OpenSSHController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        File work = new File(FileUtils.getTempDirectory(), FilenameUtils.getBaseName(_serial));
-        work.mkdirs();
-
-        try {
-            File publicKeyFile = new File(work, "public.pem");
-            File opensshPublicKeyFile = new File(work, "public-openssh.pub");
-            FileUtils.write(publicKeyFile, PublicKeyUtils.convert(key.getPublicKey()), StandardCharsets.UTF_8);
-            List<String> lines = new ArrayList<>();
-            lines.add("#!/usr/bin/env bash");
-            lines.add("");
-            lines.add("ssh-keygen -f " + publicKeyFile.getAbsolutePath() + " -i -m PKCS8 > " + opensshPublicKeyFile.getAbsolutePath());
-            File scriptFile = new File(work, "convert.sh");
-            FileUtils.writeLines(scriptFile, StandardCharsets.UTF_8.name(), lines);
-            DefaultExecutor executor = DefaultExecutor.builder().get();
-            CommandLine cli = CommandLine.parse("sh " + scriptFile.getAbsolutePath());
-            executor.execute(cli);
-            String opensshPublicKey = FileUtils.readFileToString(opensshPublicKeyFile, StandardCharsets.UTF_8);
-            return ResponseEntity.ok(opensshPublicKey);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileUtils.deleteQuietly(work);
+        String keyType;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (key.getPublicKey() instanceof ECPublicKey ec) {
+            keyType = ECDSAPublicKeyEntryDecoder.INSTANCE.encodePublicKey(baos, ec);
+        } else if (key.getPublicKey() instanceof RSAPublicKey rsa) {
+            keyType = RSAPublicKeyDecoder.INSTANCE.encodePublicKey(baos, rsa);
+        } else if (key.getPublicKey() instanceof SkEcdsaPublicKey skEcdsa) {
+            keyType = SkECDSAPublicKeyEntryDecoder.INSTANCE.encodePublicKey(baos, skEcdsa);
+        } else if (key.getPublicKey() instanceof SkED25519PublicKey skED25519) {
+            keyType = SkED25519PublicKeyEntryDecoder.INSTANCE.encodePublicKey(baos, skED25519);
+        } else if (key.getPublicKey() instanceof DSAPublicKey dsa) {
+            keyType = DSSPublicKeyEntryDecoder.INSTANCE.encodePublicKey(baos, dsa);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not supported");
         }
+
+        String text = keyType + " " + Base64.getEncoder().encodeToString(baos.toByteArray());
+        return ResponseEntity.ok(text);
     }
 
 }

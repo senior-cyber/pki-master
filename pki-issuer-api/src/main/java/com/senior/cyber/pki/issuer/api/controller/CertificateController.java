@@ -12,6 +12,7 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.piv.Slot;
+import org.apache.sshd.common.util.buffer.keys.OpenSSHCertPublicKeyParser;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

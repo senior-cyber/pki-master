@@ -19,14 +19,18 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.sshd.certificate.OpenSshCertificateBuilder;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
+import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
+import org.apache.sshd.common.config.keys.impl.OpenSSHCertificateDecoder;
+import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHDSSPrivateKeyEntryDecoder;
+import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHECDSAPrivateKeyEntryDecoder;
+import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHRSAPrivateKeyDecoder;
+import org.apache.sshd.common.util.io.output.SecureByteArrayOutputStream;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.joda.time.LocalDate;
@@ -36,11 +40,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -721,21 +727,24 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Transactional
     protected CertificateSshGenerateResponse issuingSshCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateSshGenerateRequest request) {
-        //        // generate public key if not present
-//        // convert into java pem
-//        // load public key
-
-        // TODO:
         if ((request.getPrincipal() == null || request.getPrincipal().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "principal required");
         }
 
-
-        Key certificateKey = null;
         PublicKey publicKey = null;
         PrivateKey privateKey = null;
         if (request.getOpensshPublicKey() != null && !request.getOpensshPublicKey().isBlank()) {
-
+            List<AuthorizedKeyEntry> authorizedKeyEntries = null;
+            try {
+                authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8)), true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                publicKey = authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
+            } catch (IOException | GeneralSecurityException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             publicKey = x509.getPublic();
@@ -747,78 +756,58 @@ public class CertificateServiceImpl implements CertificateService {
         openSshCertificateBuilder.serial(System.currentTimeMillis());
         // openSshCertificateBuilder.criticalOptions()
         // openSshCertificateBuilder.extensions()
+        openSshCertificateBuilder.extensions()
         // openSshCertificateBuilder.nonce()
         openSshCertificateBuilder.principals(List.of(request.getPrincipal()));
         openSshCertificateBuilder.publicKey(publicKey);
-        openSshCertificateBuilder.validBefore(Instant.now());
-        openSshCertificateBuilder.validAfter(Instant.now().plus(10, ChronoUnit.MINUTES));
+        openSshCertificateBuilder.validAfter(Instant.now());
+        openSshCertificateBuilder.validBefore(Instant.now().plus(10, ChronoUnit.MINUTES));
         OpenSshCertificate certificate = null;
         try {
-            certificate = openSshCertificateBuilder.sign(new KeyPair(issuerCertificate.getKey().getPublicKey(), issuerPrivateKey), "SHA256withRSA");
+            certificate = openSshCertificateBuilder.sign(new KeyPair(issuerCertificate.getKey().getPublicKey(), issuerPrivateKey), org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-
-        String certType = certificate.getKeyType();
-        byte[] encoded = certificate.getEncoded();
-        String base64 = Base64.getEncoder().encodeToString(encoded);
-
-        String comment = request.getPrincipal();
-        String certificateText = certType + " " + base64 + " " + comment + "\n";
-
-        String opensshPublicKey = null;
-        File publicKeyWork = new File(FileUtils.getTempDirectory(), String.valueOf(System.currentTimeMillis()));
-        publicKeyWork.mkdirs();
-
+        CertificateSshGenerateResponse response = new CertificateSshGenerateResponse();
         try {
-            File publicKeyFile = new File(publicKeyWork, "public.pem");
-            File opensshPublicKeyFile = new File(publicKeyWork, "public-openssh.pub");
-            FileUtils.write(publicKeyFile, PublicKeyUtils.convert(publicKey), StandardCharsets.UTF_8);
-            List<String> lines = new ArrayList<>();
-            lines.add("#!/usr/bin/env bash");
-            lines.add("");
-            lines.add("ssh-keygen -f " + publicKeyFile.getAbsolutePath() + " -i -m PKCS8 > " + opensshPublicKeyFile.getAbsolutePath());
-            File scriptFile = new File(publicKeyWork, "convert.sh");
-            FileUtils.writeLines(scriptFile, StandardCharsets.UTF_8.name(), lines);
-            DefaultExecutor executor = DefaultExecutor.builder().get();
-            CommandLine cli = CommandLine.parse("sh " + scriptFile.getAbsolutePath());
-            executor.execute(cli);
-            opensshPublicKey = FileUtils.readFileToString(opensshPublicKeyFile, StandardCharsets.UTF_8);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            String keyType = OpenSSHCertificateDecoder.INSTANCE.encodePublicKey(baos, certificate);
+            response.setOpensshCertificate(keyType + " " + Base64.getEncoder().encodeToString(baos.toByteArray()));
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            FileUtils.deleteQuietly(publicKeyWork);
         }
-
-        CertificateSshGenerateResponse response = new CertificateSshGenerateResponse();
-        response.setOpensshCertificate(certificateText);
-        response.setOpensshPublicKey(opensshPublicKey);
 
         if (privateKey != null) {
-            String opensshprivateKey = null;
-            File privateKeyWork = new File(FileUtils.getTempDirectory(), String.valueOf(System.currentTimeMillis()));
-            publicKeyWork.mkdirs();
             try {
-                File privateKeyFile = new File(privateKeyWork, "private.pem");
-                FileUtils.write(privateKeyFile, PrivateKeyUtils.convert(privateKey), StandardCharsets.UTF_8);
-                List<String> lines = new ArrayList<>();
-                lines.add("#!/usr/bin/env bash");
-                lines.add("");
-                lines.add("ssh-keygen -p -f " + privateKeyFile.getAbsolutePath() + " -N \"\" -C \"\"");
-                File scriptFile = new File(privateKeyWork, "convert.sh");
-                FileUtils.writeLines(scriptFile, StandardCharsets.UTF_8.name(), lines);
-                DefaultExecutor executor = DefaultExecutor.builder().get();
-                CommandLine cli = CommandLine.parse("sh " + scriptFile.getAbsolutePath());
-                executor.execute(cli);
-                opensshprivateKey = FileUtils.readFileToString(privateKeyFile, StandardCharsets.UTF_8);
+                SecureByteArrayOutputStream baos = new SecureByteArrayOutputStream();
+                if (privateKey instanceof ECPrivateKey ec) {
+                    OpenSSHECDSAPrivateKeyEntryDecoder.INSTANCE.encodePrivateKey(baos, ec, (ECPublicKey) publicKey);
+                } else if (privateKey instanceof RSAPrivateKey rsa) {
+                    OpenSSHRSAPrivateKeyDecoder.INSTANCE.encodePrivateKey(baos, rsa, (RSAPublicKey) publicKey);
+                } else if (privateKey instanceof DSAPrivateKey dsa) {
+                    OpenSSHDSSPrivateKeyEntryDecoder.INSTANCE.encodePrivateKey(baos, dsa, (DSAPublicKey) privateKey);
+                } else {
+                    throw new RuntimeException("unknown public key type");
+                }
+
+                // Encode to Base64 with line wrapping
+                String base64 = Base64.getEncoder().encodeToString(baos.toByteArray());
+                StringBuilder wrapped = new StringBuilder();
+                for (int i = 0; i < base64.length(); i += 70) {
+                    wrapped.append(base64, i, Math.min(base64.length(), i + 70)).append("\n");
+                }
+
+                String privateKeyPEM = "-----BEGIN OPENSSH PRIVATE KEY-----\n"
+                        + wrapped
+                        + "-----END OPENSSH PRIVATE KEY-----\n";
+
+                response.setOpensshPrivateKey(privateKeyPEM);
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            } finally {
-                FileUtils.deleteQuietly(privateKeyWork);
             }
-            response.setOpensshPrivateKey(opensshprivateKey);
         }
+
         response.setOpensshConfig("Host " + request.getServer() + "\n" +
                 "  HostName " + request.getServer() + "\n" +
                 "  User " + request.getPrincipal() + "\n" +
@@ -827,4 +816,5 @@ public class CertificateServiceImpl implements CertificateService {
 
         return response;
     }
+
 }
