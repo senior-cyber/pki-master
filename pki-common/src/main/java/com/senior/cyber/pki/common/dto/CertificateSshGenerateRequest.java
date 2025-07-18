@@ -31,4 +31,7 @@ public class CertificateSshGenerateRequest implements Serializable {
     @JsonProperty("principal")
     private String principal;
 
+    @JsonProperty("server")
+    private String server;
+
 }
