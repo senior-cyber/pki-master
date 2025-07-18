@@ -23,13 +23,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.sshd.certificate.OpenSshCertificateBuilder;
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
-import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
-import org.apache.sshd.common.config.keys.impl.OpenSSHCertificateDecoder;
-import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHDSSPrivateKeyEntryDecoder;
-import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHECDSAPrivateKeyEntryDecoder;
-import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHRSAPrivateKeyDecoder;
+import org.apache.sshd.common.config.keys.PublicKeyEntry;
+import org.apache.sshd.common.config.keys.loader.ssh2.Ssh2PublicKeyEntryDecoder;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionContext;
+import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.util.io.output.SecureByteArrayOutputStream;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -43,10 +41,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -734,17 +732,24 @@ public class CertificateServiceImpl implements CertificateService {
         PublicKey publicKey = null;
         PrivateKey privateKey = null;
         if (request.getOpensshPublicKey() != null && !request.getOpensshPublicKey().isBlank()) {
-            List<AuthorizedKeyEntry> authorizedKeyEntries = null;
+            byte[] data = request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8);
+            InputStream stream = new ByteArrayInputStream(data);
             try {
-                authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8)), true);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            try {
-                publicKey = authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
+                publicKey = Ssh2PublicKeyEntryDecoder.INSTANCE.readPublicKey(null, () -> "", stream);
             } catch (IOException | GeneralSecurityException e) {
                 throw new RuntimeException(e);
             }
+//            List<AuthorizedKeyEntry> authorizedKeyEntries = null;
+//            try {
+//                authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8)), true);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            try {
+//                publicKey = authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
+//            } catch (IOException | GeneralSecurityException e) {
+//                throw new RuntimeException(e);
+//            }
         } else {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             publicKey = x509.getPublic();
@@ -755,9 +760,13 @@ public class CertificateServiceImpl implements CertificateService {
         openSshCertificateBuilder.id(UUID.randomUUID().toString());
         openSshCertificateBuilder.serial(System.currentTimeMillis());
         // openSshCertificateBuilder.criticalOptions()
-        // openSshCertificateBuilder.extensions()
-        openSshCertificateBuilder.extensions()
         // openSshCertificateBuilder.nonce()
+        openSshCertificateBuilder.extensions(Arrays.asList(
+                new OpenSshCertificate.CertificateOption("permit-user-rc"),
+                new OpenSshCertificate.CertificateOption("permit-X11-forwarding"),
+                new OpenSshCertificate.CertificateOption("permit-agent-forwarding"),
+                new OpenSshCertificate.CertificateOption("permit-port-forwarding"),
+                new OpenSshCertificate.CertificateOption("permit-pty")));
         openSshCertificateBuilder.principals(List.of(request.getPrincipal()));
         openSshCertificateBuilder.publicKey(publicKey);
         openSshCertificateBuilder.validAfter(Instant.now());
@@ -770,40 +779,13 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         CertificateSshGenerateResponse response = new CertificateSshGenerateResponse();
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            String keyType = OpenSSHCertificateDecoder.INSTANCE.encodePublicKey(baos, certificate);
-            response.setOpensshCertificate(keyType + " " + Base64.getEncoder().encodeToString(baos.toByteArray()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        response.setOpensshCertificate(PublicKeyEntry.toString(certificate));
 
         if (privateKey != null) {
-            try {
-                SecureByteArrayOutputStream baos = new SecureByteArrayOutputStream();
-                if (privateKey instanceof ECPrivateKey ec) {
-                    OpenSSHECDSAPrivateKeyEntryDecoder.INSTANCE.encodePrivateKey(baos, ec, (ECPublicKey) publicKey);
-                } else if (privateKey instanceof RSAPrivateKey rsa) {
-                    OpenSSHRSAPrivateKeyDecoder.INSTANCE.encodePrivateKey(baos, rsa, (RSAPublicKey) publicKey);
-                } else if (privateKey instanceof DSAPrivateKey dsa) {
-                    OpenSSHDSSPrivateKeyEntryDecoder.INSTANCE.encodePrivateKey(baos, dsa, (DSAPublicKey) privateKey);
-                } else {
-                    throw new RuntimeException("unknown public key type");
-                }
-
-                // Encode to Base64 with line wrapping
-                String base64 = Base64.getEncoder().encodeToString(baos.toByteArray());
-                StringBuilder wrapped = new StringBuilder();
-                for (int i = 0; i < base64.length(); i += 70) {
-                    wrapped.append(base64, i, Math.min(base64.length(), i + 70)).append("\n");
-                }
-
-                String privateKeyPEM = "-----BEGIN OPENSSH PRIVATE KEY-----\n"
-                        + wrapped
-                        + "-----END OPENSSH PRIVATE KEY-----\n";
-
-                response.setOpensshPrivateKey(privateKeyPEM);
-            } catch (IOException e) {
+            try (ByteArrayOutputStream out = new SecureByteArrayOutputStream()) {
+                OpenSSHKeyPairResourceWriter.INSTANCE.writePrivateKey(new KeyPair(publicKey, privateKey), "", new OpenSSHKeyEncryptionContext(), out);
+                response.setOpensshPrivateKey(out.toString(StandardCharsets.UTF_8));
+            } catch (IOException | GeneralSecurityException e) {
                 throw new RuntimeException(e);
             }
         }

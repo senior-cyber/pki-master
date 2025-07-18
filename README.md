@@ -64,13 +64,13 @@ ssh-keygen -p -f mykey -N "" -C ""
 ```shell
 
 1. 🔐 Generate Root CA Key
-ssh-keygen -t rsa -b 4096 -f ssh_ca
+ssh-keygen -t rsa -b 1024 -f ssh_ca
 # Creates:
 # - ssh_ca        (private key)
 # - ssh_ca.pub    (public key to copy to server)
 
 2. 🔐 Generate User Key Pair
-ssh-keygen -t rsa -b 4096 -f id_rsa_user
+ssh-keygen -t rsa -b 1024 -f id_rsa_user
 # Creates:
 # - id_rsa_user        (user private key)
 # - id_rsa_user.pub    (user public key)
