@@ -55,7 +55,7 @@ ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
 ssh-keygen -p -f mykey -m PEM -m PKCS8 -N ""
 
 # Convert Any Key ==> OPENSSH PRIVATE KEY
-ssh-keygen -p -f mykey -N ""
+ssh-keygen -p -f mykey -N "" -C ""
 ```
 
 ### OpenSSH CA
@@ -164,21 +164,39 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 ./gradlew assemble bootJar
 
-scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
-scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     t460s:/opt/apps/pki-master/pki-api-ocsp
-scp pki-api-x509/build/libs/pki-api-x509.jar     t460s:/opt/apps/pki-master/pki-api-x509
-scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
-scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
+scp pki-api-crl/build/libs/pki-api-crl.jar       lenovo:/opt/apps/pki-master/pki-api-crl
+scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     lenovo:/opt/apps/pki-master/pki-api-ocsp
+scp pki-api-x509/build/libs/pki-api-x509.jar     lenovo:/opt/apps/pki-master/pki-api-x509
+scp pki-root-api/build/libs/pki-root-api.jar     lenovo:/opt/apps/pki-master/pki-root-api
+scp pki-issuer-api/build/libs/pki-issuer-api.jar lenovo:/opt/apps/pki-master/pki-issuer-api
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
 sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
+
+sudo systemctl enable pki-api-crl    
+sudo systemctl enable pki-api-ocsp   
+sudo systemctl enable pki-api-x509   
+sudo systemctl enable pki-root-api   
+sudo systemctl enable pki-issuer-api
+
+telegram endpoint, expose webhook for load test,
+update access denied page, change session expired, please try again 
 ```
 
 ```shell
 yubico-piv-tool -a verify-pin --sign -s 9c -A RSA2048 -H SHA256 -i data.txt -o data.sig
 yubico-piv-tool -a set-touch -S 9c -T never -k 010203040506070801020304050607080102030405060708
 ykman piv keys set-touch "9c" never
+```
+
+```text
+Write API Integration, with OAuth2
+```
+
+```text
+export KUBECONFIG=~/.kube/config-talos
+kubectl get pod -n shopping
 ```
