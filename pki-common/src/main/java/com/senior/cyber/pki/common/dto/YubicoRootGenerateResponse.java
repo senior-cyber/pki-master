@@ -38,6 +38,9 @@ public class YubicoRootGenerateResponse implements Serializable {
     @JsonProperty("slot")
     private String slot;
 
+    @JsonProperty("sshCa")
+    private String sshCa;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("ocspCertificate")

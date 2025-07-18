@@ -262,6 +262,8 @@ public class IssuerServiceImpl implements IssuerService {
         response.setCrlCertificate(crlCertificate);
         response.setCrlPublicKey(crlKey.getPublicKey());
         response.setCrlPrivateKey(crlKey.getPrivateKey());
+        String hex = String.format("%012X", issuingCertificate.getSerialNumber().longValue());
+        response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
 
         return response;
     }
@@ -505,6 +507,8 @@ public class IssuerServiceImpl implements IssuerService {
         response.setCrlCertificate(crlCertificate);
         response.setCrlPublicKey(crlKey.getPublicKey());
         response.setCrlPrivateKey(crlKey.getPrivateKey());
+        String hex = String.format("%012X", issuingCertificate.getSerialNumber().longValue());
+        response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
 
         try {
             session.putCertificate(pivSlot, issuingCertificate);

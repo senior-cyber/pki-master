@@ -11,6 +11,7 @@ import com.yubico.yubikit.piv.Slot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -31,6 +32,9 @@ public class RootController {
     @Autowired
     protected UserService userService;
 
+    @Value("${api.x509}")
+    protected String x509Api;
+
     @RequestMapping(path = "/root/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
@@ -38,7 +42,7 @@ public class RootController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaRootGenerateResponse response = this.rootService.rootGenerate(user, request);
+        JcaRootGenerateResponse response = this.rootService.rootGenerate(user, request, this.x509Api);
         return ResponseEntity.ok(response);
     }
 
@@ -74,7 +78,7 @@ public class RootController {
         if (request.getManagementKey() == null || request.getManagementKey().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        YubicoRootGenerateResponse response = this.rootService.rootGenerate(user, request, pivSlot);
+        YubicoRootGenerateResponse response = this.rootService.rootGenerate(user, request, pivSlot, this.x509Api);
         return ResponseEntity.ok(response);
     }
 

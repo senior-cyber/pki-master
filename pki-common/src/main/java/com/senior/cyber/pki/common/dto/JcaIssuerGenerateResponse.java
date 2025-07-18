@@ -40,6 +40,9 @@ public class JcaIssuerGenerateResponse implements Serializable {
     @JsonProperty("privateKeyBase64")
     private String privateKeyBase64;
 
+    @JsonProperty("sshCa")
+    private String sshCa;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("ocspCertificate")

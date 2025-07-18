@@ -38,6 +38,9 @@ public class YubicoIssuerGenerateResponse implements Serializable {
     @JsonProperty("serialNumber")
     private String serialNumber;
 
+    @JsonProperty("sshCa")
+    private String sshCa;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("ocspCertificate")

@@ -9,8 +9,8 @@ import com.yubico.yubikit.piv.Slot;
 
 public interface RootService {
 
-    JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request);
+    JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String x509Api);
 
-    YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot);
+    YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot, String x509Api);
 
 }

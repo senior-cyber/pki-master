@@ -167,11 +167,11 @@ git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
 ./gradlew assemble bootJar
 
-scp pki-api-crl/build/libs/pki-api-crl.jar       lenovo:/opt/apps/pki-master/pki-api-crl
-scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     lenovo:/opt/apps/pki-master/pki-api-ocsp
-scp pki-api-x509/build/libs/pki-api-x509.jar     lenovo:/opt/apps/pki-master/pki-api-x509
-scp pki-root-api/build/libs/pki-root-api.jar     lenovo:/opt/apps/pki-master/pki-root-api
-scp pki-issuer-api/build/libs/pki-issuer-api.jar lenovo:/opt/apps/pki-master/pki-issuer-api
+scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
+scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     t460s:/opt/apps/pki-master/pki-api-ocsp
+scp pki-api-x509/build/libs/pki-api-x509.jar     t460s:/opt/apps/pki-master/pki-api-x509
+scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
+scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
