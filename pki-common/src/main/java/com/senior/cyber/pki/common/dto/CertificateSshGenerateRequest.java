@@ -34,4 +34,7 @@ public class CertificateSshGenerateRequest implements Serializable {
     @JsonProperty("server")
     private String server;
 
+    @JsonProperty("validityPeriod")
+    private long validityPeriod;
+
 }

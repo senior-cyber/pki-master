@@ -739,17 +739,6 @@ public class CertificateServiceImpl implements CertificateService {
             } catch (IOException | GeneralSecurityException e) {
                 throw new RuntimeException(e);
             }
-//            List<AuthorizedKeyEntry> authorizedKeyEntries = null;
-//            try {
-//                authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8)), true);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            try {
-//                publicKey = authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
-//            } catch (IOException | GeneralSecurityException e) {
-//                throw new RuntimeException(e);
-//            }
         } else {
             KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             publicKey = x509.getPublic();
@@ -759,8 +748,6 @@ public class CertificateServiceImpl implements CertificateService {
         OpenSshCertificateBuilder openSshCertificateBuilder = OpenSshCertificateBuilder.userCertificate();
         openSshCertificateBuilder.id(UUID.randomUUID().toString());
         openSshCertificateBuilder.serial(System.currentTimeMillis());
-        // openSshCertificateBuilder.criticalOptions()
-        // openSshCertificateBuilder.nonce()
         openSshCertificateBuilder.extensions(Arrays.asList(
                 new OpenSshCertificate.CertificateOption("permit-user-rc"),
                 new OpenSshCertificate.CertificateOption("permit-X11-forwarding"),
@@ -770,7 +757,13 @@ public class CertificateServiceImpl implements CertificateService {
         openSshCertificateBuilder.principals(List.of(request.getPrincipal()));
         openSshCertificateBuilder.publicKey(publicKey);
         openSshCertificateBuilder.validAfter(Instant.now());
-        openSshCertificateBuilder.validBefore(Instant.now().plus(10, ChronoUnit.MINUTES));
+        if (request.getValidityPeriod() <= 0) {
+            openSshCertificateBuilder.validBefore(Instant.now().plus(10, ChronoUnit.MINUTES));
+        } else if (request.getValidityPeriod() > 480) {
+            openSshCertificateBuilder.validBefore(Instant.now().plus(480, ChronoUnit.MINUTES));
+        } else {
+            openSshCertificateBuilder.validBefore(Instant.now().plus(request.getValidityPeriod(), ChronoUnit.MINUTES));
+        }
         OpenSshCertificate certificate = null;
         try {
             certificate = openSshCertificateBuilder.sign(new KeyPair(issuerCertificate.getKey().getPublicKey(), issuerPrivateKey), org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
