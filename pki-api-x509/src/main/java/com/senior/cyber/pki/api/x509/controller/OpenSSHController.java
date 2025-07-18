@@ -37,8 +37,8 @@ public class OpenSSHController {
     @Autowired
     protected KeyRepository keyRepository;
 
-    @RequestMapping(path = "/openssl/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> x509Serial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException {
+    @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws CertificateException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         if (!"pub".equals(FilenameUtils.getExtension(_serial))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, _serial + " is invalid");
