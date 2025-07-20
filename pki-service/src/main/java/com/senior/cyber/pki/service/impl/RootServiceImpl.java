@@ -52,7 +52,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String x509Api) {
+    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String sshApi) {
         Provider provider = new BouncyCastleProvider();
         // root
         Key rootKey = null;
@@ -205,14 +205,14 @@ public class RootServiceImpl implements RootService {
         response.setCrlPublicKey(crlKey.getPublicKey());
         response.setCrlPrivateKey(crlKey.getPrivateKey());
         String hex = String.format("%012X", rootCertificate.getSerialNumber().longValue());
-        response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
+        response.setSshCa(sshApi + "/openssh/" + hex + ".pub");
 
         return response;
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot, String x509Api) {
+    public YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot, String sshApi) {
         YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
         if (device == null) {
             throw new RuntimeException("Device not found");
@@ -390,7 +390,7 @@ public class RootServiceImpl implements RootService {
                 response.setCrlPublicKey(crlKey.getPublicKey());
                 response.setCrlPrivateKey(crlKey.getPrivateKey());
                 String hex = String.format("%012X", rootCertificate.getSerialNumber().longValue());
-                response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
+                response.setSshCa(sshApi + "/openssh/" + hex + ".pub");
 
                 return response;
             }

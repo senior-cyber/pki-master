@@ -88,7 +88,7 @@ This will generate id_rsa_user-cert.pub which is the signed certificate.
 4. 🖥️ SSH Server Configuration (on the remote server)
 4.1 Copy the CA public key to /etc/ssh/trusted-user-ca-keys.pem:
 sudo cp ssh_ca.pub /etc/ssh/trusted-user-ca-keys.pem
-# sudo wget http://192.168.1.53:3003/api/openssh/1981b9cb5e6.pub -O /etc/ssh/trusted-user-ca-keys.pem
+# sudo wget http://192.168.1.53:3004/api/openssh/1981b9cb5e6.pub -O /etc/ssh/trusted-user-ca-keys.pem
 
 4.2 Edit /etc/ssh/sshd_config:
 # Add or uncomment the following line:
@@ -170,18 +170,21 @@ cd pki-master
 scp pki-api-crl/build/libs/pki-api-crl.jar       t460s:/opt/apps/pki-master/pki-api-crl
 scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     t460s:/opt/apps/pki-master/pki-api-ocsp
 scp pki-api-x509/build/libs/pki-api-x509.jar     t460s:/opt/apps/pki-master/pki-api-x509
+scp pki-api-x509/build/libs/pki-api-ssh.jar      t460s:/opt/apps/pki-master/pki-api-ssh
 scp pki-root-api/build/libs/pki-root-api.jar     t460s:/opt/apps/pki-master/pki-root-api
 scp pki-issuer-api/build/libs/pki-issuer-api.jar t460s:/opt/apps/pki-master/pki-issuer-api
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
+sudo service pki-api-ssh    restart
 sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
 
 sudo systemctl enable pki-api-crl    
 sudo systemctl enable pki-api-ocsp   
-sudo systemctl enable pki-api-x509   
+sudo systemctl enable pki-api-x509
+sudo systemctl enable pki-api-ssh   
 sudo systemctl enable pki-root-api   
 sudo systemctl enable pki-issuer-api
 

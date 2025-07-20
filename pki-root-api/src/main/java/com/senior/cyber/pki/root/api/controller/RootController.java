@@ -32,8 +32,8 @@ public class RootController {
     @Autowired
     protected UserService userService;
 
-    @Value("${api.x509}")
-    protected String x509Api;
+    @Value("${api.ssh}")
+    protected String sshApi;
 
     @RequestMapping(path = "/root/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<JcaRootGenerateResponse> jcaRootGenerate(RequestEntity<JcaRootGenerateRequest> httpRequest) {
@@ -42,7 +42,7 @@ public class RootController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaRootGenerateResponse response = this.rootService.rootGenerate(user, request, this.x509Api);
+        JcaRootGenerateResponse response = this.rootService.rootGenerate(user, request, this.sshApi);
         return ResponseEntity.ok(response);
     }
 
@@ -78,7 +78,7 @@ public class RootController {
         if (request.getManagementKey() == null || request.getManagementKey().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        YubicoRootGenerateResponse response = this.rootService.rootGenerate(user, request, pivSlot, this.x509Api);
+        YubicoRootGenerateResponse response = this.rootService.rootGenerate(user, request, pivSlot, this.sshApi);
         return ResponseEntity.ok(response);
     }
 

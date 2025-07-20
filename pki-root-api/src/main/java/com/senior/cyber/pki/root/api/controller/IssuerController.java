@@ -48,6 +48,9 @@ public class IssuerController {
     @Value("${api.x509}")
     protected String x509Api;
 
+    @Value("${api.ssh}")
+    protected String sshApi;
+
     @Autowired
     protected CertificateRepository certificateRepository;
 
@@ -106,7 +109,7 @@ public class IssuerController {
             }
         }
 
-        JcaIssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot);
+        JcaIssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, this.sshApi, issuerPivSlot);
         return ResponseEntity.ok(response);
     }
 
@@ -184,7 +187,7 @@ public class IssuerController {
             }
         }
 
-        YubicoIssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, issuerPivSlot, pivSlot);
+        YubicoIssuerGenerateResponse response = this.issuerService.issuerGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, this.sshApi, issuerPivSlot, pivSlot);
         return ResponseEntity.ok(response);
     }
 

@@ -51,7 +51,7 @@ public class IssuerServiceImpl implements IssuerService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+    public JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -73,7 +73,7 @@ public class IssuerServiceImpl implements IssuerService {
         if (issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
             Provider issuerProvider = new BouncyCastleProvider();
             PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
-            return issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+            return issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api, sshApi);
         } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
             YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
             if (device == null) {
@@ -91,7 +91,7 @@ public class IssuerServiceImpl implements IssuerService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                    response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api, sshApi);
                     return response;
                 }
             } catch (Exception e) {
@@ -107,7 +107,7 @@ public class IssuerServiceImpl implements IssuerService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    protected JcaIssuerGenerateResponse issuingIssuer(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
+    protected JcaIssuerGenerateResponse issuingIssuer(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) {
         // issuing
         Key issuingKey = null;
         Provider issuingProvider = new BouncyCastleProvider();
@@ -263,14 +263,14 @@ public class IssuerServiceImpl implements IssuerService {
         response.setCrlPublicKey(crlKey.getPublicKey());
         response.setCrlPrivateKey(crlKey.getPrivateKey());
         String hex = String.format("%012X", issuingCertificate.getSerialNumber().longValue());
-        response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
+        response.setSshCa(sshApi + "/openssh/" + hex + ".pub");
 
         return response;
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot, Slot pivSlot) {
+    public YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot, Slot pivSlot) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -306,7 +306,7 @@ public class IssuerServiceImpl implements IssuerService {
                     } catch (IOException | ApduException | BadResponseException e) {
                         throw new RuntimeException(e);
                     }
-                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
                     return response;
                 }
             } catch (Exception e) {
@@ -333,7 +333,7 @@ public class IssuerServiceImpl implements IssuerService {
                     KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                     PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
 
-                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api);
+                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
                     return response;
                 }
             } catch (Exception e) {
@@ -349,7 +349,7 @@ public class IssuerServiceImpl implements IssuerService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    protected YubicoIssuerGenerateResponse issuingIssuer(PivSession session, Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api) {
+    protected YubicoIssuerGenerateResponse issuingIssuer(PivSession session, Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api, String sshApi) {
         PublicKey publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
 
         Provider issuingProvider = new PivProvider(session);
@@ -508,7 +508,7 @@ public class IssuerServiceImpl implements IssuerService {
         response.setCrlPublicKey(crlKey.getPublicKey());
         response.setCrlPrivateKey(crlKey.getPrivateKey());
         String hex = String.format("%012X", issuingCertificate.getSerialNumber().longValue());
-        response.setSshCa(x509Api + "/openssh/" + hex + ".pub");
+        response.setSshCa(sshApi + "/openssh/" + hex + ".pub");
 
         try {
             session.putCertificate(pivSlot, issuingCertificate);

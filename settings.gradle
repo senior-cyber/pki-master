@@ -5,6 +5,7 @@ include(
         ":pki-api-crl",
         ":pki-api-ocsp",
         ":pki-api-x509",
+        ":pki-api-ssh",
         ":pki-root-api",
 //        ":pki-root-web",
         ":pki-issuer-api",
@@ -24,5 +25,6 @@ project(":pki-issuer-api").projectDir = file("./pki-issuer-api")
 project(":pki-api-crl").projectDir = file("./pki-api-crl")
 project(":pki-api-ocsp").projectDir = file("./pki-api-ocsp")
 project(":pki-api-x509").projectDir = file("./pki-api-x509")
+project(":pki-api-ssh").projectDir = file("./pki-api-ssh")
 //project(":pki-client-cli").projectDir = file("./pki-client-cli")
 //project(":pki-client-web").projectDir = file("./pki-client-web")

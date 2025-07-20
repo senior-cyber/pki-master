@@ -6,8 +6,8 @@ import com.yubico.yubikit.piv.Slot;
 
 public interface IssuerService {
 
-    JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot);
+    JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot);
 
-    YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot, Slot pivSlot);
+    YubicoIssuerGenerateResponse issuerGenerate(User user, YubicoIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot, Slot pivSlot);
 
 }
