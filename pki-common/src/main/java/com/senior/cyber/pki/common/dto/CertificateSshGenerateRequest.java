@@ -13,18 +13,6 @@ public class CertificateSshGenerateRequest implements Serializable {
     @JsonProperty("issuerId")
     private String issuerId;
 
-    @JsonProperty("issuerSerialNumber")
-    private String issuerSerialNumber;
-
-    @JsonProperty("issuerSlot")
-    private String issuerSlot;
-
-    @JsonProperty("issuerPin")
-    private String issuerPin;
-
-    @JsonProperty("issuerManagementKey")
-    private String issuerManagementKey;
-
     @JsonProperty("opensshPublicKey")
     private String opensshPublicKey;
 

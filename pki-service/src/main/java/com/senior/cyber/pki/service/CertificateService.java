@@ -12,6 +12,6 @@ public interface CertificateService {
 
     CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot);
 
-    CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request, Slot issuerPivSlot);
+    CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request);
 
 }

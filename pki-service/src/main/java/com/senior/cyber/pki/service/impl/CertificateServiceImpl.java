@@ -23,9 +23,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.sshd.certificate.OpenSshCertificateBuilder;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
 import org.apache.sshd.common.config.keys.PublicKeyEntry;
-import org.apache.sshd.common.config.keys.loader.ssh2.Ssh2PublicKeyEntryDecoder;
+import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionContext;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.util.io.output.SecureByteArrayOutputStream;
@@ -41,7 +42,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.X509Certificate;
@@ -667,7 +667,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional
-    public CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request, Slot issuerPivSlot) {
+    public CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -691,33 +691,6 @@ public class CertificateServiceImpl implements CertificateService {
             Provider issuerProvider = new BouncyCastleProvider();
             PrivateKey issuerPrivateKey = issuerKey.getPrivateKey();
             return issuingSshCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request);
-        } else if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getIssuerSerialNumber());
-            if (device == null) {
-                throw new IllegalArgumentException("device not found");
-            }
-            CertificateSshGenerateResponse response = null;
-            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingSshCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request);
-                    return response;
-                }
-            } catch (Exception e) {
-                if (response != null) {
-                    return response;
-                } else {
-                    throw new RuntimeException(e);
-                }
-            }
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
         }
@@ -732,10 +705,14 @@ public class CertificateServiceImpl implements CertificateService {
         PublicKey publicKey = null;
         PrivateKey privateKey = null;
         if (request.getOpensshPublicKey() != null && !request.getOpensshPublicKey().isBlank()) {
-            byte[] data = request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8);
-            InputStream stream = new ByteArrayInputStream(data);
+            List<AuthorizedKeyEntry> authorizedKeyEntries = null;
             try {
-                publicKey = Ssh2PublicKeyEntryDecoder.INSTANCE.readPublicKey(null, () -> "", stream);
+                authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(request.getOpensshPublicKey().getBytes(StandardCharsets.UTF_8)), true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                publicKey = authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
             } catch (IOException | GeneralSecurityException e) {
                 throw new RuntimeException(e);
             }

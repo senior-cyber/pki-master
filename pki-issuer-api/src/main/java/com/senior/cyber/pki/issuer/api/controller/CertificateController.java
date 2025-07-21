@@ -12,7 +12,6 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.piv.Slot;
-import org.apache.sshd.common.util.buffer.keys.OpenSSHCertPublicKeyParser;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,31 +242,11 @@ public class CertificateController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        Slot issuerPivSlot = null;
-        if (issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            if (request.getIssuerSerialNumber() == null || request.getIssuerSerialNumber().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            }
-            if (request.getIssuerSlot() == null || request.getIssuerSlot().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            } else {
-                for (Slot slot : Slot.values()) {
-                    if (slot.getStringAlias().equalsIgnoreCase(request.getIssuerSlot())) {
-                        issuerPivSlot = slot;
-                        break;
-                    }
-                }
-                request.setIssuerSlot(null);
-            }
-            if (issuerPivSlot == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            }
-            if (request.getIssuerPin() == null || request.getIssuerPin().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            }
+        if (issuerKey.getType() != KeyTypeEnum.ServerKeyJCE) {
+            throw new IllegalArgumentException("issuerKey not found");
         }
 
-        CertificateSshGenerateResponse response = this.certificateService.certificateSshGenerate(user, request, issuerPivSlot);
+        CertificateSshGenerateResponse response = this.certificateService.certificateSshGenerate(user, request);
         return ResponseEntity.ok(response);
     }
 
