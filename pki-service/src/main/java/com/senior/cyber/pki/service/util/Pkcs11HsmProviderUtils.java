@@ -18,7 +18,7 @@
 //import java.util.ArrayList;
 //import java.util.List;
 //
-//public class HsmProviderUtils {
+//public class Pkcs11HsmProviderUtils {
 //
 //    public static Provider lookProvider(String usbSlot) {
 //        File pkcs11Conf = new File(FileUtils.getTempDirectory(), System.currentTimeMillis() + "-pkcs11.conf");

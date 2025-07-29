@@ -40,6 +40,7 @@ public class YubicoController {
             _info.put("formFactor", info.getFormFactor().name());
             _info.put("versionName", info.getVersionName());
         }
+
         return ResponseEntity.ok(devices);
     }
 

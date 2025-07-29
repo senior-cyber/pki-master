@@ -81,19 +81,18 @@ public class IssuerServiceImpl implements IssuerService {
             }
             JcaIssuerGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api, sshApi);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                Provider issuerProvider = new PivProvider(session);
+                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                response = issuingIssuer(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api, sshApi);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;
@@ -300,15 +299,14 @@ public class IssuerServiceImpl implements IssuerService {
             }
             YubicoIssuerGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;
@@ -323,19 +321,18 @@ public class IssuerServiceImpl implements IssuerService {
             }
             YubicoIssuerGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                Provider issuerProvider = new PivProvider(session);
+                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                response = issuingIssuer(session, issuerProvider, issuerCertificate, issuerPrivateKey, user, request, pivSlot, crlApi, ocspApi, x509Api, sshApi);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;

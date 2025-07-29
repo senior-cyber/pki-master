@@ -11,6 +11,7 @@ import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
+import com.senior.cyber.pki.service.util.OpenSshCertificateBuilder;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -22,7 +23,6 @@ import com.yubico.yubikit.piv.jca.PivProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.sshd.certificate.OpenSshCertificateBuilder;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
 import org.apache.sshd.common.config.keys.PublicKeyEntry;
@@ -91,19 +91,18 @@ public class CertificateServiceImpl implements CertificateService {
             }
             CertificateCommonGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingCommonCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                Provider issuerProvider = new PivProvider(session);
+                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                response = issuingCommonCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;
@@ -260,19 +259,18 @@ public class CertificateServiceImpl implements CertificateService {
             }
             CertificateTlsGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingTlsClientCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                Provider issuerProvider = new PivProvider(session);
+                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                response = issuingTlsClientCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;
@@ -318,19 +316,18 @@ public class CertificateServiceImpl implements CertificateService {
             }
             CertificateTlsGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                try (PivSession session = new PivSession(connection)) {
-                    try {
-                        session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
-                    } catch (IOException | ApduException | BadResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Provider issuerProvider = new PivProvider(session);
-                    KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                    PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
-
-                    response = issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
-                    return response;
+                PivSession session = new PivSession(connection);
+                try {
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getIssuerManagementKey()));
+                } catch (IOException | ApduException | BadResponseException e) {
+                    throw new RuntimeException(e);
                 }
+                Provider issuerProvider = new PivProvider(session);
+                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, issuerPivSlot, request.getIssuerPin());
+
+                response = issuingTlsServerCertificate(issuerProvider, issuerCertificate, issuerPrivateKey, user, request, crlApi, ocspApi, x509Api);
+                return response;
             } catch (Exception e) {
                 if (response != null) {
                     return response;
@@ -723,6 +720,7 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         OpenSshCertificateBuilder openSshCertificateBuilder = OpenSshCertificateBuilder.userCertificate();
+        openSshCertificateBuilder.provider(issuerProvider);
         openSshCertificateBuilder.id(UUID.randomUUID().toString());
         openSshCertificateBuilder.serial(System.currentTimeMillis());
         openSshCertificateBuilder.extensions(Arrays.asList(
