@@ -24,7 +24,10 @@ import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMException;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +39,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
@@ -51,7 +55,7 @@ public class IssuerServiceImpl implements IssuerService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot) {
+    public JcaIssuerGenerateResponse issuerGenerate(User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi, Slot issuerPivSlot) throws PEMException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -106,7 +110,7 @@ public class IssuerServiceImpl implements IssuerService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    protected JcaIssuerGenerateResponse issuingIssuer(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) {
+    protected JcaIssuerGenerateResponse issuingIssuer(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, JcaIssuerGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) throws PEMException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         // issuing
         Key issuingKey = null;
         Provider issuingProvider = new BouncyCastleProvider();
@@ -346,7 +350,7 @@ public class IssuerServiceImpl implements IssuerService {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    protected YubicoIssuerGenerateResponse issuingIssuer(PivSession session, Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api, String sshApi) {
+    protected YubicoIssuerGenerateResponse issuingIssuer(PivSession session, Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, YubicoIssuerGenerateRequest request, Slot pivSlot, String crlApi, String ocspApi, String x509Api, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException, PEMException {
         PublicKey publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
 
         Provider issuingProvider = new PivProvider(session);

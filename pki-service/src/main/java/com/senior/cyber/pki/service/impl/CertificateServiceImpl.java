@@ -31,7 +31,9 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionCon
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.util.io.output.SecureByteArrayOutputStream;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -60,7 +63,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -116,7 +119,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateCommonGenerateResponse issuingCommonCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
+    protected CertificateCommonGenerateResponse issuingCommonCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Key certificateKey = null;
         PublicKey publicKey = null;
         if (request.getCsr() != null) {
@@ -228,7 +231,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+    public CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -285,7 +288,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsServerGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) {
+    public CertificateTlsGenerateResponse certificateTlsServerGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -341,32 +344,16 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateTlsGenerateResponse issuingTlsServerCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
-        if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
+    protected CertificateTlsGenerateResponse issuingTlsServerCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+        if (request.getSans() == null || request.getSans().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sans are required");
         }
 
-        if (request.getIp() != null) {
-            InetAddressValidator validator = InetAddressValidator.getInstance();
-            for (String ip : request.getIp()) {
-                if (!validator.isValid(ip)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + ip);
-                }
-            }
-        }
-
-        if (request.getDns() != null) {
-            DomainValidator validator = DomainValidator.getInstance(true);
-            for (String dns : request.getDns()) {
-                if (dns.startsWith("*.")) {
-                    if (!validator.isValid(dns.substring(2))) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
-                    }
-                } else {
-                    if (!validator.isValid(dns)) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
-                    }
-                }
+        InetAddressValidator ipValidator = InetAddressValidator.getInstance();
+        DomainValidator dnsValidator = DomainValidator.getInstance(true);
+        for (String san : request.getSans()) {
+            if (!ipValidator.isValid(san) && !dnsValidator.isValid(san)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + san);
             }
         }
 
@@ -408,23 +395,7 @@ public class CertificateServiceImpl implements CertificateService {
                 request.getEmailAddress()
         );
 
-        List<String> sans = new ArrayList<>();
-        if (request.getIp() != null) {
-            for (String ip : request.getIp()) {
-                if (!sans.contains(ip)) {
-                    sans.add(ip);
-                }
-            }
-        }
-        if (request.getDns() != null) {
-            for (String dns : request.getDns()) {
-                if (!sans.contains(dns)) {
-                    sans.add(dns);
-                }
-            }
-        }
-
-        X509Certificate certificateCertificate = CertificateUtils.generateTlsServer(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateTlsServer(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getSans(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -435,7 +406,7 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setStateOrProvinceName(request.getProvince());
         certificate.setEmailAddress(request.getEmailAddress());
         certificate.setKey(certificateKey);
-        certificate.setSan(StringUtils.join(sans, ", "));
+        certificate.setSan(StringUtils.join(request.getSans(), ", "));
         certificate.setCertificate(certificateCertificate);
         certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
         certificate.setCreatedDatetime(new Date());
@@ -502,32 +473,16 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateTlsGenerateResponse issuingTlsClientCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) {
-        if ((request.getIp() == null || request.getIp().isEmpty()) && (request.getDns() == null || request.getDns().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ip or dns are required");
+    protected CertificateTlsGenerateResponse issuingTlsClientCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+        if (request.getSans() == null || request.getSans().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sans are required");
         }
 
-        if (request.getIp() != null) {
-            InetAddressValidator validator = InetAddressValidator.getInstance();
-            for (String ip : request.getIp()) {
-                if (!validator.isValid(ip)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + ip);
-                }
-            }
-        }
-
-        if (request.getDns() != null) {
-            DomainValidator validator = DomainValidator.getInstance(true);
-            for (String dns : request.getDns()) {
-                if (dns.startsWith("*.")) {
-                    if (!validator.isValid(dns.substring(2))) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
-                    }
-                } else {
-                    if (!validator.isValid(dns)) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + dns);
-                    }
-                }
+        InetAddressValidator ipValidator = InetAddressValidator.getInstance();
+        DomainValidator dnsValidator = DomainValidator.getInstance(true);
+        for (String san : request.getSans()) {
+            if (!ipValidator.isValid(san) && !dnsValidator.isValid(san)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid " + san);
             }
         }
 
@@ -569,23 +524,7 @@ public class CertificateServiceImpl implements CertificateService {
                 request.getEmailAddress()
         );
 
-        List<String> sans = new ArrayList<>();
-        if (request.getIp() != null) {
-            for (String ip : request.getIp()) {
-                if (!sans.contains(ip)) {
-                    sans.add(ip);
-                }
-            }
-        }
-        if (request.getDns() != null) {
-            for (String dns : request.getDns()) {
-                if (!sans.contains(dns)) {
-                    sans.add(dns);
-                }
-            }
-        }
-
-        X509Certificate certificateCertificate = CertificateUtils.generateTlsClient(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getIp(), request.getDns(), System.currentTimeMillis());
+        X509Certificate certificateCertificate = CertificateUtils.generateTlsClient(issuerProvider, issuerCertificate.getCertificate(), issuerPrivateKey, publicKey, subject, crlApi, ocspApi, x509Api, request.getSans(), System.currentTimeMillis());
         Certificate certificate = new Certificate();
         certificate.setIssuerCertificate(issuerCertificate);
         certificate.setCountryCode(request.getCountry());
@@ -596,7 +535,7 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setStateOrProvinceName(request.getProvince());
         certificate.setEmailAddress(request.getEmailAddress());
         certificate.setKey(certificateKey);
-        certificate.setSan(StringUtils.join(sans, ", "));
+        certificate.setSan(StringUtils.join(request.getSans(), ", "));
         certificate.setCertificate(certificateCertificate);
         certificate.setSerial(certificateCertificate.getSerialNumber().longValueExact());
         certificate.setCreatedDatetime(new Date());

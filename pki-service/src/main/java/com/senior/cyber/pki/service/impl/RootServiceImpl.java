@@ -24,7 +24,10 @@ import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMException;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
@@ -52,7 +56,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String sshApi) {
+    public JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException, PEMException {
         Provider provider = new BouncyCastleProvider();
         // root
         Key rootKey = null;

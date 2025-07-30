@@ -57,10 +57,7 @@ public class CertificateTlsGenerateRequest implements Serializable {
     @JsonProperty("emailAddress")
     private String emailAddress;
 
-    @JsonProperty("ip")
-    private List<String> ip;
-
-    @JsonProperty("dns")
-    private List<String> dns;
+    @JsonProperty("sans")
+    private List<String> sans;
 
 }

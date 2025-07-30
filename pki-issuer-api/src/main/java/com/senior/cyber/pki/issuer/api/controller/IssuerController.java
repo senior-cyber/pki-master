@@ -15,6 +15,9 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IssuerService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.piv.Slot;
+import org.bouncycastle.cert.CertIOException;
+import org.bouncycastle.openssl.PEMException;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Date;
 
 @RestController
@@ -61,7 +66,7 @@ public class IssuerController {
     protected UserService userService;
 
     @RequestMapping(path = "/issuer/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) {
+    public ResponseEntity<JcaIssuerGenerateResponse> jcaIssuerGenerate(RequestEntity<JcaIssuerGenerateRequest> httpRequest) throws PEMException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         JcaIssuerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
