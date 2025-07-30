@@ -44,7 +44,7 @@ public class CertificateUtils {
         String _ocspApi = ocspApi + "/ocsp/" + hex;
         String _x509Api = x509Api + "/x509/" + hex;
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, extendedKeyUsages, null);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, null);
     }
 
     public static X509Certificate generateTlsClient(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> sans, long serial) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
@@ -60,7 +60,7 @@ public class CertificateUtils {
         String _ocspApi = ocspApi + "/ocsp/" + hex;
         String _x509Api = x509Api + "/x509/" + hex;
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, extendedKeyUsages, sans);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, sans);
     }
 
     public static X509Certificate generateTlsServer(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, List<String> sans, long serial) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
@@ -76,7 +76,7 @@ public class CertificateUtils {
         String _ocspApi = ocspApi + "/ocsp/" + hex;
         String _x509Api = x509Api + "/x509/" + hex;
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, extendedKeyUsages, sans);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, sans);
     }
 
     public static X509Certificate convert(String value) {

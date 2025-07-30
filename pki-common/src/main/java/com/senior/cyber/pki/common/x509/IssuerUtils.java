@@ -40,7 +40,7 @@ public class IssuerUtils {
         String _ocspApi = ocspApi + "/ocsp/" + hex;
         String _x509Api = x509Api + "/x509/" + hex + ".der";
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, null, null);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
     public static X509Certificate generateCrlCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) throws PEMException, NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
@@ -59,7 +59,7 @@ public class IssuerUtils {
 
         X500Name subject = csr.getSubject();
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, null, null, null, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, null, null);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, null, null, null, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
     public static X509Certificate generateOcspCertificate(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PKCS10CertificationRequest csr) throws PEMException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
@@ -79,7 +79,7 @@ public class IssuerUtils {
 
         X500Name subject = csr.getSubject();
 
-        return X509Utils.issue(provider, issuerKey, issuerCertificate, null, null, null, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, extendedKeyUsages, null);
+        return PkiUtils.issue(provider, issuerKey, issuerCertificate, null, null, null, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, null);
     }
 
 }

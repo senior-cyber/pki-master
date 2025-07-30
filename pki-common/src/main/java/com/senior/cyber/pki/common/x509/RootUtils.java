@@ -63,7 +63,7 @@ public class RootUtils {
         Date notAfter = LocalDate.now().plusYears(10).toDate();
         List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
 
-        return X509Utils.issue(provider, privateKey, publicKey, subject, null, null, null, publicKey, subject, serial, ca, notBefore, notAfter, keyUsages, null, null);
+        return PkiUtils.issue(provider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
     public static Map<String, X509Certificate> generateCrossRoot(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate,
@@ -78,8 +78,8 @@ public class RootUtils {
 
         Map<String, X509Certificate> certificates = new HashMap<>();
 
-        X509Certificate rootCa = X509Utils.issue(provider, privateKey, publicKey, subject, null, null, null, publicKey, subject, serial + 1, ca, notBefore, notAfter, keyUsages, null, null);
-        X509Certificate rootCaX = X509Utils.issue(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, publicKey, subject, serial + 2, ca, notBefore, notAfter, keyUsages, null, null);
+        X509Certificate rootCa = PkiUtils.issue(provider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, ca, notBefore, notAfter, serial + 1, keyUsages, null, null);
+        X509Certificate rootCaX = PkiUtils.issue(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial + 2, keyUsages, null, null);
         certificates.put("rootCa", rootCa);
         certificates.put("rootCaX", rootCaX);
 
