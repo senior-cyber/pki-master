@@ -15,8 +15,8 @@ import java.security.cert.CertificateException;
 
 public interface RootService {
 
-    JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException, PEMException;
+    JcaRootGenerateResponse rootGenerate(User user, JcaRootGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException, PEMException;
 
-    YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot, String x509Api);
+    YubicoRootGenerateResponse rootGenerate(User user, YubicoRootGenerateRequest request, Slot pivSlot, String sshApi);
 
 }
