@@ -113,9 +113,6 @@ public class X509Utils {
             builder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
         }
 
-        List<String> ips = new ArrayList<>();
-        List<String> dnses = new ArrayList<>();
-
         if (sans != null && !sans.isEmpty()) {
             List<String> included = new ArrayList<>();
             InetAddressValidator ipValidator = InetAddressValidator.getInstance();
