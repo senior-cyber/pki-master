@@ -10,7 +10,6 @@ import org.apache.sshd.common.signature.Signature;
 import org.apache.sshd.common.util.MapEntryUtils;
 import org.apache.sshd.common.util.ValidateUtils;
 import org.apache.sshd.common.util.buffer.ByteArrayBuffer;
-import org.apache.sshd.common.util.security.SecurityUtils;
 
 import java.security.KeyPair;
 import java.security.Provider;
@@ -225,8 +224,6 @@ public class OpenSshCertificateBuilder {
             rand.nextBytes(tempNonce);
             cert.setNonce(tempNonce);
         }
-
-        SecurityUtils.setAPrioriDisabledProvider(SecurityUtils.BOUNCY_CASTLE, true);
 
         String algo = KeyUtils.getKeyType(caKeypair.getPublic());
         Signature signer = new SignatureRSASHA256(this.provider);
