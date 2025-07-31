@@ -11,12 +11,12 @@ import java.security.cert.CertificateException;
 
 public interface CertificateService {
 
-    CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
+    LeafGenerateResponse certificateCommonGenerate(User user, LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
 
-    CertificateTlsGenerateResponse certificateTlsServerGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
+    ServerCertificateGenerateResponse certificateTlsServerGenerate(User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
 
-    CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
+    ServerCertificateGenerateResponse certificateTlsClientGenerate(User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException;
 
-    CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request);
+    SshCertificateGenerateResponse certificateSshGenerate(User user, SshCertificateGenerateRequest request);
 
 }

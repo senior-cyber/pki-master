@@ -27,6 +27,8 @@ import java.util.List;
 
 public class CertificateUtils {
 
+    private static BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+
     public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         return generateCommon(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
     }
@@ -80,15 +82,13 @@ public class CertificateUtils {
     }
 
     public static X509Certificate convert(String value) {
-        Provider provider = new BouncyCastleProvider();
-
         if (value == null || value.isEmpty()) {
             return null;
         }
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
             Object object = parser.readObject();
             JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
-            converter.setProvider(provider);
+            converter.setProvider(PROVIDER);
             if (object instanceof JcaX509CertificateHolder holder) {
                 return converter.getCertificate(holder);
             } else if (object instanceof X509CertificateHolder holder) {

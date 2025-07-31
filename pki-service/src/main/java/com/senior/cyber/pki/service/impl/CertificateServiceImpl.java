@@ -63,7 +63,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateCommonGenerateResponse certificateCommonGenerate(User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    public LeafGenerateResponse certificateCommonGenerate(User user, LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -71,7 +71,7 @@ public class CertificateServiceImpl implements CertificateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -92,7 +92,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
-            CertificateCommonGenerateResponse response = null;
+            LeafGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 PivSession session = new PivSession(connection);
                 try {
@@ -119,7 +119,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateCommonGenerateResponse issuingCommonCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateCommonGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    protected LeafGenerateResponse issuingCommonCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Key certificateKey = null;
         PublicKey publicKey = null;
         if (request.getCsr() != null) {
@@ -176,11 +176,11 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setValidFrom(certificateCertificate.getNotBefore());
         certificate.setValidUntil(certificateCertificate.getNotAfter());
         certificate.setStatus(CertificateStatusEnum.Good);
-        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setType(CertificateTypeEnum.Leaf);
         certificate.setUser(user);
         this.certificateRepository.save(certificate);
 
-        CertificateCommonGenerateResponse response = new CertificateCommonGenerateResponse();
+        LeafGenerateResponse response = new LeafGenerateResponse();
         response.setId(certificate.getId());
         response.setCert(certificateCertificate);
         response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
@@ -200,7 +200,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 chain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -219,7 +219,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 fullchain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -231,7 +231,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsClientGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    public ServerCertificateGenerateResponse certificateTlsClientGenerate(User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -239,7 +239,7 @@ public class CertificateServiceImpl implements CertificateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -260,7 +260,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
-            CertificateTlsGenerateResponse response = null;
+            ServerCertificateGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 PivSession session = new PivSession(connection);
                 try {
@@ -288,7 +288,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public CertificateTlsGenerateResponse certificateTlsServerGenerate(User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    public ServerCertificateGenerateResponse certificateTlsServerGenerate(User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api, Slot issuerPivSlot) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -296,7 +296,7 @@ public class CertificateServiceImpl implements CertificateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -317,7 +317,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (device == null) {
                 throw new IllegalArgumentException("device not found");
             }
-            CertificateTlsGenerateResponse response = null;
+            ServerCertificateGenerateResponse response = null;
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
                 PivSession session = new PivSession(connection);
                 try {
@@ -344,7 +344,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateTlsGenerateResponse issuingTlsServerCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    protected ServerCertificateGenerateResponse issuingTlsServerCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         if (request.getSans() == null || request.getSans().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sans are required");
         }
@@ -413,11 +413,11 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setValidFrom(certificateCertificate.getNotBefore());
         certificate.setValidUntil(certificateCertificate.getNotAfter());
         certificate.setStatus(CertificateStatusEnum.Good);
-        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setType(CertificateTypeEnum.Leaf);
         certificate.setUser(user);
         this.certificateRepository.save(certificate);
 
-        CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
+        ServerCertificateGenerateResponse response = new ServerCertificateGenerateResponse();
         response.setId(certificate.getId());
         response.setCert(certificateCertificate);
         response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
@@ -440,7 +440,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 chain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -462,7 +462,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 fullchain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -473,7 +473,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateTlsGenerateResponse issuingTlsClientCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateTlsGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
+    protected ServerCertificateGenerateResponse issuingTlsClientCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         if (request.getSans() == null || request.getSans().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sans are required");
         }
@@ -542,11 +542,11 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setValidFrom(certificateCertificate.getNotBefore());
         certificate.setValidUntil(certificateCertificate.getNotAfter());
         certificate.setStatus(CertificateStatusEnum.Good);
-        certificate.setType(CertificateTypeEnum.Certificate);
+        certificate.setType(CertificateTypeEnum.Leaf);
         certificate.setUser(user);
         this.certificateRepository.save(certificate);
 
-        CertificateTlsGenerateResponse response = new CertificateTlsGenerateResponse();
+        ServerCertificateGenerateResponse response = new ServerCertificateGenerateResponse();
         response.setId(certificate.getId());
         response.setCert(certificateCertificate);
         response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(certificateCertificate).getBytes(StandardCharsets.UTF_8)));
@@ -569,7 +569,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 chain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -591,7 +591,7 @@ public class CertificateServiceImpl implements CertificateService {
             if (cert.getType() == CertificateTypeEnum.Root) {
                 break;
             }
-            if (cert.getType() == CertificateTypeEnum.Issuer) {
+            if (cert.getType() == CertificateTypeEnum.Intermediate) {
                 fullchain.add(cert.getCertificate());
                 temp = cert;
             }
@@ -603,7 +603,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional
-    public CertificateSshGenerateResponse certificateSshGenerate(User user, CertificateSshGenerateRequest request) {
+    public SshCertificateGenerateResponse certificateSshGenerate(User user, SshCertificateGenerateRequest request) {
         Date now = LocalDate.now().toDate();
 
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
@@ -611,7 +611,7 @@ public class CertificateServiceImpl implements CertificateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
         }
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Issuer) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Root && issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -633,7 +633,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Transactional
-    protected CertificateSshGenerateResponse issuingSshCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, CertificateSshGenerateRequest request) {
+    protected SshCertificateGenerateResponse issuingSshCertificate(Provider issuerProvider, Certificate issuerCertificate, PrivateKey issuerPrivateKey, User user, SshCertificateGenerateRequest request) {
         if ((request.getPrincipal() == null || request.getPrincipal().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "principal required");
         }
@@ -685,7 +685,7 @@ public class CertificateServiceImpl implements CertificateService {
             throw new RuntimeException(e);
         }
 
-        CertificateSshGenerateResponse response = new CertificateSshGenerateResponse();
+        SshCertificateGenerateResponse response = new SshCertificateGenerateResponse();
         response.setOpensshCertificate(PublicKeyEntry.toString(certificate));
 
         if (privateKey != null) {

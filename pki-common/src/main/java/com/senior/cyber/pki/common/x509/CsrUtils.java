@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.security.KeyPair;
-import java.security.Provider;
 import java.security.PublicKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.ECPublicKey;
@@ -38,15 +37,16 @@ import java.util.Map;
 
 public class CsrUtils {
 
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+
     public static PKCS10CertificationRequest generate(KeyPair key, X500Name subject) {
         int shaSize = 256;
         return generate(key, subject, shaSize);
     }
 
     public static PublicKey lookupPublicKey(PKCS10CertificationRequest csr) {
-        Provider provider = new BouncyCastleProvider();
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(provider);
+        subjectPublicKeyConverter.setProvider(PROVIDER);
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -57,9 +57,8 @@ public class CsrUtils {
     }
 
     public static boolean isValid(PKCS10CertificationRequest csr) {
-        Provider provider = new BouncyCastleProvider();
         JcaPEMKeyConverter subjectPublicKeyConverter = new JcaPEMKeyConverter();
-        subjectPublicKeyConverter.setProvider(provider);
+        subjectPublicKeyConverter.setProvider(PROVIDER);
         PublicKey subjectPublicKey = null;
         try {
             subjectPublicKey = subjectPublicKeyConverter.getPublicKey(csr.getSubjectPublicKeyInfo());
@@ -68,7 +67,7 @@ public class CsrUtils {
         }
 
         JcaContentVerifierProviderBuilder verifierBuilder = new JcaContentVerifierProviderBuilder();
-        verifierBuilder.setProvider(new BouncyCastleProvider());
+        verifierBuilder.setProvider(PROVIDER);
         ContentVerifierProvider verifier = null;
         try {
             verifier = verifierBuilder.build(subjectPublicKey);
@@ -100,7 +99,7 @@ public class CsrUtils {
 
         JcaPKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, key.getPublic());
         JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-        csBuilder.setProvider(new BouncyCastleProvider());
+        csBuilder.setProvider(PROVIDER);
         ContentSigner contentSigner = null;
         try {
             contentSigner = csBuilder.build(key.getPrivate());

@@ -20,8 +20,8 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECKey;
+import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
@@ -138,12 +138,10 @@ public class PkiUtils {
         }
 
         String format = "";
-        if (issuerPrivateKey instanceof RSAPrivateKey) {
+        if (issuerPrivateKey instanceof RSAKey) {
             format = "RSA";
-        } else if (issuerPrivateKey instanceof ECPrivateKey || "EC".equals(issuerPrivateKey.getAlgorithm())) {
+        } else if (issuerPrivateKey instanceof ECKey || "EC".equals(issuerPrivateKey.getAlgorithm())) {
             format = "ECDSA";
-        } else if (issuerPrivateKey instanceof DSAPrivateKey) {
-            format = "DSA";
         } else {
             format = issuerPrivateKey.getAlgorithm();
         }
@@ -179,15 +177,15 @@ public class PkiUtils {
         return issue(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, false, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, sans);
     }
 
-    public static X509Certificate issueCrlCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+    public static X509Certificate issueCrlCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
         List<Integer> keyUsages = List.of(KeyUsage.cRLSign);
-        return issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, notBefore, notAfter, serial, keyUsages, null, null);
+        return issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, null, null, null, null, publicKey, subject, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
-    public static X509Certificate issueOcspCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+    public static X509Certificate issueOcspCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
         List<Integer> keyUsages = List.of(KeyUsage.digitalSignature);
         List<KeyPurposeId> extendedKeyUsages = List.of(KeyPurposeId.id_kp_OCSPSigning);
-        return issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, null);
+        return issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, null, null, null, null, publicKey, subject, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, null);
     }
 
     public static X509Certificate issueClientCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {

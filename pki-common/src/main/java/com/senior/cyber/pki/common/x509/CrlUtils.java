@@ -15,12 +15,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.NoSuchProviderException;
-import java.security.Provider;
 import java.security.cert.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CrlUtils {
+
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     public static boolean validate(X509Certificate certificate, String crlUrl) throws CertificateException, IOException, NoSuchProviderException, CRLException, InterruptedException {
         return validate(certificate, null, crlUrl);
@@ -28,9 +29,6 @@ public class CrlUtils {
 
     public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String crlUrl)
             throws IOException, CRLException, InterruptedException, CertificateException, NoSuchProviderException {
-
-        Provider provider = new BouncyCastleProvider();
-
         // Step 1: Validate input
         if (certificate == null || crlUrl == null || crlUrl.isBlank()) {
             throw new IllegalArgumentException("Certificate or CRL URL is missing.");
@@ -51,13 +49,13 @@ public class CrlUtils {
             byte[] rawCrl = response.body();
 
             // Step 3: Parse CRL using Bouncy Castle
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509", provider);
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509", PROVIDER);
             X509CRL crl = (X509CRL) certFactory.generateCRL(new ByteArrayInputStream(rawCrl));
 
             // Step 4: Optional - Verify the CRL's signature using the issuer certificate
             if (issuerCertificate != null) {
                 try {
-                    crl.verify(issuerCertificate.getPublicKey(), provider);
+                    crl.verify(issuerCertificate.getPublicKey(), PROVIDER);
                 } catch (Exception e) {
                     throw new CertificateException("CRL signature verification failed.", e);
                 }

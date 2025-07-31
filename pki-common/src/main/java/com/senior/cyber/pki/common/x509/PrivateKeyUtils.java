@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.x509;
 
+import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.IESParameterSpec;
@@ -22,18 +23,20 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.ECKey;
+import java.security.interfaces.RSAKey;
 import java.util.Base64;
 
 public class PrivateKeyUtils {
 
-    public static String signText(PrivateKey privateKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+
+    public static String signText(Provider provider, PrivateKey privateKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = null;
-        if (privateKey instanceof RSAPrivateKey) {
-            signature = Signature.getInstance("SHA256withRSA");
-        } else if (privateKey instanceof ECPrivateKey) {
-            signature = Signature.getInstance("SHA256withECDSA");
+        if (privateKey instanceof RSAKey) {
+            signature = Signature.getInstance("SHA256withRSA", provider);
+        } else if (privateKey instanceof ECKey) {
+            signature = Signature.getInstance("SHA256withECDSA", provider);
         } else {
             throw new IllegalArgumentException(privateKey.getClass().getName() + " is not supported");
         }
@@ -42,23 +45,37 @@ public class PrivateKeyUtils {
         return Base64.getEncoder().encodeToString(signature.sign()) + "." + text;
     }
 
-    public static String decryptText(PrivateKey privateKey, String text) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-        if (privateKey instanceof RSAPrivateKey) {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text));
-            return new String(textData, StandardCharsets.UTF_8);
-        } else if (privateKey instanceof ECPrivateKey) {
-            Provider provider = new BouncyCastleProvider();
-            int dotIndex = text.indexOf('.');
-            byte[] iv = Base64.getDecoder().decode(text.substring(0, dotIndex));
-            byte[] derivation = iv.clone();
-            byte[] encoding = iv.clone();
-            int length = iv.length;
-            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", provider);
-            cipher.init(Cipher.DECRYPT_MODE, privateKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
-            byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text.substring(dotIndex + 1)));
-            return new String(textData, StandardCharsets.UTF_8);
+    public static String decryptText(Provider provider, PrivateKey privateKey, String text) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+        if (privateKey instanceof RSAKey) {
+            if (provider instanceof BouncyCastleProvider) {
+                Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING", provider);
+                cipher.init(Cipher.DECRYPT_MODE, privateKey);
+                byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text));
+                return new String(textData, StandardCharsets.UTF_8);
+            } else if (provider instanceof PivProvider) {
+                Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", provider);
+                cipher.init(Cipher.DECRYPT_MODE, privateKey);
+                byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text));
+                return new String(textData, StandardCharsets.UTF_8);
+            } else {
+                throw new IllegalArgumentException(provider.getClass().getName() + " is not supported");
+            }
+        } else if (privateKey instanceof ECKey) {
+            if (provider instanceof BouncyCastleProvider) {
+                int dotIndex = text.indexOf('.');
+                byte[] iv = Base64.getDecoder().decode(text.substring(0, dotIndex));
+                byte[] derivation = iv.clone();
+                byte[] encoding = iv.clone();
+                int length = iv.length;
+                Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", provider);
+                cipher.init(Cipher.DECRYPT_MODE, privateKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
+                byte[] textData = cipher.doFinal(Base64.getDecoder().decode(text.substring(dotIndex + 1)));
+                return new String(textData, StandardCharsets.UTF_8);
+            } else if (provider instanceof PivProvider) {
+                throw new IllegalArgumentException(privateKey.getClass().getName() + " is not supported");
+            } else {
+                throw new IllegalArgumentException(provider.getClass().getName() + " is not supported");
+            }
         } else {
             throw new IllegalArgumentException(privateKey.getClass().getName() + " is not supported");
         }
@@ -68,11 +85,10 @@ public class PrivateKeyUtils {
         if (value == null || value.isEmpty()) {
             return null;
         }
-        Provider provider = new BouncyCastleProvider();
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
             Object objectHolder = parser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            converter.setProvider(provider);
+            converter.setProvider(PROVIDER);
             if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
                 throw new IllegalArgumentException("Encrypted private key is not supported");
             } else if (objectHolder instanceof PEMKeyPair holder) {
@@ -88,10 +104,9 @@ public class PrivateKeyUtils {
     }
 
     public static PrivateKey convert(String value, String password) throws OperatorCreationException {
-        Provider provider = new BouncyCastleProvider();
         InputDecryptorProvider _decryptor = null;
         JceOpenSSLPKCS8DecryptorProviderBuilder decryptorBuilder = new JceOpenSSLPKCS8DecryptorProviderBuilder();
-        decryptorBuilder.setProvider(provider);
+        decryptorBuilder.setProvider(PROVIDER);
         _decryptor = decryptorBuilder.build(password.toCharArray());
 
         if (value == null || value.isEmpty()) {
@@ -100,7 +115,7 @@ public class PrivateKeyUtils {
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
             Object objectHolder = parser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            converter.setProvider(provider);
+            converter.setProvider(PROVIDER);
             if (objectHolder instanceof PKCS8EncryptedPrivateKeyInfo holder) {
                 PrivateKeyInfo info = holder.decryptPrivateKeyInfo(_decryptor);
                 return converter.getPrivateKey(info);
@@ -130,11 +145,9 @@ public class PrivateKeyUtils {
     }
 
     public static String convert(PrivateKey value, String password) throws OperatorCreationException {
-        Provider provider = new BouncyCastleProvider();
-
         OutputEncryptor _encryptor = null;
         JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PKCS8Generator.AES_256_CBC);
-        encryptorBuilder.setProvider(provider);
+        encryptorBuilder.setProvider(PROVIDER);
         encryptorBuilder.setRandom(new SecureRandom());
         encryptorBuilder.setPassword(password.toCharArray());
         encryptorBuilder.setIterationCount(10000);

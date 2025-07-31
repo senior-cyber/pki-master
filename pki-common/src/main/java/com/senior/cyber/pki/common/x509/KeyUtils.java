@@ -17,9 +17,7 @@ public class KeyUtils {
 
     public static KeyPair generate(KeyFormat format) {
         int keySize = 0;
-        if (format == KeyFormat.DSA) {
-            keySize = 512;
-        } else if (format == KeyFormat.EC) {
+        if (format == KeyFormat.EC) {
             keySize = 256;
         } else if (format == KeyFormat.RSA) {
             keySize = 2048;

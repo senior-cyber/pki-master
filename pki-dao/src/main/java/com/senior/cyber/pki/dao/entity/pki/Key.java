@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.dao.entity.pki;
 
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.type.PrivateKeyType;
@@ -38,6 +39,28 @@ public class Key implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private KeyTypeEnum type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "key_format")
+    private KeyFormat keyFormat;
+
+    @Column(name = "key_size")
+    private int keySize = -1;
+
+    @Column(name = "pwd")
+    private String password;
+
+    @Column(name = "yubico_serial")
+    private String yubicoSerial;
+
+    @Column(name = "yubico_piv_slot")
+    private String yubicoPivSlot;
+
+    @Column(name = "yubico_management_key")
+    private String yubicoManagementKey;
+
+    @Column(name = "yubico_pin")
+    private String yubicoPin;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_datetime")
