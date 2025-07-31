@@ -139,33 +139,12 @@ public class LeafController {
     }
 
     @RequestMapping(path = "/ssh/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SshCertificateGenerateResponse> sshGenerate(RequestEntity<SshCertificateGenerateRequest> httpRequest) {
+    public ResponseEntity<SshCertificateGenerateResponse> sshGenerate(RequestEntity<SshCertificateGenerateRequest> httpRequest) throws BadResponseException, ApduException, IOException, ApplicationNotAvailableException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+
         SshCertificateGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerId()).orElse(null);
-        if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not found");
-        }
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerId() + " is not valid");
-        }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-        if (issuerKey == null) {
-            throw new IllegalArgumentException("issuerKey not found");
-        }
-
-        if (issuerKey.getType() != KeyTypeEnum.ServerKeyJCE) {
-            throw new IllegalArgumentException("issuerKey not found");
         }
 
         SshCertificateGenerateResponse response = this.certificateService.sshGenerate(user, request);
