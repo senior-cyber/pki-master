@@ -3,38 +3,42 @@ package com.senior.cyber.pki.common.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestDeserializer;
-import com.senior.cyber.pki.common.converter.PKCS10CertificationRequestSerializer;
+import com.senior.cyber.pki.common.converter.*;
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import lombok.Getter;
 import lombok.Setter;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.List;
 
 @Setter
 @Getter
 public class ServerCertificateGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerId")
-    private String issuerId;
+    @JsonProperty("issuerCertificateId")
+    private String issuerCertificateId;
 
-    @JsonProperty("issuerSerialNumber")
-    private String issuerSerialNumber;
+    @JsonSerialize(using = PrivateKeySerializer.class)
+    @JsonDeserialize(using = PrivateKeyDeserializer.class)
+    @JsonProperty("issuerPrivateKey")
+    private PrivateKey issuerPrivateKey;
 
-    @JsonProperty("issuerSlot")
-    private String issuerSlot;
+    @JsonProperty("keyId")
+    private String keyId;
 
-    @JsonProperty("issuerPin")
-    private String issuerPin;
+    @JsonSerialize(using = PublicKeySerializer.class)
+    @JsonDeserialize(using = PublicKeyDeserializer.class)
+    @JsonProperty("publicKey")
+    private PublicKey publicKey;
 
-    @JsonProperty("issuerManagementKey")
-    private String issuerManagementKey;
+    @JsonProperty("keyFormat")
+    private KeyFormat keyFormat;
 
-    @JsonSerialize(using = PKCS10CertificationRequestSerializer.class)
-    @JsonDeserialize(using = PKCS10CertificationRequestDeserializer.class)
-    @JsonProperty("csr")
-    private PKCS10CertificationRequest csr;
+    @JsonProperty("keySize")
+    private int keySize;
 
     @JsonProperty("locality")
     private String locality;

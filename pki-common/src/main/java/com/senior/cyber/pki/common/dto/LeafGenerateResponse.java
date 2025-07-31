@@ -19,6 +19,9 @@ public class LeafGenerateResponse implements Serializable {
     @JsonProperty("id")
     private String id;
 
+    @JsonProperty("keyId")
+    private String keyId;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("cert")
