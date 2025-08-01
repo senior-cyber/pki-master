@@ -173,6 +173,15 @@ scp pki-api-x509/build/libs/pki-api-x509.jar     lenovo:/opt/apps/pki-master/pki
 scp pki-api-ssh/build/libs/pki-api-ssh.jar       lenovo:/opt/apps/pki-master/pki-api-ssh
 scp pki-root-api/build/libs/pki-root-api.jar     lenovo:/opt/apps/pki-master/pki-root-api
 scp pki-issuer-api/build/libs/pki-issuer-api.jar lenovo:/opt/apps/pki-master/pki-issuer-api
+scp pki-key-api/build/libs/pki-key-api.jar       lenovo:/opt/apps/pki-master/pki-key-api
+
+cp pki-api-crl/build/libs/pki-api-crl.jar       /opt/apps/pki-master/pki-api-crl
+cp pki-api-ocsp/build/libs/pki-api-ocsp.jar     /opt/apps/pki-master/pki-api-ocsp
+cp pki-api-x509/build/libs/pki-api-x509.jar     /opt/apps/pki-master/pki-api-x509
+cp pki-api-ssh/build/libs/pki-api-ssh.jar       /opt/apps/pki-master/pki-api-ssh
+cp pki-root-api/build/libs/pki-root-api.jar     /opt/apps/pki-master/pki-root-api
+cp pki-issuer-api/build/libs/pki-issuer-api.jar /opt/apps/pki-master/pki-issuer-api
+cp pki-key-api/build/libs/pki-key-api.jar       /opt/apps/pki-master/pki-key-api
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
@@ -180,6 +189,7 @@ sudo service pki-api-x509   restart
 sudo service pki-api-ssh    restart
 sudo service pki-root-api   restart
 sudo service pki-issuer-api restart
+sudo service pki-key-api    restart
 
 sudo systemctl enable pki-api-crl    
 sudo systemctl enable pki-api-ocsp   
@@ -187,6 +197,7 @@ sudo systemctl enable pki-api-x509
 sudo systemctl enable pki-api-ssh   
 sudo systemctl enable pki-root-api   
 sudo systemctl enable pki-issuer-api
+sudo systemctl enable pki-key-api
 
 telegram endpoint, expose webhook for load test,
 update access denied page, change session expired, please try again 

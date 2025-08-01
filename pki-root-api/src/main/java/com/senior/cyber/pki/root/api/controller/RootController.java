@@ -6,6 +6,7 @@ import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class RootController {
     protected String sshApi;
 
     @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException {
+    public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
 
         RootGenerateRequest request = httpRequest.getBody();

@@ -15,6 +15,7 @@ import com.senior.cyber.pki.service.IntermediateService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.PivSession;
@@ -51,7 +52,7 @@ public class IntermediateServiceImpl implements IntermediateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public IntermediateGenerateResponse intermediateGenerate(User user, IntermediateGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException {
+    public IntermediateGenerateResponse intermediateGenerate(User user, IntermediateGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException {
         Provider issuerProvider = null;
         Provider provider = null;
         Map<String, SmartCardConnection> connections = new HashMap<>();
@@ -79,6 +80,7 @@ public class IntermediateServiceImpl implements IntermediateService {
             SmartCardConnection connection = device.openConnection(SmartCardConnection.class);
             connections.put(_issuerKey.getYubicoSerial(), connection);
             PivSession session = new PivSession(connection);
+            session.authenticate(YubicoProviderUtils.hexStringToByteArray(_issuerKey.getYubicoManagementKey()));
             sessions.put(_issuerKey.getYubicoSerial(), session);
             issuerProvider = new PivProvider(session);
             KeyStore ks = YubicoProviderUtils.lookupKeyStore(issuerProvider);
@@ -114,6 +116,7 @@ public class IntermediateServiceImpl implements IntermediateService {
                 connection = device.openConnection(SmartCardConnection.class);
                 connections.put(_intermediateKey.getYubicoSerial(), connection);
                 PivSession session = new PivSession(connection);
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(_intermediateKey.getYubicoManagementKey()));
                 sessions.put(_intermediateKey.getYubicoSerial(), session);
                 provider = new PivProvider(session);
                 ks = YubicoProviderUtils.lookupKeyStore(provider);

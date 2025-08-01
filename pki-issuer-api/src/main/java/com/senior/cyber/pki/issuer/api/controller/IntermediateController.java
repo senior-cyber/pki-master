@@ -11,6 +11,7 @@ import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
@@ -62,7 +63,7 @@ public class IntermediateController {
     protected UserService userService;
 
     @RequestMapping(path = "/intermediate/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<IntermediateGenerateResponse> intermediateGenerate(RequestEntity<IntermediateGenerateRequest> httpRequest) throws IOException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, ApduException, ApplicationNotAvailableException {
+    public ResponseEntity<IntermediateGenerateResponse> intermediateGenerate(RequestEntity<IntermediateGenerateRequest> httpRequest) throws IOException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, ApduException, ApplicationNotAvailableException, BadResponseException {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
 
         IntermediateGenerateRequest request = httpRequest.getBody();

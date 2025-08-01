@@ -5,6 +5,7 @@ import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.Yubico;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
@@ -35,8 +36,8 @@ public class KeyServiceImpl implements KeyService {
     private KeyRepository keyRepository;
 
     @Override
-    @Transactional
-    public JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request) {
+    @Transactional(rollbackFor = Throwable.class)
+    public JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request, User user) {
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
         key.setPrivateKey(_key.getPrivate());
@@ -46,6 +47,7 @@ public class KeyServiceImpl implements KeyService {
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setCreatedDatetime(new Date());
+        key.setUser(user);
         this.keyRepository.save(key);
 
         JcaKeyGenerateResponse response = new JcaKeyGenerateResponse();
@@ -54,8 +56,8 @@ public class KeyServiceImpl implements KeyService {
     }
 
     @Override
-    @Transactional
-    public YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    @Transactional(rollbackFor = Throwable.class)
+    public YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request, User user) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -92,6 +94,7 @@ public class KeyServiceImpl implements KeyService {
             key.setYubicoPin(Yubico.DEFAULT_PIN);
             key.setKeyFormat(request.getFormat());
             key.setCreatedDatetime(new Date());
+            key.setUser(user);
             this.keyRepository.save(key);
 
             YubicoKeyGenerateResponse response = new YubicoKeyGenerateResponse();
@@ -101,11 +104,12 @@ public class KeyServiceImpl implements KeyService {
     }
 
     @Override
-    @Transactional
-    public JcaKeyRegisterResponse register(JcaKeyRegisterRequest request) {
+    @Transactional(rollbackFor = Throwable.class)
+    public JcaKeyRegisterResponse register(JcaKeyRegisterRequest request, User user) {
         Key key = new Key();
         key.setPublicKey(request.getPublicKey());
         key.setPrivateKey(request.getPrivateKey());
+        key.setUser(user);
         if (request.getPrivateKey() == null) {
             key.setType(KeyTypeEnum.ClientKey);
         } else {
@@ -125,7 +129,8 @@ public class KeyServiceImpl implements KeyService {
     }
 
     @Override
-    public YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    @Transactional(rollbackFor = Throwable.class)
+    public YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request, User user) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -148,6 +153,7 @@ public class KeyServiceImpl implements KeyService {
             } else if (publicKey instanceof ECKey) {
                 key.setKeyFormat(KeyFormat.EC);
             }
+            key.setUser(user);
             key.setYubicoManagementKey(request.getManagementKey());
             key.setYubicoPin(request.getPin());
             key.setYubicoPivSlot(pivSlot.getStringAlias());

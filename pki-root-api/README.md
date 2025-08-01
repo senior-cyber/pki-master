@@ -29,7 +29,7 @@ User=socheat
 Group=socheat
 WorkingDirectory=/opt/apps/pki-master/pki-root-api
 ExecStart=/opt/apps/pki-master/pki-root-api/run.sh
-StartLimitInterval=0
+StartLimitInterval=15
 
 [Install]
 WantedBy=multi-user.target

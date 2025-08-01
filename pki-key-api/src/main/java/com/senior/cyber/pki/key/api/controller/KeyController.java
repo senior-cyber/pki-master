@@ -60,7 +60,7 @@ public class KeyController {
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaKeyGenerateResponse response = this.keyService.generate(request);
+        JcaKeyGenerateResponse response = this.keyService.generate(request, user);
         return ResponseEntity.ok(response);
     }
 
@@ -113,7 +113,7 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyGenerateResponse response = this.keyService.generate(request);
+        YubicoKeyGenerateResponse response = this.keyService.generate(request, user);
         return ResponseEntity.ok(response);
     }
 
@@ -129,7 +129,7 @@ public class KeyController {
         if (request.getPublicKey() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaKeyRegisterResponse response = this.keyService.register(request);
+        JcaKeyRegisterResponse response = this.keyService.register(request, user);
         return ResponseEntity.ok(response);
     }
 
@@ -174,7 +174,7 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyRegisterResponse response = this.keyService.register(request);
+        YubicoKeyRegisterResponse response = this.keyService.register(request, user);
         return ResponseEntity.ok(response);
     }
 

@@ -15,6 +15,7 @@ import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.PivSession;
@@ -56,7 +57,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException {
+    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Provider provider = null;
         SmartCardConnection connection = null;
         PivSession session = null;
@@ -79,6 +80,7 @@ public class RootServiceImpl implements RootService {
             YubiKeyDevice device = YubicoProviderUtils.lookupDevice(rootKey.getYubicoSerial());
             connection = device.openConnection(SmartCardConnection.class);
             session = new PivSession(connection);
+            session.authenticate(YubicoProviderUtils.hexStringToByteArray(rootKey.getYubicoManagementKey()));
             provider = new PivProvider(session);
             KeyStore ks = YubicoProviderUtils.lookupKeyStore(provider);
             for (Slot s : Slot.values()) {
@@ -213,8 +215,10 @@ public class RootServiceImpl implements RootService {
             response.setCertificate(rootCertificate);
             response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(rootCertificate).getBytes(StandardCharsets.UTF_8)));
             response.setPublicKey(rootKey.getPublicKey());
-            response.setPrivateKey(rootPrivateKey);
-            response.setPrivateKeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(rootPrivateKey).getBytes(StandardCharsets.UTF_8)));
+            if (rootKey.getType() != KeyTypeEnum.ServerKeyYubico) {
+                response.setPrivateKey(rootPrivateKey);
+                response.setPrivateKeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(rootPrivateKey).getBytes(StandardCharsets.UTF_8)));
+            }
             response.setOcspCertificate(ocspCertificate);
             response.setOcspPublicKey(ocspCertificate.getPublicKey());
             response.setOcspPrivateKey(ocspKey.getPrivateKey());

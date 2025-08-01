@@ -118,6 +118,7 @@ public class CertificateServiceImpl implements CertificateService {
                 if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
                 }
+                publicKey = certificateKey.getPublicKey();
             } else {
                 if (request.getPublicKey() != null) {
                     publicKey = request.getPublicKey();
@@ -157,7 +158,7 @@ public class CertificateServiceImpl implements CertificateService {
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, request.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -289,6 +290,7 @@ public class CertificateServiceImpl implements CertificateService {
                 if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
                 }
+                publicKey = certificateKey.getPublicKey();
             } else {
                 if (request.getPublicKey() != null) {
                     publicKey = request.getPublicKey();
@@ -328,7 +330,7 @@ public class CertificateServiceImpl implements CertificateService {
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, request.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -411,8 +413,6 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     @Transactional
     public SshCertificateGenerateResponse sshGenerate(User user, SshCertificateGenerateRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        Date now = LocalDate.now().toDate();
-
         Key _issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
 
         SmartCardConnection connection = null;
