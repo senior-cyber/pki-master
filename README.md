@@ -239,3 +239,24 @@ yubihsm-auth setup --keyset-id 1 --label "Admin" --password-from-prompt
 yubihsm-shell --authkey 1 --password-from-prompt
 
 ```
+
+```angular2html
+ykman otp yubiotp 1 --serial-public-id --generate-private-id --generate-key
+
+ykman otp yubiotp 1 --serial-public-id --generate-private-id --generate-key -O yubicloud.csv
+https://upgrade.yubico.com/getapikey/
+
+https://upload.yubico.com/
+```
+
+```text
+Home / OTP / Short Touch (Slot 1) or Home / OTP / Long Touch (Slot 2)
+- Yubico OTP - it is one time password authentication
+- Challenge Response - it is offline challenge response verification, use for Linux PAM, Window Login, Mac Login
+- Static Password - it is a static password auto fill
+- OATH-HOTP - it is HMAC-based One-Time Password, 6 digit
+Home / FIDO2 : it is Passkeys
+Home / PIV (Personal Identity Verification) : it is x509 certificate
+
+TOTP: it is Time-Base One-Time Password, 6 digit 
+```
