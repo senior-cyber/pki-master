@@ -264,3 +264,17 @@ PIN : it is PIN
 PUK : it is PIN Unlock Code
 
 ```
+
+```shell
+https://www.youtube.com/watch?v=INi-xKpYjbE&t=474s
+
+Window Login
+Mac Login
+Linux
+  - Login
+  - SSH
+    - FIDO2
+    - Yobico OTP
+  - TTY
+  - SUDO
+```
