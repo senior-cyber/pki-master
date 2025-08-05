@@ -414,6 +414,9 @@ public class CertificateServiceImpl implements CertificateService {
     @Transactional
     public SshCertificateGenerateResponse sshGenerate(User user, SshCertificateGenerateRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Key _issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
+//        uhlvvIBiBdvHDLuvjUHrTInvGGigCgilfhcBTj
+//        uhlvvIBiBdvHDLuvjUHrTInvGGigCgilfhcBTj
+//        2326da3c099d0e2edf1d611b0e3d716de28f1396
 
         SmartCardConnection connection = null;
 

@@ -2,7 +2,10 @@ package com.senior.cyber.pki.key.api.controller;
 
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.UserService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
@@ -21,6 +24,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -37,8 +41,39 @@ public class KeyController {
     @Autowired
     protected UserService userService;
 
+    @Autowired
+    protected KeyRepository keyRepository;
+
     @Value("${api.ssh}")
     protected String sshApi;
+
+    @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyInfoResponse> info(RequestEntity<Void> httpRequest, @RequestParam("id") String id) {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+
+//        Void request = httpRequest.getBody();
+//        if (request == null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+//        }
+
+        Key key = this.keyRepository.findById(id).orElseThrow();
+
+        KeyInfoResponse response = new KeyInfoResponse();
+        response.setId(key.getId());
+        if (key.getType() != null) {
+            response.setType(key.getType().name());
+        }
+        if (key.getKeyFormat() != null) {
+            response.setKeyFormat(key.getKeyFormat().name());
+        }
+        response.setPrivateKey(key.getPrivateKey());
+        response.setPublicKey(key.getPublicKey());
+        response.setCreatedDatetime(key.getCreatedDatetime());
+        if (key.getKeySize() > 0) {
+            response.setKeySize(key.getKeySize());
+        }
+        return ResponseEntity.ok(response);
+    }
 
     @RequestMapping(path = "/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<JcaKeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) {

@@ -227,3 +227,15 @@ kubectl get pod -n shopping
 7. Azure Cloud
 8. Nginx
 ```
+
+```text
+# 1. Make sure CCID is on (not needed on default config)
+ykman config usb --enable {OTP|U2F|FIDO2|OATH|PIV|OPENPGP|HSMAUTH}
+
+# 2. Generate credentials on the YubiKey
+yubihsm-auth setup --keyset-id 1 --label "Admin" --password-from-prompt
+
+# 3. Connect to the HSM using those credentials
+yubihsm-shell --authkey 1 --password-from-prompt
+
+```

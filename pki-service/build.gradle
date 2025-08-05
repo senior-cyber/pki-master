@@ -28,6 +28,10 @@ dependencies {
     implementation "com.yubico.yubikit:piv:${yubikit}"
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"
+    implementation "com.yubico.yubikit:core:${yubikit}"
+    implementation "com.yubico.yubikit:yubiotp:${yubikit}"
+    implementation "com.yubico.yubikit:oath:${yubikit}"
+    implementation "com.yubico.yubikit:fido:${yubikit}"
 
     implementation "org.apache.sshd:sshd-core:${sshd_common}"
 
