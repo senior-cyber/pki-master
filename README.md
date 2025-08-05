@@ -258,5 +258,9 @@ Home / OTP / Short Touch (Slot 1) or Home / OTP / Long Touch (Slot 2)
 Home / FIDO2 : it is Passkeys
 Home / PIV (Personal Identity Verification) : it is x509 certificate
 
-TOTP: it is Time-Base One-Time Password, 6 digit 
+TOTP: it is Time-Base One-Time Password, 6 digit
+
+PIN : it is PIN
+PUK : it is PIN Unlock Code
+
 ```
