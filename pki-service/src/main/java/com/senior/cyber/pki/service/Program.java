@@ -3,28 +3,30 @@ package com.senior.cyber.pki.service;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.CommandException;
+import com.yubico.yubikit.core.fido.FidoConnection;
 import com.yubico.yubikit.core.otp.Modhex;
 import com.yubico.yubikit.core.otp.OtpConnection;
 import com.yubico.yubikit.core.smartcard.SmartCardConnection;
-import com.yubico.yubikit.core.smartcard.scp.SecurityDomainSession;
-import com.yubico.yubikit.desktop.YubiKitManager;
-import com.yubico.yubikit.management.DeviceInfo;
-import com.yubico.yubikit.management.ManagementSession;
+import com.yubico.yubikit.fido.client.BasicWebAuthnClient;
+import com.yubico.yubikit.fido.client.ClientError;
+import com.yubico.yubikit.fido.ctap.Ctap2Session;
+import com.yubico.yubikit.fido.webauthn.*;
+import com.yubico.yubikit.oath.CredentialData;
 import com.yubico.yubikit.oath.OathSession;
-import com.yubico.yubikit.yubiotp.Slot;
-import com.yubico.yubikit.yubiotp.YubiOtpSession;
-import com.yubico.yubikit.yubiotp.YubiOtpSlotConfiguration;
+import com.yubico.yubikit.oath.ParseUriException;
+import com.yubico.yubikit.yubiotp.*;
 
-import java.io.Console;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.HexFormat;
-import java.util.Map;
+import java.util.*;
 
 public class Program {
 
-    public static void main(String[] args) throws IOException, CommandException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws IOException, CommandException, NoSuchAlgorithmException, ParseUriException, URISyntaxException, ClientError {
 
 //        YubiKitManager manager = new YubiKitManager();
 //        for (Map.Entry<YubiKeyDevice, DeviceInfo> p : manager.listAllDevices().entrySet()) {
@@ -33,42 +35,146 @@ public class Program {
 //            System.out.println(info.getSerialNumber());
 //        }
 
-        YubiKeyDevice device = YubicoProviderUtils.lookupDevice("34247908");
+        YubiKeyDevice device = YubicoProviderUtils.lookupDevice("23275988");
+        fido2(device);
 
-//        if (device.supportsConnection(SmartCardConnection.class)) {
-//            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-//                PivSession session = new PivSession(connection);
-//            }
-//        }
-//
-//        if (device.supportsConnection(SmartCardConnection.class)) {
-//            try (FidoConnection connection = device.openConnection(FidoConnection.class)) {
-//                Ctap2Session session = new Ctap2Session(connection);
-//            }
-//        }
-//
+
+    }
+
+    public static void fido2(YubiKeyDevice device) throws IOException, URISyntaxException, ClientError, CommandException {
+        if (!device.supportsConnection(FidoConnection.class)) {
+            System.err.println("❌ This YubiKey does not support FIDO2.");
+            return;
+        }
+
+        try (FidoConnection connection = device.openConnection(FidoConnection.class)) {
+            Ctap2Session ctapSession = new Ctap2Session(connection);
+            BasicWebAuthnClient client = new BasicWebAuthnClient(ctapSession);
+
+            // Domain must be DNS-valid for YubiKey (nip.io resolves to 127.0.0.1)
+            String rpDomain = "127.0.0.1.nip.io";
+            String origin = "https://" + rpDomain;
+
+            // Step 1: Random challenge
+            byte[] challenge = new byte[32];
+            new SecureRandom().nextBytes(challenge);
+
+            // Step 2: Create clientDataJSON manually
+            String encodedChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(challenge);
+            String clientDataJsonString = "{"
+                    + "\"type\":\"webauthn.create\","
+                    + "\"challenge\":\"" + encodedChallenge + "\","
+                    + "\"origin\":\"" + origin + "\""
+                    + "}";
+            byte[] clientDataJson = clientDataJsonString.getBytes(StandardCharsets.UTF_8);
+
+            // Step 3: Relying party
+            PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity(rpDomain, "Test RP");
+
+            // Step 4: User entity
+            PublicKeyCredentialUserEntity user = new PublicKeyCredentialUserEntity(
+                    "user@example.com",
+                    UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8),
+                    "Test User"
+            );
+
+            // Step 5: Credential parameters
+            PublicKeyCredentialParameters pubKeyParams = new PublicKeyCredentialParameters(
+                    PublicKeyCredentialType.PUBLIC_KEY,
+                    -7 // ES256
+            );
+
+            // Step 6: Authenticator selection
+            AuthenticatorSelectionCriteria selection = new AuthenticatorSelectionCriteria(
+                    AuthenticatorAttachment.CROSS_PLATFORM,
+                    ResidentKeyRequirement.DISCOURAGED,
+                    UserVerificationRequirement.PREFERRED
+            );
+
+            // Step 7: Create options
+            PublicKeyCredentialCreationOptions options = new PublicKeyCredentialCreationOptions(
+                    rp,
+                    user,
+                    challenge,
+                    Collections.singletonList(pubKeyParams),
+                    60000L,
+                    null,
+                    selection,
+                    "none",
+                    null
+            );
+
+            // Step 8: Call makeCredential
+            PublicKeyCredential credential = client.makeCredential(
+                    clientDataJson,
+                    options,
+                    rpDomain,
+                    null,   // PIN if set (char[]), or null
+                    null,   // enterpriseAttestation
+                    null    // commandState
+            );
+
+//            // Step 9: Output result
+//            System.out.println("✅ Credential Created:");
+//            System.out.println(" - ID: " + Base64.getUrlEncoder().withoutPadding().encodeToString(credential.getId()));
+//            System.out.println(" - Format: " + credential.getResponse().getFormat());
+//            System.out.println(" - PublicKey: " + Base64.getEncoder().encodeToString(credential.getResponse().getCredentialPublicKey()));
+        }
+    }
+
+    public static void oathTotp(YubiKeyDevice device) throws IOException, CommandException, URISyntaxException, ParseUriException {
         if (device.supportsConnection(SmartCardConnection.class)) {
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                // Initialize OATH application
                 OathSession session = new OathSession(connection);
-//                session.setAccessKey("".getBytes(StandardCharsets.UTF_8));
-//                session.setPassword("".toCharArray());
+
+                URI uri = new URI("otpauth://totp/Example:demo@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example");
+
+                CredentialData data = CredentialData.parseUri(uri); // parse from URI :contentReference[oaicite:5]{index=5}
+                System.out.println("Parsed credential:");
+                System.out.println("  Account: " + data.getAccountName());
+                System.out.println("  Issuer:  " + data.getIssuer());
+                System.out.println("  Period:  " + data.getPeriod());
+                System.out.println("  Digits:  " + data.getDigits());
+
+                // Write to key
+                session.putCredential(data, false);
+                System.out.println("TOTP credential written successfully.");
             }
         }
+    }
 
+    public static void oathHotp(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException, URISyntaxException, ParseUriException {
         if (device.supportsConnection(SmartCardConnection.class)) {
             try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                ManagementSession session = new ManagementSession(connection);
-                //DeviceInfo deviceInfo = session.getDeviceInfo();
-                System.out.println("");
+                // Initialize OATH application
+                OathSession session = new OathSession(connection);
+
+                URI uri = new URI("otpauth://hotp/Test:hotp@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Test&counter=0");
+
+                CredentialData data = CredentialData.parseUri(uri); // parse from URI :contentReference[oaicite:5]{index=5}
+                System.out.println("Parsed credential:");
+                System.out.println("  Account: " + data.getAccountName());
+                System.out.println("  Issuer:  " + data.getIssuer());
+                System.out.println("  Period:  " + data.getPeriod());
+                System.out.println("  Digits:  " + data.getDigits());
+
+                // Write to key
+                session.putCredential(data, false);
+                System.out.println("TOTP credential written successfully.");
             }
         }
+    }
 
-        if (device.supportsConnection(SmartCardConnection.class)) {
-            try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-                SecurityDomainSession session = new SecurityDomainSession(connection);
-            }
-        }
-
+    /**
+     * yubico OTP
+     *
+     * @param device
+     * @throws IOException
+     * @throws CommandException
+     * @throws NoSuchAlgorithmException
+     */
+    public static void yubicoOtp(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException {
         if (device.supportsConnection(OtpConnection.class)) {
             try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
                 YubiOtpSession session = new YubiOtpSession(connection);
@@ -103,37 +209,204 @@ public class Program {
                 // publicId (modhex) -> bytes; privateId/key are raw bytes.
                 byte[] publicIdBytes = Modhex.decode(publicIdModhex);
 
-                YubiOtpSlotConfiguration cfg = new YubiOtpSlotConfiguration(publicIdBytes, privateId, secretKey);
+                YubiOtpSlotConfiguration configuration = new YubiOtpSlotConfiguration(publicIdBytes, privateId, secretKey);
                 // With default flags this mimics "ykman otp yubiotp 1 ..." behavior. :contentReference[oaicite:5]{index=5}
 
-                session.putConfiguration(Slot.ONE, cfg, null, null); // write, no access code. :contentReference[oaicite:6]{index=6}
+                session.putConfiguration(Slot.ONE, configuration, null, null); // write, no access code. :contentReference[oaicite:6]{index=6}
                 System.out.println("Slot 1 programmed.");
             }
         }
+    }
 
-//        if (device.supportsConnection(OtpConnection.class)) {
-//            try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
-//                YubiOtpSession session = new YubiOtpSession(connection);
-//                ConfigurationState state = session.getConfigurationState();
-////            String configuredSlots = " ";
-////            if (state.isConfigured(Slot.ONE)) {
-////                configuredSlots += "SLOT1 ";
-////            }
-////            if (state.isConfigured(Slot.TWO)) {
-////                configuredSlots += "SLOT2";
-////            }
-////            System.out.println(configuredSlots);
-//            }
-//        }
+    /**
+     * yubico OTP
+     *
+     * @param device
+     * @throws IOException
+     * @throws CommandException
+     * @throws NoSuchAlgorithmException
+     */
+    public static void yubicoOtpChallengeResponse(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException {
+        if (device.supportsConnection(OtpConnection.class)) {
+            try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
+                YubiOtpSession session = new YubiOtpSession(connection);
+                // Generate a random 20-byte key (max allowed)
+                byte[] secretKey = new byte[20];
+                SecureRandom.getInstanceStrong().nextBytes(secretKey);
 
-//        if (device.supportsConnection(FidoConnection.class)) {
-//            try (FidoConnection connection = device.openConnection(FidoConnection.class)) {
-//                FidoProtocol session = new FidoProtocol(connection);
-//                Ctap2Session ctap2Session = new Ctap2Session(connection);
-//                CommandState state = new CommandState();
-//                ctap2Session.reset(state);   // CommandState can be null for blocking call
-//            }
-//        }
+                String hexKey = HexFormat.of().formatHex(secretKey);
+                System.out.println("Generated HMAC-SHA1 Key: " + hexKey);
+
+                // Create config (with user-visible option like require touch)
+                HmacSha1SlotConfiguration configuration = new HmacSha1SlotConfiguration(secretKey);
+                configuration.requireTouch(false);
+
+                session.putConfiguration(Slot.ONE, configuration, null, null); // write, no access code. :contentReference[oaicite:6]{index=6}
+                System.out.println("Slot 1 programmed.");
+            }
+        }
+    }
+
+    public static void yubicoHotp(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException {
+        if (device.supportsConnection(OtpConnection.class)) {
+            try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
+                YubiOtpSession session = new YubiOtpSession(connection);
+                // 1. Generate a random 20-byte HOTP secret (maximum allowed)
+                byte[] secretKey = new byte[20];
+                SecureRandom.getInstanceStrong().nextBytes(secretKey);
+
+                // Optional: encode as hex for printing
+                System.out.println("Generated HOTP Key: " + HexFormat.of().formatHex(secretKey));
+
+                // 2. Create HOTP slot configuration
+                HotpSlotConfiguration configuration = new HotpSlotConfiguration(secretKey);
+
+                // 3. Program to slot (e.g., SLOT.ONE or SLOT.TWO)
+                session.putConfiguration(Slot.ONE, configuration, null, null);
+                System.out.println("HOTP configuration written to Slot 1.");
+            }
+        }
+    }
+
+    public static void yubicoStaticPassword(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException {
+        if (device.supportsConnection(OtpConnection.class)) {
+            try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
+                YubiOtpSession session = new YubiOtpSession(connection);
+
+                String password = "<!3z#b1K]hB0QtipsuC!U&oU7lN^+SVHwFU7o>";
+                byte[] scanCodes = toScanCodeBytes(password);
+                StaticPasswordSlotConfiguration configuration = new StaticPasswordSlotConfiguration(scanCodes);
+
+                // 3. Program to slot (e.g., SLOT.ONE or SLOT.TWO)
+                session.putConfiguration(Slot.ONE, configuration, null, null);
+                System.out.println("HOTP configuration written to Slot 1.");
+            }
+        }
+    }
+
+    public static void yubicoStaticTicket(YubiKeyDevice device) throws IOException, CommandException, NoSuchAlgorithmException {
+        if (device.supportsConnection(OtpConnection.class)) {
+            try (OtpConnection connection = device.openConnection(OtpConnection.class)) {
+                YubiOtpSession session = new YubiOtpSession(connection);
+
+                // Step 1: Generate values (16 bytes = 32 modhex chars)
+                SecureRandom random = SecureRandom.getInstanceStrong();
+
+                byte[] fixed = new byte[6]; // Public ID = 12 modhex characters
+                byte[] uid = new byte[6];   // Private ID
+                byte[] key = new byte[16];  // AES key
+
+                random.nextBytes(fixed);
+                random.nextBytes(uid);
+                random.nextBytes(key);
+
+                // Step 2: Create OTP configuration
+                StaticTicketSlotConfiguration configuration = new StaticTicketSlotConfiguration(fixed, uid, key);
+
+
+                // 3. Program to slot (e.g., SLOT.ONE or SLOT.TWO)
+                session.putConfiguration(Slot.ONE, configuration, null, null);
+                System.out.println("HOTP configuration written to Slot 1.");
+            }
+        }
+    }
+
+    // Struct to hold scan code and whether Shift is required
+    public static class ScanCode {
+        public final byte code;
+        public final boolean requiresShift;
+
+        public ScanCode(int code, boolean shift) {
+            this.code = (byte) code;
+            this.requiresShift = shift;
+        }
+    }
+
+    private static final Map<Character, ScanCode> US_QWERTY_MAP = new HashMap<>();
+
+    static {
+        // Digits
+        US_QWERTY_MAP.put('1', new ScanCode(0x1E, false));
+        US_QWERTY_MAP.put('!', new ScanCode(0x1E, true));
+        US_QWERTY_MAP.put('2', new ScanCode(0x1F, false));
+        US_QWERTY_MAP.put('@', new ScanCode(0x1F, true));
+        US_QWERTY_MAP.put('3', new ScanCode(0x20, false));
+        US_QWERTY_MAP.put('#', new ScanCode(0x20, true));
+        US_QWERTY_MAP.put('4', new ScanCode(0x21, false));
+        US_QWERTY_MAP.put('$', new ScanCode(0x21, true));
+        US_QWERTY_MAP.put('5', new ScanCode(0x22, false));
+        US_QWERTY_MAP.put('%', new ScanCode(0x22, true));
+        US_QWERTY_MAP.put('6', new ScanCode(0x23, false));
+        US_QWERTY_MAP.put('^', new ScanCode(0x23, true));
+        US_QWERTY_MAP.put('7', new ScanCode(0x24, false));
+        US_QWERTY_MAP.put('&', new ScanCode(0x24, true));
+        US_QWERTY_MAP.put('8', new ScanCode(0x25, false));
+        US_QWERTY_MAP.put('*', new ScanCode(0x25, true));
+        US_QWERTY_MAP.put('9', new ScanCode(0x26, false));
+        US_QWERTY_MAP.put('(', new ScanCode(0x26, true));
+        US_QWERTY_MAP.put('0', new ScanCode(0x27, false));
+        US_QWERTY_MAP.put(')', new ScanCode(0x27, true));
+
+        // Letters
+        for (char c = 'a'; c <= 'z'; c++) {
+            US_QWERTY_MAP.put(c, new ScanCode(0x04 + (c - 'a'), false));
+        }
+        for (char c = 'A'; c <= 'Z'; c++) {
+            US_QWERTY_MAP.put(c, new ScanCode(0x04 + (c - 'A'), true));
+        }
+
+        // Common symbols
+        US_QWERTY_MAP.put('-', new ScanCode(0x2D, false));
+        US_QWERTY_MAP.put('_', new ScanCode(0x2D, true));
+        US_QWERTY_MAP.put('=', new ScanCode(0x2E, false));
+        US_QWERTY_MAP.put('+', new ScanCode(0x2E, true));
+        US_QWERTY_MAP.put('[', new ScanCode(0x2F, false));
+        US_QWERTY_MAP.put('{', new ScanCode(0x2F, true));
+        US_QWERTY_MAP.put(']', new ScanCode(0x30, false));
+        US_QWERTY_MAP.put('}', new ScanCode(0x30, true));
+        US_QWERTY_MAP.put('\\', new ScanCode(0x31, false));
+        US_QWERTY_MAP.put('|', new ScanCode(0x31, true));
+        US_QWERTY_MAP.put(';', new ScanCode(0x33, false));
+        US_QWERTY_MAP.put(':', new ScanCode(0x33, true));
+        US_QWERTY_MAP.put('\'', new ScanCode(0x34, false));
+        US_QWERTY_MAP.put('"', new ScanCode(0x34, true));
+        US_QWERTY_MAP.put(',', new ScanCode(0x36, false));
+        US_QWERTY_MAP.put('<', new ScanCode(0x36, true));
+        US_QWERTY_MAP.put('.', new ScanCode(0x37, false));
+        US_QWERTY_MAP.put('>', new ScanCode(0x37, true));
+        US_QWERTY_MAP.put('/', new ScanCode(0x38, false));
+        US_QWERTY_MAP.put('?', new ScanCode(0x38, true));
+        US_QWERTY_MAP.put(' ', new ScanCode(0x2C, false));
+    }
+
+    public static byte[] toScanCodeBytes(String input) {
+        List<Byte> result = new ArrayList<>();
+
+        for (char c : input.toCharArray()) {
+            ScanCode code = US_QWERTY_MAP.get(c);
+            if (code == null) {
+                throw new IllegalArgumentException("Unsupported character: " + c);
+            }
+
+            byte encoded;
+            if (code.requiresShift) {
+                encoded = (byte) (code.code | 0x80); // Use high bit to indicate SHIFT
+            } else {
+                encoded = code.code;
+            }
+
+            result.add(encoded);
+        }
+
+        if (result.size() > 38) {
+            throw new IllegalArgumentException("Password too long (max 38 scan codes)");
+        }
+
+        byte[] output = new byte[result.size()];
+        for (int i = 0; i < output.length; i++) {
+            output[i] = result.get(i);
+        }
+        return output;
     }
 
 }

@@ -268,10 +268,15 @@ PUK : it is PIN Unlock Code
 ```shell
 https://www.youtube.com/watch?v=INi-xKpYjbE&t=474s
 
-Window Login (https://support.microsoft.com/en-us/windows/configure-windows-hello-dae28983-8242-bb2a-d3d1-87c9d265a5f0)
-MacOS Login (https://support.yubico.com/hc/en-us/articles/360016649059-YubiKey-for-macOS-login)
+Window Login
+  - (https://support.microsoft.com/en-us/windows/configure-windows-hello-dae28983-8242-bb2a-d3d1-87c9d265a5f0)
+  - https://github.com/privacyidea/pi-authenticator
+  - https://github.com/privacyidea/privacyidea-credential-provider
+MacOS Login 
+  - (https://support.yubico.com/hc/en-us/articles/360016649059-YubiKey-for-macOS-login)
+  - Platform SSO Extension + SSO Extension (https://twocanoes.com/products/mac/xcreds/)
 Linux (https://developers.yubico.com/pam-u2f/)
-  - Login
+  - Login (ubuntu/authd) - https://github.com/ubuntu/authd/tree/main
   - SSH
     - FIDO2
     - Yobico OTP
