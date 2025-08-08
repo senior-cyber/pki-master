@@ -277,4 +277,10 @@ Linux (https://developers.yubico.com/pam-u2f/)
     - Yobico OTP
   - TTY
   - SUDO
+Android
+  - https://codelabs.developers.google.com/credential-manager-api-for-android?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fpasskeys%23codelab-https%3A%2F%2Fcodelabs.developers.google.com%2Fcredential-manager-api-for-android#2
+  - https://github.com/Yubico/yubikit-android
+iOS
+  - https://github.com/Yubico/yubikit-swift
+  - https://developer.apple.com/documentation/authenticationservices/supporting-passkeys
 ```
