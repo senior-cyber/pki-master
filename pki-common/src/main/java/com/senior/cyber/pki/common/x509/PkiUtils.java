@@ -36,6 +36,22 @@ import java.util.*;
  * KU: Key Usage
  * EKU: Extended Key Usage
  * LDS: Logical Data Structure.
+ * DG1 — MRZ data (exact copy of the printed MRZ). Required.
+ * DG2 — Encoded facial image (JPEG/JPEG2000/updated biometrics format). Required.
+ * DG3 — Fingerprint(s) (if a state uses them). Optional.
+ * DG4 — Iris image(s) (if used). Optional.
+ * DG5 — Displayed portrait (scan of the printed photo on the data page). Optional.
+ * DG6 — Reserved for future use (no defined content in Doc 9303). Optional.
+ * DG7 — Displayed signature or usual mark (image of the holder’s signature/mark). Optional.
+ * DG8 — Data feature(s) (slot for additional facial features/encodings; rarely used). Optional.
+ * DG9 — Structure feature(s) (historically reserved; Doc 9303 leaves this undefined / proprietary). Optional.
+ * DG10 — Substance feature(s) (historically reserved; undefined in Doc 9303). Optional.
+ * DG11 — Additional personal details (e.g., full name in national script, place of birth, etc.). Optional.
+ * DG12 — Additional document details (e.g., issuing authority, issue date). Optional.
+ * DG13 — Optional details (issuer-specific). Optional.
+ * DG14 — Security options / Chip Authentication public key & metadata. Conditional.
+ * DG15 — Active Authentication public key info. Conditional.
+ * DG16 — Person(s) to notify (emergency contact). Optional.
  */
 public class PkiUtils {
 
