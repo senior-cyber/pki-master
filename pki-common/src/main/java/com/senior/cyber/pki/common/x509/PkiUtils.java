@@ -26,6 +26,17 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
+/**
+ * CSCA: Country Signing Certification Authority
+ * ICAO: International Civil Aviation Organization. They publish the e-passport spec (Doc 9303) and run the global key-sharing service (PKD).
+ * PKD: Public Key Directory, ICAO’s clearinghouse where countries upload/share their CSCA certs, link certs, CRLs, and often DSCs/Master Lists. Border systems sync from PKD (and/or bilateral exchanges) to know which keys to trust.
+ * DSC: Document Signer Certificate
+ * MRZ: Machine Readable Zone
+ * LDS Security Object: " The ASN.1 structure inside EF.SOD that holds: a version, the digest algorithm, and the list of (DG number → DG hash) pairs. (LDS = Logical Data Structure—the standardized file layout on the chip: EF.COM, DG1, DG2, …)
+ * KU: Key Usage
+ * EKU: Extended Key Usage
+ * LDS: Logical Data Structure.
+ */
 public class PkiUtils {
 
     private static final Provider X509_PROVIDER = new BouncyCastleProvider();
