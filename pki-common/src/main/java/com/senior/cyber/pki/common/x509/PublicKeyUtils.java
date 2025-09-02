@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.x509;
 
+import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -20,19 +21,20 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
+import java.security.interfaces.ECKey;
+import java.security.interfaces.RSAKey;
 import java.util.Base64;
 
 public class PublicKeyUtils {
 
-    private static final SecureRandom RANDOM = new SecureRandom(); 
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
-    public boolean verifyText(PublicKey publicKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public static boolean verifyText(PublicKey publicKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = null;
-        if (publicKey instanceof RSAPublicKey) {
+        if (publicKey instanceof RSAKey) {
             signature = Signature.getInstance("SHA256withRSA");
-        } else if (publicKey instanceof ECPublicKey) {
+        } else if (publicKey instanceof ECKey) {
             signature = Signature.getInstance("SHA256withECDSA");
         } else {
             throw new IllegalArgumentException(publicKey.getClass().getName() + " is not supported");
@@ -43,22 +45,27 @@ public class PublicKeyUtils {
         return signature.verify(Base64.getDecoder().decode(text.substring(0, dotIndex)));
     }
 
-    public static String encryptText(PublicKey publicKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Provider provider = new BouncyCastleProvider();
-        if (publicKey instanceof RSAPublicKey) {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING", provider);
+    public static String encryptText(Provider provider, PublicKey publicKey, String text) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        if (publicKey instanceof RSAKey) {
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] cipherData = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(cipherData);
-        } else if (publicKey instanceof ECPublicKey) {
-            int length = 16;
-            byte[] iv = RANDOM.generateSeed(length);
-            byte[] derivation = iv.clone();
-            byte[] encoding = iv.clone();
-            Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC", provider);
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
-            byte[] cipherData = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(iv) + "." + Base64.getEncoder().encodeToString(cipherData);
+        } else if (publicKey instanceof ECKey) {
+            if (provider instanceof BouncyCastleProvider) {
+                int length = 16;
+                byte[] iv = RANDOM.generateSeed(length);
+                byte[] derivation = iv.clone();
+                byte[] encoding = iv.clone();
+                Cipher cipher = Cipher.getInstance("ECIESwithSHA256andAES-CBC");
+                cipher.init(Cipher.ENCRYPT_MODE, publicKey, new IESParameterSpec(derivation, encoding, length * 8, length * 8, iv, false));
+                byte[] cipherData = cipher.doFinal(text.getBytes(StandardCharsets.UTF_8));
+                return Base64.getEncoder().encodeToString(iv) + "." + Base64.getEncoder().encodeToString(cipherData);
+            } else if (provider instanceof PivProvider) {
+                throw new IllegalArgumentException(publicKey.getClass().getName() + " is not supported");
+            } else {
+                throw new IllegalArgumentException(provider.getClass().getName() + " is not supported");
+            }
         } else {
             throw new IllegalArgumentException(publicKey.getClass().getName() + " is not supported");
         }
@@ -76,16 +83,15 @@ public class PublicKeyUtils {
 
     public static PublicKey convert(String value) {
         try (PEMParser parser = new PEMParser(new StringReader(value))) {
-            Provider provider = new BouncyCastleProvider();
             Object object = parser.readObject();
             if (object instanceof X509CertificateHolder holder) {
                 JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
-                converter.setProvider(provider);
+                converter.setProvider(PROVIDER);
                 X509Certificate certificate = converter.getCertificate(holder);
                 return certificate.getPublicKey();
             } else if (object instanceof SubjectPublicKeyInfo holder) {
                 JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-                converter.setProvider(provider);
+                converter.setProvider(PROVIDER);
                 return converter.getPublicKey(holder);
             } else {
                 throw new java.lang.UnsupportedOperationException(object.getClass().getName());

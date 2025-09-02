@@ -7,14 +7,19 @@ import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.desktop.YubiKitManager;
 import com.yubico.yubikit.management.DeviceInfo;
 import com.yubico.yubikit.piv.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 
 public class YubicoProviderUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(YubicoProviderUtils.class);
 
     public static byte[] hexStringToByteArray(String hex) {
         int len = hex.length();
@@ -39,42 +44,63 @@ public class YubicoProviderUtils {
     }
 
     public static PublicKey generateKey(PivSession session, Slot pivSlot, KeyType keyType) {
-        PublicKeyValues publicKeyValues = null;
         try {
-            publicKeyValues = session.generateKeyValues(pivSlot, keyType, PinPolicy.NEVER, TouchPolicy.NEVER);
-        } catch (IOException | ApduException | BadResponseException e) {
-            return null;
-        }
-        try {
+            PublicKeyValues publicKeyValues = session.generateKeyValues(pivSlot, keyType, PinPolicy.NEVER, TouchPolicy.NEVER);
             return publicKeyValues.toPublicKey();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            return null;
+        } catch (IOException | ApduException | BadResponseException | NoSuchAlgorithmException |
+                 InvalidKeySpecException e) {
+            LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
         }
+        return null;
     }
 
     public static KeyStore lookupKeyStore(Provider provider) {
-        KeyStore ks = null;
         try {
-            ks = KeyStore.getInstance("YKPiv", provider);
-        } catch (KeyStoreException e) {
-            System.err.println(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        try {
+            KeyStore ks = KeyStore.getInstance("YKPiv", provider);
             ks.load(null);  // PIN
-        } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
-            System.err.println(e.getMessage());
-            throw new RuntimeException(e);
+            return ks;
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+            LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
         }
-        return ks;
+        return null;
     }
 
     public static PrivateKey lookupPrivateKey(KeyStore ks, Slot slot, String pin) {
         try {
             return (PrivateKey) ks.getKey(slot.getStringAlias(), pin.toCharArray());
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-            return null;
+            LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
         }
+        return null;
+    }
+
+    public static PublicKey lookupPublicKey(PivSession session, Slot slot) {
+        if (session.supports(PivSession.FEATURE_METADATA)) {
+            try {
+                SlotMetadata meta = session.getSlotMetadata(slot);
+                return meta.getPublicKeyValues().toPublicKey();
+            } catch (ApduException | IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+                LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
+            }
+        }
+
+        try {
+            X509Certificate certificate = session.getCertificate(slot);
+            return certificate.getPublicKey();
+        } catch (BadResponseException | IOException | ApduException e) {
+            LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
+        }
+
+        if (session.supports(PivSession.FEATURE_ATTESTATION)) {
+            try {
+                X509Certificate certificate = session.attestKey(slot);
+                return certificate.getPublicKey();
+            } catch (BadResponseException | IOException | ApduException e) {
+                LOGGER.info("lookupPublicKey [{}] [{}]", e.getClass().getSimpleName(), e.getMessage());
+            }
+        }
+
+        return null;
     }
 
 }

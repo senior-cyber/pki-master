@@ -20,13 +20,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OcspUtils {
+
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     public static List<String> lookupUrl(X509Certificate certificate) throws IOException {
         byte[] bytes = certificate.getExtensionValue(Extension.authorityInfoAccess.getId());
@@ -64,11 +65,9 @@ public class OcspUtils {
 
     public static boolean validate(X509Certificate certificate, X509Certificate issuerCertificate, String ocspUri)
             throws OCSPException, OperatorCreationException, IOException, CertificateException, InterruptedException {
-        Provider provider = new BouncyCastleProvider();
-
         // Step 1: Create CertificateID for OCSP request
         DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder()
-                .setProvider(provider)
+                .setProvider(PROVIDER)
                 .build();
 
         CertificateID certificateID = new JcaCertificateID(
@@ -109,11 +108,11 @@ public class OcspUtils {
             }
 
             X509Certificate signerCert = new JcaX509CertificateConverter()
-                    .setProvider(provider)
+                    .setProvider(PROVIDER)
                     .getCertificate(certHolders[0]);
 
             ContentVerifierProvider contentVerifier = new JcaContentVerifierProviderBuilder()
-                    .setProvider(provider)
+                    .setProvider(PROVIDER)
                     .build(signerCert.getPublicKey());
 
             if (!basicOCSPResp.isSignatureValid(contentVerifier)) {

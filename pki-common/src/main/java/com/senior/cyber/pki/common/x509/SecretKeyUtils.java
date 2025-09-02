@@ -15,10 +15,10 @@ import java.util.Base64;
 public class SecretKeyUtils {
 
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     public static SecretKey extractSecretKey(ECPrivateKey privateKey, ECPublicKey publicKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {
-        Provider provider = new BouncyCastleProvider();
-        KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", provider);
+        KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", PROVIDER);
         keyAgreement.init(privateKey);
         keyAgreement.doPhase(publicKey, true);
         byte[] secretData = keyAgreement.generateSecret();
