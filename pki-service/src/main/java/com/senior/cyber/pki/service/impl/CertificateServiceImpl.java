@@ -29,6 +29,8 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionCon
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.util.io.output.SecureByteArrayOutputStream;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
@@ -330,7 +332,18 @@ public class CertificateServiceImpl implements CertificateService {
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
+            List<Integer> keyUsages = new ArrayList<>();
+            keyUsages.add(KeyUsage.digitalSignature);
+            if (request.getKeyFormat() == KeyFormat.RSA) {
+                keyUsages.add(KeyUsage.keyEncipherment);
+            } else if (request.getKeyFormat() == KeyFormat.EC) {
+                keyUsages.add(KeyUsage.keyEncipherment);
+                keyUsages.add(KeyUsage.keyAgreement);
+            }
+            List<KeyPurposeId> extendedKeyUsages = new ArrayList<>();
+            extendedKeyUsages.add(KeyPurposeId.id_kp_serverAuth);
+            List<String> sans = request.getSans();
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), keyUsages, extendedKeyUsages, sans);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
