@@ -43,6 +43,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-key-api"
+    archiveFileName = "pki-key-api.jar"
     archiveVersion = ""
 }

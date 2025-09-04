@@ -44,6 +44,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-api-x509"
+    archiveFileName = "pki-api-x509.jar"
     archiveVersion = ""
 }

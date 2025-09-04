@@ -24,7 +24,6 @@ buildscript {
         lombok = '1.18.38' // https://mvnrepository.com/artifact/org.projectlombok/lombok
         retrofit = '3.0.0' // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
         auth0_jwt = '4.5.0' // https://mvnrepository.com/artifact/com.auth0/java-jwt
-        commons_exec = '1.5.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-exec
         sshd_common = '2.16.0' // https://mvnrepository.com/artifact/org.apache.sshd/sshd-common
 
         commons_validator = '1.10.0' // https://mvnrepository.com/artifact/commons-validator/commons-validator
@@ -32,7 +31,7 @@ buildscript {
         commons_csv = '1.14.1' // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
         commons_compress = '1.28.0' // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
         google_tink = '1.18.0' // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
-        mysql = '9.3.0' // https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
+        mysql = '9.4.0' // https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
         yubikit = '2.8.2' // https://mvnrepository.com/artifact/com.yubico.yubikit/piv
         commons_codec = '1.19.0' // https://mvnrepository.com/artifact/commons-codec/commons-codec
         commons_beanutils = '1.11.0' // https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils

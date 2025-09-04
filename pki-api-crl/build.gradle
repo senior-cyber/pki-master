@@ -41,6 +41,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-api-crl"
+    archiveFileName = "pki-api-crl.jar"
     archiveVersion = ""
 }

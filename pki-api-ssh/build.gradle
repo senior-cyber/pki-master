@@ -44,6 +44,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-api-ssh"
+    archiveFileName = "pki-api-ssh.jar"
     archiveVersion = ""
 }

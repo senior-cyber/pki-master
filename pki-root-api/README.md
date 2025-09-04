@@ -1,4 +1,4 @@
-# pki-api-crl
+# pki-root-api
 
 #### nano /opt/apps/pki-master/pki-root-api/run.sh
 

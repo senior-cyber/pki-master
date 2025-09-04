@@ -41,6 +41,6 @@ dependencies {
 }
 
 bootJar {
-    archiveBaseName = "pki-api-ocsp"
+    archiveFileName = "pki-api-ocsp.jar"
     archiveVersion = ""
 }
