@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.UserService;
@@ -47,7 +46,7 @@ public class KeyController {
     @Value("${api.ssh}")
     protected String sshApi;
 
-    @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<KeyInfoResponse> info(RequestEntity<Void> httpRequest, @RequestParam("id") String id) {
         User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
 
