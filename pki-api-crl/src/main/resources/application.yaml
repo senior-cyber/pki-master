@@ -43,10 +43,10 @@ spring:
       platform: mysql
       schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
 api:
-  crl: http://127.0.0.1:3001/api
-  ocsp: http://127.0.0.1:3002/api
-  x509: http://127.0.0.1:3003/api
-  ssh: http://127.0.0.1:3004/api
+  crl: http://127.0.0.1:3001/api/crl
+  ocsp: http://127.0.0.1:3002/api/ocsp
+  x509: http://127.0.0.1:3003/api/x509
+  ssh: http://127.0.0.1:3004/api/openssh
 logging:
   file:
     path: ./

@@ -13,6 +13,7 @@ import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -84,7 +85,9 @@ public class IntermediateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
         }
 
-        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, this.sshApi);
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi, this.x509Api, this.sshApi);
         return ResponseEntity.ok(response);
     }
 
