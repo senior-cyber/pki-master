@@ -6,7 +6,6 @@ import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -109,7 +108,7 @@ public class CrlController {
         builder.setNextUpdate(now.plusWeeks(1).toDate());
         builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(_issuerKey.getPublicKey()));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(BigInteger.valueOf(System.currentTimeMillis())));
-        builder.addExtension(Extension.issuerAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, this.x509Api + "/x509/" + hex + ".der")));
+        builder.addExtension(Extension.issuerAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, this.x509Api + "/" + hex + ".der")));
 
         List<Certificate> certificates = this.certificateRepository.findByIssuerCertificate(issuerCertificate);
         for (Certificate certificate : certificates) {
