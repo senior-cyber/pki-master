@@ -6,7 +6,6 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
@@ -80,7 +79,9 @@ public class LeafController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
         }
 
-        LeafGenerateResponse response = this.certificateService.leafGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        LeafGenerateResponse response = this.certificateService.leafGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
@@ -107,7 +108,69 @@ public class LeafController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        return ResponseEntity.ok(response);
+    }
+
+    // TODO :
+    @RequestMapping(path = "/mtls/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeafGenerateResponse> mtlsServerGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        ServerCertificateGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        return ResponseEntity.ok(response);
+    }
+
+    // TODO :
+    @RequestMapping(path = "/mtls/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeafGenerateResponse> mtlsClientGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+        ServerCertificateGenerateRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Date now = LocalDate.now().toDate();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
+                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
+                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                issuerCertificate.getValidFrom().after(now) ||
+                issuerCertificate.getValidUntil().before(now)
+        ) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
+        if (issuerKey == null) {
+            throw new IllegalArgumentException("issuerKey not found");
+        }
+
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
@@ -134,7 +197,9 @@ public class LeafController {
             throw new IllegalArgumentException("issuerKey not found");
         }
 
-        LeafGenerateResponse response = this.certificateService.clientGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api);
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        LeafGenerateResponse response = this.certificateService.clientGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 

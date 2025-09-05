@@ -87,7 +87,7 @@ public class IntermediateController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi, this.x509Api, this.sshApi);
+        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der", this.sshApi + "/" + serial + ".pub");
         return ResponseEntity.ok(response);
     }
 

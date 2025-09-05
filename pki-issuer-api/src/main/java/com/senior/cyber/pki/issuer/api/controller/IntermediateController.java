@@ -84,7 +84,9 @@ public class IntermediateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
         }
 
-        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi, this.ocspApi, this.x509Api, this.sshApi);
+        String serial = String.format("%012X", issuerCertificate.getSerial());
+
+        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der", this.sshApi + "/" + serial + ".pub");
         return ResponseEntity.ok(response);
     }
 
