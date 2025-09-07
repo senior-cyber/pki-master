@@ -165,7 +165,7 @@ sudo systemctl restart pcscd
 cd ~
 git clone https://github.com/senior-cyber/pki-master.git
 cd pki-master
-./gradlew assemble bootJar
+./gradlew clean bootJar
 
 scp pki-api-crl/build/libs/pki-api-crl.jar       lenovo:/opt/apps/pki-master/pki-api-crl
 scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     lenovo:/opt/apps/pki-master/pki-api-ocsp
