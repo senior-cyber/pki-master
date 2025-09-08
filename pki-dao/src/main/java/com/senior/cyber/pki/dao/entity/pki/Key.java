@@ -35,11 +35,11 @@ public class Key implements Serializable {
     private PublicKey publicKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "`type")
+    @Column(name = "`type`")
     private KeyTypeEnum type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "`usage")
+    @Column(name = "`usage`")
     private KeyUsageEnum usage;
 
     @Enumerated(EnumType.STRING)
