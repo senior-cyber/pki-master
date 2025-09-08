@@ -57,14 +57,14 @@ public class IntermediateServiceImpl implements IntermediateService {
         Map<String, PivSession> sessions = new HashMap<>();
 
         // issuer
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         Key _issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
         PrivateKey issuerPrivateKey = null;
         switch (_issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
+                issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
@@ -240,8 +240,8 @@ public class IntermediateServiceImpl implements IntermediateService {
             this.certificateRepository.save(intermediate);
 
             IntermediateGenerateResponse response = new IntermediateGenerateResponse();
-            response.setIssuerCertificateId(intermediate.getId());
-            response.setIssuerKeyPassword(request.getKeyPassword());
+            response.setCertificateId(intermediate.getId());
+            response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(intermediateCertificate);
 
             PivSession session = sessions.get(_intermediateKey.getYubicoSerial());

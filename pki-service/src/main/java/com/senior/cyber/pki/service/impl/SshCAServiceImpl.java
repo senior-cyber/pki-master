@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.service.impl;
 
-import com.senior.cyber.pki.common.dto.SshCAGenerateRequest;
-import com.senior.cyber.pki.common.dto.SshCAGenerateResponse;
+import com.senior.cyber.pki.common.dto.SshGenerateRequest;
+import com.senior.cyber.pki.common.dto.SshGenerateResponse;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
@@ -33,7 +33,7 @@ public class SshCAServiceImpl implements SshCAService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public SshCAGenerateResponse sshcaGenerate(SshCAGenerateRequest request, String sshApi) throws OperatorCreationException {
+    public SshGenerateResponse sshcaGenerate(SshGenerateRequest request, String sshApi) throws OperatorCreationException {
         switch (request.getSize()) {
             case 1024, 2048 -> {
                 String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
@@ -48,7 +48,7 @@ public class SshCAServiceImpl implements SshCAService {
                 key.setCreatedDatetime(new Date());
                 this.keyRepository.save(key);
 
-                SshCAGenerateResponse response = new SshCAGenerateResponse();
+                SshGenerateResponse response = new SshGenerateResponse();
                 response.setKeyPassword(password);
                 response.setKeyId(key.getId());
                 response.setSshCa(sshApi + "/" + key.getId() + ".pub");

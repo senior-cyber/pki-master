@@ -10,11 +10,8 @@ import java.io.Serializable;
 @Setter
 public class IntermediateGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerCertificateId")
-    private String issuerCertificateId;
-
-    @JsonProperty("issuerKeyPassword")
-    private String issuerKeyPassword;
+    @JsonProperty("issuer")
+    private Issuer issuer;
 
     @JsonProperty("keyId")
     private String keyId;

@@ -61,13 +61,13 @@ public class CertificateServiceImpl implements CertificateService {
     public ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (_issuerCertificate.getType() != CertificateTypeEnum.ROOT && _issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
 
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
@@ -81,7 +81,7 @@ public class CertificateServiceImpl implements CertificateService {
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
+                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
@@ -148,6 +148,8 @@ public class CertificateServiceImpl implements CertificateService {
             this.certificateRepository.save(certificate);
 
             ServerGenerateResponse response = new ServerGenerateResponse();
+            response.setCertificateId(certificate.getId());
+            response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
 
@@ -200,7 +202,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     @Transactional
     public SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws Exception {
-        Key _issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
+        Key _issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow();
 
         SmartCardConnection connection = null;
 
@@ -209,7 +211,7 @@ public class CertificateServiceImpl implements CertificateService {
         switch (_issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerKey = new KeyPair(_issuerKey.getPublicKey(), PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuerKeyPassword()));
+                issuerKey = new KeyPair(_issuerKey.getPublicKey(), PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword()));
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
@@ -283,13 +285,13 @@ public class CertificateServiceImpl implements CertificateService {
     public MtlsClientGenerateResponse mtlsClientGenerate(MtlsClientGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (_issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
 
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
@@ -303,7 +305,7 @@ public class CertificateServiceImpl implements CertificateService {
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
+                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
@@ -356,6 +358,8 @@ public class CertificateServiceImpl implements CertificateService {
             this.certificateRepository.save(certificate);
 
             MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
+            response.setCertificateId(certificate.getId());
+            response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
             return response;

@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.issuer.api.controller;
 
-import com.senior.cyber.pki.common.dto.MtlsCertificateGenerateRequest;
-import com.senior.cyber.pki.common.dto.MtlsCertificateGenerateResponse;
+import com.senior.cyber.pki.common.dto.MtlsGenerateRequest;
+import com.senior.cyber.pki.common.dto.MtlsGenerateResponse;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
@@ -61,13 +61,13 @@ public class MtlsController {
     protected MtlsService mtlsService;
 
     @RequestMapping(path = "/mtls/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MtlsCertificateGenerateResponse> mtlsGenerate(RequestEntity<MtlsCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        MtlsCertificateGenerateRequest request = httpRequest.getBody();
+    public ResponseEntity<MtlsGenerateResponse> mtlsGenerate(RequestEntity<MtlsGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        MtlsGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        MtlsCertificateGenerateResponse response = this.mtlsService.mtlsGenerate(request);
+        MtlsGenerateResponse response = this.mtlsService.mtlsGenerate(request);
         return ResponseEntity.ok(response);
     }
 

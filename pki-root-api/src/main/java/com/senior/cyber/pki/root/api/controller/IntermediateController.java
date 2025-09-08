@@ -68,9 +68,9 @@ public class IntermediateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElse(null);
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElse(null);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not found");
         }
         Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
@@ -78,7 +78,7 @@ public class IntermediateController {
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());

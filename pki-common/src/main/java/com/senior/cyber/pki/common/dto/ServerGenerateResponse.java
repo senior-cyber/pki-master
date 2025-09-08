@@ -16,6 +16,12 @@ import java.util.List;
 @Getter
 public class ServerGenerateResponse implements Serializable {
 
+    @JsonProperty("certificateId")
+    private String certificateId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("cert")

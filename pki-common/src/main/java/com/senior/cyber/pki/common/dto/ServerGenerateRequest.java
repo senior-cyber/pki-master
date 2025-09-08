@@ -11,11 +11,8 @@ import java.util.List;
 @Getter
 public class ServerGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerCertificateId")
-    private String issuerCertificateId;
-
-    @JsonProperty("issuerKeyPassword")
-    private String issuerKeyPassword;
+    @JsonProperty("issuer")
+    private Issuer issuer;
 
     @JsonProperty("keyId")
     private String keyId;

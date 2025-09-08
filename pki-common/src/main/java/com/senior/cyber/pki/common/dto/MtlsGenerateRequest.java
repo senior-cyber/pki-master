@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class MtlsCertificateGenerateRequest implements Serializable {
+public class MtlsGenerateRequest implements Serializable {
 
     @JsonProperty("keyId")
     private String keyId;

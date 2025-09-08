@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class SshCAGenerateResponse implements Serializable {
+public class SshGenerateResponse implements Serializable {
 
     @JsonProperty("keyId")
     private String keyId;

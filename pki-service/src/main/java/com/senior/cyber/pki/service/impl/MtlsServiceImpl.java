@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.service.impl;
 
-import com.senior.cyber.pki.common.dto.MtlsCertificateGenerateRequest;
-import com.senior.cyber.pki.common.dto.MtlsCertificateGenerateResponse;
+import com.senior.cyber.pki.common.dto.MtlsGenerateRequest;
+import com.senior.cyber.pki.common.dto.MtlsGenerateResponse;
 import com.senior.cyber.pki.common.x509.PkiUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.SubjectUtils;
@@ -53,7 +53,7 @@ public class MtlsServiceImpl implements MtlsService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public MtlsCertificateGenerateResponse mtlsGenerate(MtlsCertificateGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public MtlsGenerateResponse mtlsGenerate(MtlsGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Provider provider = null;
         SmartCardConnection connection = null;
         PivSession session = null;
@@ -115,10 +115,10 @@ public class MtlsServiceImpl implements MtlsService {
             root.setType(CertificateTypeEnum.mTLS_SERVER);
             this.certificateRepository.save(root);
 
-            MtlsCertificateGenerateResponse response = new MtlsCertificateGenerateResponse();
-            response.setIssuerCertificateId(root.getId());
+            MtlsGenerateResponse response = new MtlsGenerateResponse();
+            response.setCertificateId(root.getId());
+            response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(rootCertificate);
-            response.setIssuerKeyPassword(request.getKeyPassword());
 
             if (session != null) {
                 session.putCertificate(slot, rootCertificate);

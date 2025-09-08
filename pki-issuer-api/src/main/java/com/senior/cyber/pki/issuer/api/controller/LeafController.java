@@ -66,14 +66,14 @@ public class LeafController {
         }
 
         Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE &&
                         issuerCertificate.getType() != CertificateTypeEnum.ROOT) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
         Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
         if (issuerKey == null) {
@@ -94,13 +94,13 @@ public class LeafController {
         }
 
         Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
         Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
         if (issuerKey == null) {
@@ -120,7 +120,7 @@ public class LeafController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Key issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
+        Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow();
 
         switch (issuerKey.getUsage()) {
             case SSH -> {
@@ -128,7 +128,7 @@ public class LeafController {
                 return ResponseEntity.ok(response);
             }
             default -> {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerKeyId() + " is not found");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getKeyId() + " is not found");
             }
         }
     }

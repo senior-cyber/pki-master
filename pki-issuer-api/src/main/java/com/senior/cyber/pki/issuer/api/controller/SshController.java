@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.issuer.api.controller;
 
-import com.senior.cyber.pki.common.dto.SshCAGenerateRequest;
-import com.senior.cyber.pki.common.dto.SshCAGenerateResponse;
+import com.senior.cyber.pki.common.dto.SshGenerateRequest;
+import com.senior.cyber.pki.common.dto.SshGenerateResponse;
 import com.senior.cyber.pki.service.SshCAService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -45,13 +45,13 @@ public class SshController {
     protected SshCAService sshcaService;
 
     @RequestMapping(path = "/ssh/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SshCAGenerateResponse> rootGenerate(RequestEntity<SshCAGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        SshCAGenerateRequest request = httpRequest.getBody();
+    public ResponseEntity<SshGenerateResponse> rootGenerate(RequestEntity<SshGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+        SshGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        SshCAGenerateResponse response = this.sshcaService.sshcaGenerate(request, this.sshApi);
+        SshGenerateResponse response = this.sshcaService.sshcaGenerate(request, this.sshApi);
         return ResponseEntity.ok(response);
     }
 

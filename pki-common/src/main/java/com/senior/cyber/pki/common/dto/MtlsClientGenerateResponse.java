@@ -18,6 +18,12 @@ import java.security.cert.X509Certificate;
 @Setter
 public class MtlsClientGenerateResponse {
 
+    @JsonProperty("certificateId")
+    private String certificateId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("cert")

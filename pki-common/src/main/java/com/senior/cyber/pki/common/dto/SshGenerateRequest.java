@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class SshCAGenerateRequest implements Serializable {
+public class SshGenerateRequest implements Serializable {
 
     @JsonProperty("size")
     private int size;

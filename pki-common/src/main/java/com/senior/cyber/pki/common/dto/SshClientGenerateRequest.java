@@ -10,11 +10,8 @@ import java.io.Serializable;
 @Getter
 public class SshClientGenerateRequest implements Serializable {
 
-    @JsonProperty("issuerKeyId")
-    private String issuerKeyId;
-
-    @JsonProperty("issuerKeyPassword")
-    private String issuerKeyPassword;
+    @JsonProperty("issuer")
+    private Issuer issuer;
 
     @JsonProperty("opensshPublicKey")
     private String opensshPublicKey;

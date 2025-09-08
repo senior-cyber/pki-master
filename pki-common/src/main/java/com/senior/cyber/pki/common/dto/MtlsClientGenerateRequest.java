@@ -8,11 +8,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MtlsClientGenerateRequest {
 
-    @JsonProperty("issuerCertificateId")
-    private String issuerCertificateId;
-
-    @JsonProperty("issuerKeyPassword")
-    private String issuerKeyPassword;
+    @JsonProperty("issuer")
+    private Issuer issuer;
 
     @JsonProperty("keyId")
     private String keyId;
