@@ -357,7 +357,7 @@ public class CertificateServiceImpl implements CertificateService {
 
             MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
             response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey()));
+            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
             return response;
         } finally {
             if (connection != null) {
