@@ -14,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SpringBootApplication
@@ -25,8 +26,7 @@ public class ClientProgram implements CommandLineRunner {
         SpringApplication.run(ClientProgram.class, args);
     }
 
-    @Override
-    public void run(String... args) throws Exception {
+    public void run2(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> mtlsServerKey = null;
             {
@@ -114,7 +114,7 @@ public class ClientProgram implements CommandLineRunner {
         System.exit(0);
     }
 
-    public void run1(String... args) throws Exception {
+    public void run(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> rootCaKey = null;
             {
@@ -240,12 +240,13 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("locality", "Phnom Penh");
                 request.put("province", "Kandal");
                 request.put("country", "KH");
-                request.put("commonName", "Leaf");
+                request.put("commonName", "127.0.0.1");
                 request.put("organization", "Ministry of Post and Telecommunications");
                 request.put("organizationalUnit", "Digital Government Committee");
+                request.put("sans", List.of("127.0.0.1", "localhost"));
 
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/leaf/generate"))
+                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/server/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -254,10 +255,10 @@ public class ClientProgram implements CommandLineRunner {
                 leaf = MAPPER.readValue(resp.body(), new TypeReference<>() {
                 });
             }
-            FileUtils.write(new File("pki-rootCa.pem"), (String) rootCa.get("certificate"));
-            FileUtils.write(new File("pki-subCa.pem"), (String) subCa.get("certificate"));
-            FileUtils.write(new File("pki-leaf.pem"), (String) leaf.get("fullchain"));
-            System.out.println("openssl verify -CAfile pki-rootCa.pem pki-subCa.pem pki-leaf.pem");
+            FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), (String) rootCa.get("certificate"));
+            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
+            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
+            // System.out.println("openssl verify -CAfile pki-root-ca.pem pki-sub-ca.pem pki-leaf.pem");
 
         }
         System.exit(0);
