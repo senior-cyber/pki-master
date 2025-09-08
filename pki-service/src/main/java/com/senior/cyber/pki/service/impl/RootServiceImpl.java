@@ -202,18 +202,6 @@ public class RootServiceImpl implements RootService {
             response.setIssuerCertificateId(root.getId());
             response.setIssuerKeyPassword(request.getKeyPassword());
             response.setCertificate(rootCertificate);
-            response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(rootCertificate).getBytes(StandardCharsets.UTF_8)));
-            response.setPublicKey(rootKey.getPublicKey());
-            if (rootKey.getType() != KeyTypeEnum.ServerKeyYubico) {
-                response.setPrivateKey(rootPrivateKey);
-                response.setPrivateKeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(rootPrivateKey).getBytes(StandardCharsets.UTF_8)));
-            }
-            response.setOcspCertificate(ocspCertificate);
-            response.setOcspPublicKey(ocspCertificate.getPublicKey());
-            response.setOcspPrivateKey(PrivateKeyUtils.convert(ocspKey.getPrivateKey()));
-            response.setCrlCertificate(crlCertificate);
-            response.setCrlPublicKey(crlKey.getPublicKey());
-            response.setCrlPrivateKey(PrivateKeyUtils.convert(crlKey.getPrivateKey()));
 
             if (session != null) {
                 session.putCertificate(slot, rootCertificate);

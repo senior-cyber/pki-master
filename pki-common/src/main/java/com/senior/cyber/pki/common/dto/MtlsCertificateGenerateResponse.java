@@ -16,12 +16,15 @@ import java.util.List;
 @Getter
 public class MtlsCertificateGenerateResponse implements Serializable {
 
-    @JsonProperty("certificateId")
-    private String certificateId;
+    @JsonProperty("issuerCertificateId")
+    private String issuerCertificateId;
+
+    @JsonProperty("issuerKeyPassword")
+    private String issuerKeyPassword;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
-    @JsonProperty("cert")
-    private X509Certificate cert;
+    @JsonProperty("certificate")
+    private X509Certificate certificate;
 
 }

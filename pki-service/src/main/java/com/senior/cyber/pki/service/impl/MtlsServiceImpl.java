@@ -116,8 +116,9 @@ public class MtlsServiceImpl implements MtlsService {
             this.certificateRepository.save(root);
 
             MtlsCertificateGenerateResponse response = new MtlsCertificateGenerateResponse();
-            response.setCertificateId(root.getId());
-            response.setCert(rootCertificate);
+            response.setIssuerCertificateId(root.getId());
+            response.setCertificate(rootCertificate);
+            response.setIssuerKeyPassword(request.getKeyPassword());
 
             if (session != null) {
                 session.putCertificate(slot, rootCertificate);

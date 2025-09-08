@@ -245,13 +245,6 @@ public class IntermediateServiceImpl implements IntermediateService {
             response.setIssuerCertificateId(intermediate.getId());
             response.setIssuerKeyPassword(request.getKeyPassword());
             response.setCertificate(intermediateCertificate);
-            response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(intermediateCertificate).getBytes(StandardCharsets.UTF_8)));
-            response.setOcspCertificate(ocspCertificate);
-            response.setOcspPublicKey(ocspCertificate.getPublicKey());
-            response.setOcspPrivateKey(PrivateKeyUtils.convert(ocspKey.getPrivateKey()));
-            response.setCrlCertificate(crlCertificate);
-            response.setCrlPublicKey(crlKey.getPublicKey());
-            response.setCrlPrivateKey(PrivateKeyUtils.convert(crlKey.getPrivateKey()));
 
             PivSession session = sessions.get(_intermediateKey.getYubicoSerial());
             if (session != null) {
