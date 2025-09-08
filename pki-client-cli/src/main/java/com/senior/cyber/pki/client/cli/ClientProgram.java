@@ -21,7 +21,7 @@ public class ClientProgram implements CommandLineRunner {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         SpringApplication.run(ClientProgram.class, args);
     }
 
