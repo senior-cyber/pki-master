@@ -36,15 +36,14 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.RSAPrivateKey;
 import java.util.Date;
 
 @RestController
 public class OcspController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcspController.class);
+
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     @Autowired
     protected CertificateRepository certificateRepository;
@@ -69,31 +68,24 @@ public class OcspController {
 
         switch (issuerCertificate.getType()) {
             case ROOT, INTERMEDIATE -> {
-                Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElse(null);
-                if (_c == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                }
-                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
-                if (_k == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                }
+                Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElseThrow();
+                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
                 X509Certificate ocspCertificate = _c.getCertificate();
                 PrivateKey ocspPrivateKey = PrivateKeyUtils.convert(_k.getPrivateKey());
 
                 byte[] requestBody = httpRequest.getBody();
                 if (requestBody == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
 
-                String format = "";
-                if (ocspPrivateKey instanceof RSAPrivateKey) {
-                    format = "RSA";
-                } else if (ocspPrivateKey instanceof ECPrivateKey || "EC".equals(ocspPrivateKey.getAlgorithm())) {
-                    format = "ECDSA";
-                } else if (ocspPrivateKey instanceof DSAPrivateKey) {
-                    format = "DSA";
-                } else {
-                    format = ocspPrivateKey.getAlgorithm();
+                String format = null;
+                switch (_k.getKeyFormat()) {
+                    case RSA -> {
+                        format = "RSA";
+                    }
+                    case EC -> {
+                        format = "ECDSA";
+                    }
                 }
 
                 Date now = LocalDate.now().toDate();
@@ -134,7 +126,7 @@ public class OcspController {
 
                 int keySize = 256;
                 JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + keySize + "WITH" + format);
-                contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+                contentSignerBuilder.setProvider(PROVIDER);
                 ContentSigner contentSigner = contentSignerBuilder.build(ocspPrivateKey);
 
                 BasicOCSPResp resp = ocspRespBuilder.build(contentSigner, new X509CertificateHolder[]{new JcaX509CertificateHolder(ocspCertificate)}, now);

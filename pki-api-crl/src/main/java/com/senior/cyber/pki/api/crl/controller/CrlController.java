@@ -37,15 +37,14 @@ import java.security.Security;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.RSAPrivateKey;
 import java.util.List;
 
 @RestController
 public class CrlController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrlController.class);
+
+    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -88,21 +87,12 @@ public class CrlController {
 
         switch (issuerCertificate.getType()) {
             case ROOT, INTERMEDIATE -> {
-                Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
-                if (_c == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                }
-                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElse(null);
-                if (_k == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                }
+                Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElseThrow();
+                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
                 X509Certificate crlCertificate = _c.getCertificate();
                 PrivateKey crlPrivateKey = PrivateKeyUtils.convert(_k.getPrivateKey());
 
-                Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-                if (_issuerKey == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                }
+                Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
 
                 String hex = String.format("%012X", issuerCertificate.getSerial());
 
@@ -129,20 +119,19 @@ public class CrlController {
                     }
                 }
 
-                String format = "";
-                if (crlPrivateKey instanceof RSAPrivateKey) {
-                    format = "RSA";
-                } else if (crlPrivateKey instanceof ECPrivateKey || "EC".equals(crlPrivateKey.getAlgorithm())) {
-                    format = "ECDSA";
-                } else if (crlPrivateKey instanceof DSAPrivateKey) {
-                    format = "DSA";
-                } else {
-                    format = crlPrivateKey.getAlgorithm();
+                String format = null;
+                switch (_k.getKeyFormat()) {
+                    case RSA -> {
+                        format = "RSA";
+                    }
+                    case EC -> {
+                        format = "ECDSA";
+                    }
                 }
 
                 int shaSize = 256;
                 JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-                contentSignerBuilder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+                contentSignerBuilder.setProvider(PROVIDER);
                 ContentSigner contentSigner = contentSignerBuilder.build(crlPrivateKey);
 
                 X509CRLHolder holder = builder.build(contentSigner);

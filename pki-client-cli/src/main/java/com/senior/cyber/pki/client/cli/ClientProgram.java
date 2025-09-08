@@ -258,7 +258,7 @@ public class ClientProgram implements CommandLineRunner {
             FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), (String) rootCa.get("certificate"));
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
-            // System.out.println("openssl verify -CAfile pki-root-ca.pem pki-sub-ca.pem pki-leaf.pem");
+            System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
 
         }
         System.exit(0);
