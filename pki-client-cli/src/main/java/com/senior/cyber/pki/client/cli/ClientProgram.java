@@ -106,8 +106,9 @@ public class ClientProgram implements CommandLineRunner {
                 });
             }
             FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
-            FileUtils.write(new File("pki-mtls-client.pem"), (String) mtlsClient.get("certificate"));
-            System.out.println("openssl verify -CAfile pki-rootCa.pem pki-subCa.pem pki-leaf.pem");
+            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
+            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
+            System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
 
         }
         System.exit(0);
