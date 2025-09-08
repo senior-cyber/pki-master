@@ -14,7 +14,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class LeafGenerateResponse implements Serializable {
+public class ServerGenerateResponse implements Serializable {
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

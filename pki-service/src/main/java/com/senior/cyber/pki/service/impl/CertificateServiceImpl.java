@@ -59,7 +59,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public LeafGenerateResponse leafGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public ServerGenerateResponse leafGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
@@ -134,7 +134,7 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setType(CertificateTypeEnum.Leaf);
             this.certificateRepository.save(certificate);
 
-            LeafGenerateResponse response = new LeafGenerateResponse();
+            ServerGenerateResponse response = new ServerGenerateResponse();
             response.setCert(leafCertificate);
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
 
@@ -185,7 +185,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public LeafGenerateResponse serverGenerate(ServerCertificateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
@@ -274,7 +274,7 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setType(CertificateTypeEnum.Leaf);
             this.certificateRepository.save(certificate);
 
-            LeafGenerateResponse response = new LeafGenerateResponse();
+            ServerGenerateResponse response = new ServerGenerateResponse();
             response.setCert(leafCertificate);
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
 
@@ -326,7 +326,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional
-    public SshCertificateGenerateResponse sshClientGenerate(SshCertificateGenerateRequest request) throws Exception {
+    public SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws Exception {
         Key _issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
 
         SmartCardConnection connection = null;
@@ -390,7 +390,7 @@ public class CertificateServiceImpl implements CertificateService {
             }
             OpenSshCertificate certificate = openSshCertificateBuilder.sign(issuerKey, org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
 
-            SshCertificateGenerateResponse response = new SshCertificateGenerateResponse();
+            SshClientGenerateResponse response = new SshClientGenerateResponse();
             response.setOpensshCertificate(PublicKeyEntry.toString(certificate));
             response.setOpensshConfig("Host " + request.getServer() + "\n" +
                     "  HostName " + request.getServer() + "\n" +
@@ -430,7 +430,7 @@ public class CertificateServiceImpl implements CertificateService {
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey());
+                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
@@ -484,7 +484,7 @@ public class CertificateServiceImpl implements CertificateService {
 
             MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
             response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey()));
+            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
             return response;
         } finally {
             if (connection != null) {

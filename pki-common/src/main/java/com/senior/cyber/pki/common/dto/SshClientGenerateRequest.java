@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class SshCertificateGenerateRequest implements Serializable {
+public class SshClientGenerateRequest implements Serializable {
 
     @JsonProperty("issuerKeyId")
     private String issuerKeyId;

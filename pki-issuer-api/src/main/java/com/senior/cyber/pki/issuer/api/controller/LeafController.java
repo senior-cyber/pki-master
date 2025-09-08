@@ -59,8 +59,8 @@ public class LeafController {
     protected UserService userService;
 
     @RequestMapping(path = "/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> serverGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        ServerCertificateGenerateRequest request = httpRequest.getBody();
+    public ResponseEntity<ServerGenerateResponse> serverGenerate(RequestEntity<ServerGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        ServerGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -82,7 +82,7 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        LeafGenerateResponse response = this.certificateService.serverGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        ServerGenerateResponse response = this.certificateService.serverGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
@@ -114,8 +114,8 @@ public class LeafController {
     }
 
     @RequestMapping(path = "/ssh/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SshCertificateGenerateResponse> sshClientGenerate(RequestEntity<SshCertificateGenerateRequest> httpRequest) throws Exception {
-        SshCertificateGenerateRequest request = httpRequest.getBody();
+    public ResponseEntity<SshClientGenerateResponse> sshClientGenerate(RequestEntity<SshClientGenerateRequest> httpRequest) throws Exception {
+        SshClientGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -124,7 +124,7 @@ public class LeafController {
 
         switch (issuerKey.getUsage()) {
             case SSH -> {
-                SshCertificateGenerateResponse response = this.certificateService.sshClientGenerate(request);
+                SshClientGenerateResponse response = this.certificateService.sshClientGenerate(request);
                 return ResponseEntity.ok(response);
             }
             default -> {

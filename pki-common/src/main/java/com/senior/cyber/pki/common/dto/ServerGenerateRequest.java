@@ -9,7 +9,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class ServerCertificateGenerateRequest implements Serializable {
+public class ServerGenerateRequest implements Serializable {
 
     @JsonProperty("issuerCertificateId")
     private String issuerCertificateId;

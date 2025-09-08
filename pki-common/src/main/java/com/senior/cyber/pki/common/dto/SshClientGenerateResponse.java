@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class SshCertificateGenerateResponse implements Serializable {
+public class SshClientGenerateResponse implements Serializable {
 
     @JsonProperty("opensshCertificate")
     private String opensshCertificate;
