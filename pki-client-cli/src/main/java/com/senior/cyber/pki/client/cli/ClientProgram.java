@@ -29,8 +29,8 @@ public class ClientProgram implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         x509(args);
-        mtls(args);
-        sshCa(args);
+//        mtls(args);
+//        sshCa(args);
         System.exit(0);
     }
 
@@ -315,11 +315,23 @@ public class ClientProgram implements CommandLineRunner {
                 leaf = MAPPER.readValue(resp.body(), new TypeReference<>() {
                 });
             }
+            {
+                Map<String, Object> request = new HashMap<>();
+                request.put("keyId", rootCaKey.get("keyId"));
+                request.put("keyPassword", rootCaKey.get("keyPassword"));
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create("https://pki-api-revoke.khmer.name/api/revoke/key"))
+                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
+                        .build();
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                System.out.println(resp.statusCode());
+            }
             FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), (String) rootCa.get("certificate"));
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
             System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
-
         }
     }
 
