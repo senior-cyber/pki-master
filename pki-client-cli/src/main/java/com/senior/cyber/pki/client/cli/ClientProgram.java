@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.client.cli;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
@@ -43,49 +44,30 @@ public class ClientProgram implements CommandLineRunner {
                 });
             }
 
-            Map<String, Object> mtlsClientKey = null;
-//            {
-//                Map<String, Object> request = new HashMap<>();
-//                request.put("size", "2048");
-//                request.put("format", "RSA");
-//                HttpRequest req = HttpRequest.newBuilder()
-//                        .uri(URI.create("https://pki-key-api.khmer.name/api/jca/generate"))
-//                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-//                        .header("Content-Type", "application/json")
-//                        .header("Accept", "application/json")
-//                        .build();
-//                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-//                mtlsClientKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
-//                });
-//            }
-//            Map<String, Object> mtlsClient = null;
-//            {
-//                Map<String, Object> request = new HashMap<>();
-//                request.put("issuerCertificateId", mtlsServer.get("issuerCertificateId"));
-//                request.put("issuerKeyPassword", mtlsServer.get("issuerKeyPassword"));
-//                request.put("keyId", mtlsClientKey.get("keyId"));
-//                request.put("keyPassword", mtlsClientKey.get("keyPassword"));
-//                request.put("locality", "Phnom Penh");
-//                request.put("province", "Kandal");
-//                request.put("country", "KH");
-//                request.put("commonName", "mTLS Client");
-//                request.put("organization", "Ministry of Post and Telecommunications");
-//                request.put("organizationalUnit", "Digital Government Committee");
-//
-//                HttpRequest req = HttpRequest.newBuilder()
-//                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/mtls/client/generate"))
-//                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-//                        .header("Content-Type", "application/json")
-//                        .header("Accept", "application/json")
-//                        .build();
-//                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-//                mtlsClient = MAPPER.readValue(resp.body(), new TypeReference<>() {
-//                });
-//            }
+            Map<String, Object> sshClient = null;
+            {
+                Map<String, Object> request = new HashMap<>();
+                request.put("issuerKeyId", sshCaKey.get("keyId"));
+                request.put("issuerKeyPassword", sshCaKey.get("keyPassword"));
+                request.put("opensshPublicKey", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQClwFPqhyptjv9av32YK09AqXDCIgcYzIrapN8sBtvZxZvjSo3rp5LkBC5Cerhh23VKHr2gwFUvW/szKQEcS5Zgu0I4vrVwMcKGFbDz/CAgdBsoiscjO/d7vLK01MS/TvsU1uKMKArZPArqwQpYoT7TLZTKVd7RwPm/udSi/jNTSzIL1+/xDUtZpcuu9sIxS2jPBEZvvSgaJcnc1uDlL03HPrRNqx5O/CXGDCyUH+ATea9IQGqbflUB3DDXFSDM8oOOMNXGMOhre8HM5B7pCOekH93U+Gbzw9HHsZfxFsmqT19uvtZe9LeqelbabYMMZvTAJjBsNaS4+Z4IPa/hs7PBIuASKjtFI73sA28wa32MDz8iDAygL97vW9wLo1zPbyELh9CEF/haAd4JPm04Zx3pq7osfaiWQ8tc1APH9cqNY+lbnMKnWGN8HLMaia+/RYKT03alAnW7HMvCk1f7oXBkqdeAbDZ2nLy5zvaKgw9UgOa7a6VTSUKwgJg6nDdod18= dev");
+                request.put("principal", "socheat");
+                request.put("server", "192.168.1.1");
+                request.put("validityPeriod", 1000);
+
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/ssh/client/generate"))
+                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
+                        .build();
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                sshClient = MAPPER.readValue(resp.body(), new TypeReference<>() {
+                });
+            }
 //            FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
 //            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
 //            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
-//            System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
+            System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
 
         }
         System.exit(0);
