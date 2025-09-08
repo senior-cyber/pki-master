@@ -157,7 +157,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("organizationalUnit", "Digital Government Committee");
 
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/server/generate"))
+                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/leaf/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
