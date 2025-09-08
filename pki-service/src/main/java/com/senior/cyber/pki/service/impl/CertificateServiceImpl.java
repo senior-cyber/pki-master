@@ -212,7 +212,7 @@ public class CertificateServiceImpl implements CertificateService {
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
                 issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getKeyPassword());
+                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
             }
             case ServerKeyYubico -> {
                 YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());

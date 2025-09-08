@@ -14,6 +14,9 @@ public class ServerCertificateGenerateRequest implements Serializable {
     @JsonProperty("issuerCertificateId")
     private String issuerCertificateId;
 
+    @JsonProperty("issuerKeyPassword")
+    private String issuerKeyPassword;
+
     @JsonProperty("keyId")
     private String keyId;
 
