@@ -1,7 +1,7 @@
 package com.senior.cyber.pki.service;
 
-import com.senior.cyber.pki.common.dto.RootGenerateRequest;
-import com.senior.cyber.pki.common.dto.RootGenerateResponse;
+import com.senior.cyber.pki.common.dto.SshCAGenerateRequest;
+import com.senior.cyber.pki.common.dto.SshCAGenerateResponse;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
-public interface RootService {
+public interface SshCAService {
 
-    RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    SshCAGenerateResponse sshcaGenerate(SshCAGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

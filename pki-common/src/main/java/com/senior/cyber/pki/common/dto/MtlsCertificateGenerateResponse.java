@@ -14,7 +14,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class LeafGenerateResponse implements Serializable {
+public class MtlsCertificateGenerateResponse implements Serializable {
 
     @JsonProperty("certificateId")
     private String certificateId;
@@ -23,24 +23,5 @@ public class LeafGenerateResponse implements Serializable {
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("cert")
     private X509Certificate cert;
-
-    @JsonProperty("certBase64")
-    private String certBase64;
-
-    @JsonSerialize(using = PrivateKeySerializer.class)
-    @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privkey")
-    private PrivateKey privkey;
-
-    @JsonProperty("privkeyBase64")
-    private String privkeyBase64;
-
-    @JsonSerialize(using = X509CertificatesSerializer.class)
-    @JsonDeserialize(using = X509CertificatesDeserializer.class)
-    private List<X509Certificate> chain;
-
-    @JsonSerialize(using = X509CertificatesSerializer.class)
-    @JsonDeserialize(using = X509CertificatesDeserializer.class)
-    private List<X509Certificate> fullchain;
 
 }

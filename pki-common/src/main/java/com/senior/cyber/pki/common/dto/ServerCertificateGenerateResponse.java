@@ -16,8 +16,8 @@ import java.util.List;
 @Getter
 public class ServerCertificateGenerateResponse implements Serializable {
 
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("certificateId")
+    private String certificateId;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

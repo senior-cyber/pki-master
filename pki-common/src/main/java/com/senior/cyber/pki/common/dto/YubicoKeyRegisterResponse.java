@@ -10,7 +10,7 @@ import java.io.Serializable;
 @Getter
 public class YubicoKeyRegisterResponse implements Serializable {
 
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("keyId")
+    private String keyId;
 
 }

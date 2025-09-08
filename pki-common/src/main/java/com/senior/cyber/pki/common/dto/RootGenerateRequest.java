@@ -18,10 +18,8 @@ public class RootGenerateRequest implements Serializable {
     @JsonProperty("keyId")
     private String keyId;
 
-    @JsonSerialize(using = PrivateKeySerializer.class)
-    @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privateKey")
-    private PrivateKey privateKey;
+    @JsonProperty("keyPassword")
+    private String keyPassword;
 
     @JsonProperty("locality")
     private String locality;

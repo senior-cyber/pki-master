@@ -2,8 +2,8 @@ package com.senior.cyber.pki.key.api.controller;
 
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.UserService;
@@ -13,6 +13,7 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +49,6 @@ public class KeyController {
 
     @RequestMapping(path = "/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<KeyInfoResponse> info(RequestEntity<Void> httpRequest, @RequestParam("id") String id) {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
-//        Void request = httpRequest.getBody();
-//        if (request == null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-//        }
-
         Key key = this.keyRepository.findById(id).orElseThrow();
 
         KeyInfoResponse response = new KeyInfoResponse();
@@ -65,7 +59,7 @@ public class KeyController {
         if (key.getKeyFormat() != null) {
             response.setKeyFormat(key.getKeyFormat().name());
         }
-        response.setPrivateKey(key.getPrivateKey());
+        response.setPrivateKey(PrivateKeyUtils.convert(key.getPrivateKey()));
         response.setPublicKey(key.getPublicKey());
         response.setCreatedDatetime(key.getCreatedDatetime());
         if (key.getKeySize() > 0) {
@@ -75,9 +69,7 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaKeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
+    public ResponseEntity<JcaKeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) throws OperatorCreationException {
         JcaKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -94,14 +86,12 @@ public class KeyController {
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaKeyGenerateResponse response = this.keyService.generate(request, user);
+        JcaKeyGenerateResponse response = this.keyService.generate(request);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<YubicoKeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoKeyGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
         YubicoKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -147,30 +137,12 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyGenerateResponse response = this.keyService.generate(request, user);
-        return ResponseEntity.ok(response);
-    }
-
-    @RequestMapping(path = "/jca/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaKeyRegisterResponse> jcaRegister(RequestEntity<JcaKeyRegisterRequest> httpRequest) {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
-        JcaKeyRegisterRequest request = httpRequest.getBody();
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        if (request.getPublicKey() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-        JcaKeyRegisterResponse response = this.keyService.register(request, user);
+        YubicoKeyGenerateResponse response = this.keyService.generate(request);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/yubico/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<YubicoKeyRegisterResponse> yubicoRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
         YubicoKeyRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -208,7 +180,7 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyRegisterResponse response = this.keyService.register(request, user);
+        YubicoKeyRegisterResponse response = this.keyService.register(request);
         return ResponseEntity.ok(response);
     }
 

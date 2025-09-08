@@ -5,10 +5,10 @@ import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
@@ -28,10 +28,8 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +52,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootGenerateResponse rootGenerate(User user, RootGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Provider provider = null;
         SmartCardConnection connection = null;
         PivSession session = null;
@@ -63,30 +61,26 @@ public class RootServiceImpl implements RootService {
         // root
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
         PrivateKey rootPrivateKey = null;
-        if (rootKey.getType() == KeyTypeEnum.ClientKey) {
-            provider = new BouncyCastleProvider();
-            if (request.getPrivateKey() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            } else {
-                rootPrivateKey = request.getPrivateKey();
-            }
-        } else if (rootKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-            provider = new BouncyCastleProvider();
-            rootPrivateKey = rootKey.getPrivateKey();
-        } else if (rootKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(rootKey.getYubicoSerial());
-            connection = device.openConnection(SmartCardConnection.class);
-            session = new PivSession(connection);
-            session.authenticate(YubicoProviderUtils.hexStringToByteArray(rootKey.getYubicoManagementKey()));
-            provider = new PivProvider(session);
-            KeyStore ks = YubicoProviderUtils.lookupKeyStore(provider);
-            for (Slot s : Slot.values()) {
-                if (s.getStringAlias().equalsIgnoreCase(rootKey.getYubicoPivSlot())) {
-                    slot = s;
-                    break;
+        switch (rootKey.getType()) {
+            case ServerKeyYubico -> {
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(rootKey.getYubicoSerial());
+                connection = device.openConnection(SmartCardConnection.class);
+                session = new PivSession(connection);
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(rootKey.getYubicoManagementKey()));
+                provider = new PivProvider(session);
+                KeyStore ks = YubicoProviderUtils.lookupKeyStore(provider);
+                for (Slot s : Slot.values()) {
+                    if (s.getStringAlias().equalsIgnoreCase(rootKey.getYubicoPivSlot())) {
+                        slot = s;
+                        break;
+                    }
                 }
+                rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, rootKey.getYubicoPin());
             }
-            rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, rootKey.getYubicoPin());
+            case ServerKeyJCE -> {
+                provider = new BouncyCastleProvider();
+                rootPrivateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
+            }
         }
 
         LocalDate now = LocalDate.now();
@@ -119,7 +113,6 @@ public class RootServiceImpl implements RootService {
             root.setValidUntil(rootCertificate.getNotAfter());
             root.setStatus(CertificateStatusEnum.Good);
             root.setType(CertificateTypeEnum.Root);
-            root.setUser(user);
             this.certificateRepository.save(root);
 
             // crl
@@ -130,10 +123,10 @@ public class RootServiceImpl implements RootService {
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(x509.getPrivate());
+                key.setUsage(KeyUsageEnum.X509);
+                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
-                key.setUser(user);
                 this.keyRepository.save(key);
                 crlKey = key;
             }
@@ -155,7 +148,6 @@ public class RootServiceImpl implements RootService {
             crl.setValidUntil(crlCertificate.getNotAfter());
             crl.setStatus(CertificateStatusEnum.Good);
             crl.setType(CertificateTypeEnum.Crl);
-            crl.setUser(user);
             this.certificateRepository.save(crl);
 
             // ocsp
@@ -166,10 +158,10 @@ public class RootServiceImpl implements RootService {
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(x509.getPrivate());
+                key.setUsage(KeyUsageEnum.X509);
+                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
-                key.setUser(user);
                 this.keyRepository.save(key);
                 ocspKey = key;
             }
@@ -200,7 +192,6 @@ public class RootServiceImpl implements RootService {
             ocsp.setValidUntil(ocspCertificate.getNotAfter());
             ocsp.setStatus(CertificateStatusEnum.Good);
             ocsp.setType(CertificateTypeEnum.Ocsp);
-            ocsp.setUser(user);
             this.certificateRepository.save(ocsp);
 
             root.setCrlCertificate(crl);
@@ -208,7 +199,7 @@ public class RootServiceImpl implements RootService {
             this.certificateRepository.save(root);
 
             RootGenerateResponse response = new RootGenerateResponse();
-            response.setId(root.getId());
+            response.setCertificateId(root.getId());
             response.setCertificate(rootCertificate);
             response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(rootCertificate).getBytes(StandardCharsets.UTF_8)));
             response.setPublicKey(rootKey.getPublicKey());
@@ -218,12 +209,10 @@ public class RootServiceImpl implements RootService {
             }
             response.setOcspCertificate(ocspCertificate);
             response.setOcspPublicKey(ocspCertificate.getPublicKey());
-            response.setOcspPrivateKey(ocspKey.getPrivateKey());
+            response.setOcspPrivateKey(PrivateKeyUtils.convert(ocspKey.getPrivateKey()));
             response.setCrlCertificate(crlCertificate);
             response.setCrlPublicKey(crlKey.getPublicKey());
-            response.setCrlPrivateKey(crlKey.getPrivateKey());
-            String hex = String.format("%012X", rootCertificate.getSerialNumber().longValue());
-            response.setSshCa(sshApi + "/" + hex + ".pub");
+            response.setCrlPrivateKey(PrivateKeyUtils.convert(crlKey.getPrivateKey()));
 
             if (session != null) {
                 session.putCertificate(slot, rootCertificate);

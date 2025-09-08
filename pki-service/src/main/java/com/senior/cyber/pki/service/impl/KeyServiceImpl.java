@@ -3,10 +3,11 @@ package com.senior.cyber.pki.service.impl;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
+import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.Yubico;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
@@ -18,6 +19,8 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.KeyType;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,27 +40,28 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request, User user) {
+    public JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException {
+        String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
-        key.setPrivateKey(_key.getPrivate());
+        key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
         key.setPublicKey(_key.getPublic());
         key.setType(KeyTypeEnum.ServerKeyJCE);
-        key.setPassword(request.getPassword());
+        key.setUsage(KeyUsageEnum.X509);
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setCreatedDatetime(new Date());
-        key.setUser(user);
         this.keyRepository.save(key);
 
         JcaKeyGenerateResponse response = new JcaKeyGenerateResponse();
-        response.setId(key.getId());
+        response.setKeyPassword(password);
+        response.setKeyId(key.getId());
         return response;
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request, User user) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    public YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -70,67 +74,53 @@ public class KeyServiceImpl implements KeyService {
             PivSession session = new PivSession(connection);
             session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
             PublicKey publicKey = null;
-            if (request.getFormat() == KeyFormat.RSA) {
-                if (request.getSize() == 1024) {
-                    publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA1024);
-                } else if (request.getSize() == 2048) {
-                    publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
+            switch (request.getFormat()) {
+                case RSA -> {
+                    switch (request.getSize()) {
+                        case 1024 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA1024);
+                        }
+                        case 2048 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
+                        }
+                    }
                 }
-            } else if (request.getFormat() == KeyFormat.EC) {
-                if (request.getSize() == 256) {
-                    publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.ECCP256);
-                } else if (request.getSize() == 384) {
-                    publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.ECCP384);
+                case EC -> {
+                    switch (request.getSize()) {
+                        case 256 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.ECCP256);
+                        }
+                        case 384 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.ECCP384);
+                        }
+                    }
                 }
             }
 
             Key key = new Key();
             key.setPublicKey(publicKey);
+            key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
             key.setKeySize(request.getSize());
             key.setYubicoSerial(request.getSerialNumber());
-            key.setYubicoPivSlot(pivSlot.getStringAlias());
+            if (pivSlot != null) {
+                key.setYubicoPivSlot(pivSlot.getStringAlias());
+            }
             key.setYubicoManagementKey(request.getManagementKey());
             key.setYubicoPin(Yubico.DEFAULT_PIN);
             key.setKeyFormat(request.getFormat());
             key.setCreatedDatetime(new Date());
-            key.setUser(user);
             this.keyRepository.save(key);
 
             YubicoKeyGenerateResponse response = new YubicoKeyGenerateResponse();
-            response.setId(key.getId());
+            response.setKeyId(key.getId());
             return response;
         }
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaKeyRegisterResponse register(JcaKeyRegisterRequest request, User user) {
-        Key key = new Key();
-        key.setPublicKey(request.getPublicKey());
-        key.setPrivateKey(request.getPrivateKey());
-        key.setUser(user);
-        if (request.getPrivateKey() == null) {
-            key.setType(KeyTypeEnum.ClientKey);
-        } else {
-            key.setType(KeyTypeEnum.ServerKeyJCE);
-        }
-        if (request.getPublicKey() instanceof RSAKey) {
-            key.setKeyFormat(KeyFormat.RSA);
-        } else if (request.getPublicKey() instanceof ECKey) {
-            key.setKeyFormat(KeyFormat.EC);
-        }
-        key.setCreatedDatetime(new Date());
-        this.keyRepository.save(key);
-
-        JcaKeyRegisterResponse response = new JcaKeyRegisterResponse();
-        response.setId(key.getId());
-        return response;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request, User user) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -147,13 +137,13 @@ public class KeyServiceImpl implements KeyService {
 
             Key key = new Key();
             key.setPublicKey(publicKey);
+            key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
             if (publicKey instanceof RSAKey) {
                 key.setKeyFormat(KeyFormat.RSA);
             } else if (publicKey instanceof ECKey) {
                 key.setKeyFormat(KeyFormat.EC);
             }
-            key.setUser(user);
             key.setYubicoManagementKey(request.getManagementKey());
             key.setYubicoPin(request.getPin());
             key.setYubicoPivSlot(pivSlot.getStringAlias());
@@ -162,7 +152,7 @@ public class KeyServiceImpl implements KeyService {
             this.keyRepository.save(key);
 
             YubicoKeyRegisterResponse response = new YubicoKeyRegisterResponse();
-            response.setId(key.getId());
+            response.setKeyId(key.getId());
             return response;
         }
     }

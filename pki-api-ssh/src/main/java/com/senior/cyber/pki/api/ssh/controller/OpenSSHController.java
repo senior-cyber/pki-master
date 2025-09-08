@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.api.ssh.controller;
 
-import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -27,35 +26,35 @@ public class OpenSSHController {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenSSHController.class);
 
     @Autowired
-    protected CertificateRepository certificateRepository;
-
-    @Autowired
     protected KeyRepository keyRepository;
 
-    @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws IOException {
-        LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
-        if (!"pub".equals(FilenameUtils.getExtension(_serial))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, _serial + " is invalid");
-        }
+    @Autowired
+    protected CertificateRepository certificateRepository;
 
-        long serial = -1;
-        try {
-            serial = Long.parseLong(FilenameUtils.getBaseName(_serial), 16);
-        } catch (NumberFormatException e) {
+    @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String serial) throws IOException {
+        LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
+        if (!"pub".equals(FilenameUtils.getExtension(serial))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
         }
-        Certificate certificate = this.certificateRepository.findBySerial(serial);
-        if (certificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-        }
 
-        Key key = this.keyRepository.findById(certificate.getKey().getId()).orElse(null);
-        if (key == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-        }
+        Key key = this.keyRepository.findById(serial).orElseThrow();
 
-        return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
+        switch (key.getKeyFormat()) {
+            case RSA -> {
+                switch (key.getUsage()) {
+                    case SSH -> {
+                        return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
+                    }
+                    default -> {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+                    }
+                }
+            }
+            default -> {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+            }
+        }
     }
 
 }

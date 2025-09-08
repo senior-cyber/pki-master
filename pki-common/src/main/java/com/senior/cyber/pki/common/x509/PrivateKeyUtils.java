@@ -30,6 +30,7 @@ import java.util.Base64;
 public class PrivateKeyUtils {
 
     private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public static String signText(Provider provider, PrivateKey privateKey, String text) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = null;
@@ -40,7 +41,7 @@ public class PrivateKeyUtils {
         } else {
             throw new IllegalArgumentException(privateKey.getClass().getName() + " is not supported");
         }
-        signature.initSign(privateKey, new SecureRandom());
+        signature.initSign(privateKey, RANDOM);
         signature.update(text.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(signature.sign()) + "." + text;
     }
@@ -148,7 +149,7 @@ public class PrivateKeyUtils {
         OutputEncryptor _encryptor = null;
         JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PKCS8Generator.AES_256_CBC);
         encryptorBuilder.setProvider(PROVIDER);
-        encryptorBuilder.setRandom(new SecureRandom());
+        encryptorBuilder.setRandom(RANDOM);
         encryptorBuilder.setPassword(password.toCharArray());
         encryptorBuilder.setIterationCount(10000);
         _encryptor = encryptorBuilder.build();

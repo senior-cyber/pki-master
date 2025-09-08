@@ -3,7 +3,6 @@ package com.senior.cyber.pki.issuer.api.controller;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
@@ -61,8 +60,6 @@ public class LeafController {
 
     @RequestMapping(path = "/leaf/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeafGenerateResponse> leafGenerate(RequestEntity<LeafGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
         LeafGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -81,13 +78,12 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        LeafGenerateResponse response = this.certificateService.leafGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        LeafGenerateResponse response = this.certificateService.leafGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeafGenerateResponse> serverGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
         ServerCertificateGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -110,73 +106,12 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        LeafGenerateResponse response = this.certificateService.serverGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
-    // TODO :
-    @RequestMapping(path = "/mtls/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> mtlsServerGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-        ServerCertificateGenerateRequest request = httpRequest.getBody();
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
-        }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-        if (issuerKey == null) {
-            throw new IllegalArgumentException("issuerKey not found");
-        }
-
-        String serial = String.format("%012X", issuerCertificate.getSerial());
-
-        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
-        return ResponseEntity.ok(response);
-    }
-
-    // TODO :
     @RequestMapping(path = "/mtls/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> mtlsClientGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-        ServerCertificateGenerateRequest request = httpRequest.getBody();
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
-        }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-        if (issuerKey == null) {
-            throw new IllegalArgumentException("issuerKey not found");
-        }
-
-        String serial = String.format("%012X", issuerCertificate.getSerial());
-
-        LeafGenerateResponse response = this.certificateService.serverGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
-        return ResponseEntity.ok(response);
-    }
-
-    @RequestMapping(path = "/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> clientGenerate(RequestEntity<LeafGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
+    public ResponseEntity<LeafGenerateResponse> mtlsClientGenerate(RequestEntity<LeafGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
         LeafGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -185,8 +120,7 @@ public class LeafController {
         Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.MutualTLS) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -199,21 +133,28 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        LeafGenerateResponse response = this.certificateService.clientGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        LeafGenerateResponse response = this.certificateService.mtlsClientGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/ssh/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SshCertificateGenerateResponse> sshGenerate(RequestEntity<SshCertificateGenerateRequest> httpRequest) throws BadResponseException, ApduException, IOException, ApplicationNotAvailableException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
+    @RequestMapping(path = "/ssh/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SshCertificateGenerateResponse> sshClientGenerate(RequestEntity<SshCertificateGenerateRequest> httpRequest) throws Exception {
         SshCertificateGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        SshCertificateGenerateResponse response = this.certificateService.sshGenerate(user, request);
-        return ResponseEntity.ok(response);
+        Key issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow();
+
+        switch (issuerKey.getUsage()) {
+            case SSH -> {
+                SshCertificateGenerateResponse response = this.certificateService.sshClientGenerate(request);
+                return ResponseEntity.ok(response);
+            }
+            default -> {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerKeyId() + " is not found");
+            }
+        }
     }
 
 }

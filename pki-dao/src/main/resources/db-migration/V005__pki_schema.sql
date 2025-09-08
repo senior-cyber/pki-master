@@ -15,7 +15,7 @@ CREATE TABLE tbl_iban
 CREATE TABLE tbl_key
 (
     key_id                VARCHAR(36)  NOT NULL,
-    user_id               VARCHAR(36)  NOT NULL,
+    user_id               VARCHAR(36)  NULL,
     private_key_pem       TEXT         NULL,
     public_key_pem        TEXT         NOT NULL,
     yubico_piv_slot       VARCHAR(50)  NULL,
@@ -25,7 +25,8 @@ CREATE TABLE tbl_key
     pwd                   VARCHAR(100) NULL,
     key_format            VARCHAR(3)   NULL,
     key_size              INT(11)      NULL,
-    type                  VARCHAR(30)  NOT NULL,
+    `usage`               VARCHAR(30)  NULL,
+    `type`                VARCHAR(30)  NOT NULL,
     created_datetime      DATETIME     NOT NULL,
     INDEX (created_datetime),
     INDEX (yubico_piv_slot),
@@ -55,7 +56,7 @@ CREATE TABLE tbl_certificate
     created_datetime       DATETIME     NOT NULL,
     status                 VARCHAR(10)  NOT NULL,
     type                   VARCHAR(20)  NOT NULL,
-    user_id                VARCHAR(36)  NOT NULL,
+    user_id                VARCHAR(36)  NULL,
     issuer_certificate_id  VARCHAR(36)  NULL,
     crl_certificate_id     VARCHAR(36)  NULL,
     ocsp_certificate_id    VARCHAR(36)  NULL,

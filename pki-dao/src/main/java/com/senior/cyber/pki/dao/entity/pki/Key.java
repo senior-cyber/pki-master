@@ -3,7 +3,7 @@ package com.senior.cyber.pki.dao.entity.pki;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.type.PrivateKeyType;
+import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,7 +12,6 @@ import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
 
@@ -28,17 +27,20 @@ public class Key implements Serializable {
     @Setter(AccessLevel.NONE)
     private String id;
 
-    @Convert(converter = PrivateKeyType.class)
     @Column(name = "private_key_pem")
-    private PrivateKey privateKey;
+    private String privateKey;
 
     @Convert(converter = PublicKeyType.class)
     @Column(name = "public_key_pem")
     private PublicKey publicKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "`type")
     private KeyTypeEnum type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`usage")
+    private KeyUsageEnum usage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "key_format")

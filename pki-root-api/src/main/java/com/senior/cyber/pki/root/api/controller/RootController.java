@@ -2,7 +2,6 @@ package com.senior.cyber.pki.root.api.controller;
 
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
@@ -42,14 +41,12 @@ public class RootController {
 
     @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
         RootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        RootGenerateResponse response = this.rootService.rootGenerate(user, request, this.sshApi);
+        RootGenerateResponse response = this.rootService.rootGenerate(request);
         return ResponseEntity.ok(response);
     }
 

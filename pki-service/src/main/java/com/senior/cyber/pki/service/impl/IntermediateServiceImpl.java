@@ -5,10 +5,10 @@ import com.senior.cyber.pki.common.dto.IntermediateGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
@@ -26,10 +26,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +50,7 @@ public class IntermediateServiceImpl implements IntermediateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public IntermediateGenerateResponse intermediateGenerate(User user, IntermediateGenerateRequest request, String crlApi, String ocspApi, String x509Api, String sshApi) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException {
+    public IntermediateGenerateResponse intermediateGenerate(IntermediateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException {
         Provider issuerProvider = null;
         Provider provider = null;
         Map<String, SmartCardConnection> connections = new HashMap<>();
@@ -65,74 +63,66 @@ public class IntermediateServiceImpl implements IntermediateService {
         Key _issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
         PrivateKey issuerPrivateKey = null;
-        if (_issuerKey.getType() == KeyTypeEnum.ClientKey) {
-            issuerProvider = new BouncyCastleProvider();
-            if (request.getIssuerPrivateKey() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            } else {
-                issuerPrivateKey = request.getIssuerPrivateKey();
+        switch (_issuerKey.getType()) {
+            case ServerKeyJCE -> {
+                issuerProvider = new BouncyCastleProvider();
+                issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
             }
-        } else if (_issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-            issuerProvider = new BouncyCastleProvider();
-            issuerPrivateKey = _issuerKey.getPrivateKey();
-        } else if (_issuerKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
-            SmartCardConnection connection = device.openConnection(SmartCardConnection.class);
-            connections.put(_issuerKey.getYubicoSerial(), connection);
-            PivSession session = new PivSession(connection);
-            session.authenticate(YubicoProviderUtils.hexStringToByteArray(_issuerKey.getYubicoManagementKey()));
-            sessions.put(_issuerKey.getYubicoSerial(), session);
-            issuerProvider = new PivProvider(session);
-            KeyStore ks = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-            keys.put(_issuerKey.getYubicoSerial(), ks);
-            Slot slot = null;
-            for (Slot s : Slot.values()) {
-                if (s.getStringAlias().equalsIgnoreCase(_issuerKey.getYubicoPivSlot())) {
-                    slot = s;
-                    break;
+            case ServerKeyYubico -> {
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
+                SmartCardConnection connection = device.openConnection(SmartCardConnection.class);
+                connections.put(_issuerKey.getYubicoSerial(), connection);
+                PivSession session = new PivSession(connection);
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(_issuerKey.getYubicoManagementKey()));
+                sessions.put(_issuerKey.getYubicoSerial(), session);
+                issuerProvider = new PivProvider(session);
+                KeyStore ks = YubicoProviderUtils.lookupKeyStore(issuerProvider);
+                keys.put(_issuerKey.getYubicoSerial(), ks);
+                Slot slot = null;
+                for (Slot s : Slot.values()) {
+                    if (s.getStringAlias().equalsIgnoreCase(_issuerKey.getYubicoPivSlot())) {
+                        slot = s;
+                        break;
+                    }
                 }
+                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _issuerKey.getYubicoPin());
             }
-            issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _issuerKey.getYubicoPin());
         }
 
         Key _intermediateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
         PublicKey publicKey = _intermediateKey.getPublicKey();
         PrivateKey privateKey = null;
-        if (_intermediateKey.getType() == KeyTypeEnum.ClientKey) {
-            provider = new BouncyCastleProvider();
-            if (request.getPrivateKey() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-            } else {
-                privateKey = request.getPrivateKey();
+        switch (_intermediateKey.getType()) {
+            case ServerKeyJCE -> {
+                provider = new BouncyCastleProvider();
+                privateKey = PrivateKeyUtils.convert(_intermediateKey.getPrivateKey(), request.getKeyPassword());
             }
-        } else if (_intermediateKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-            provider = new BouncyCastleProvider();
-            privateKey = _intermediateKey.getPrivateKey();
-        } else if (_intermediateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-            SmartCardConnection connection = null;
-            KeyStore ks = null;
-            if (!connections.containsKey(_intermediateKey.getYubicoSerial())) {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_intermediateKey.getYubicoSerial());
-                connection = device.openConnection(SmartCardConnection.class);
-                connections.put(_intermediateKey.getYubicoSerial(), connection);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(_intermediateKey.getYubicoManagementKey()));
-                sessions.put(_intermediateKey.getYubicoSerial(), session);
-                provider = new PivProvider(session);
-                ks = YubicoProviderUtils.lookupKeyStore(provider);
-            } else {
-                provider = issuerProvider;
-                ks = keys.get(_intermediateKey.getYubicoSerial());
-            }
-            Slot slot = null;
-            for (Slot s : Slot.values()) {
-                if (s.getStringAlias().equalsIgnoreCase(_intermediateKey.getYubicoPivSlot())) {
-                    slot = s;
-                    break;
+            case ServerKeyYubico -> {
+                SmartCardConnection connection = null;
+                KeyStore ks = null;
+                if (!connections.containsKey(_intermediateKey.getYubicoSerial())) {
+                    YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_intermediateKey.getYubicoSerial());
+                    connection = device.openConnection(SmartCardConnection.class);
+                    connections.put(_intermediateKey.getYubicoSerial(), connection);
+                    PivSession session = new PivSession(connection);
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(_intermediateKey.getYubicoManagementKey()));
+                    sessions.put(_intermediateKey.getYubicoSerial(), session);
+                    provider = new PivProvider(session);
+                    ks = YubicoProviderUtils.lookupKeyStore(provider);
+                } else {
+                    provider = issuerProvider;
+                    ks = keys.get(_intermediateKey.getYubicoSerial());
                 }
+                Slot slot = null;
+                for (Slot s : Slot.values()) {
+                    if (s.getStringAlias().equalsIgnoreCase(_intermediateKey.getYubicoPivSlot())) {
+                        slot = s;
+                        break;
+                    }
+                }
+                slots.put(_intermediateKey.getYubicoSerial(), slot);
+                privateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _intermediateKey.getYubicoPin());
             }
-            slots.put(_intermediateKey.getYubicoSerial(), slot);
-            privateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _intermediateKey.getYubicoPin());
         }
 
         try {
@@ -166,7 +156,6 @@ public class IntermediateServiceImpl implements IntermediateService {
             intermediate.setValidUntil(intermediateCertificate.getNotAfter());
             intermediate.setStatus(CertificateStatusEnum.Good);
             intermediate.setType(CertificateTypeEnum.Intermediate);
-            intermediate.setUser(user);
             this.certificateRepository.save(intermediate);
 
             // crl
@@ -175,12 +164,12 @@ public class IntermediateServiceImpl implements IntermediateService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setUsage(KeyUsageEnum.X509);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(x509.getPrivate());
+                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
-                key.setUser(user);
                 this.keyRepository.save(key);
                 crlKey = key;
             }
@@ -202,7 +191,6 @@ public class IntermediateServiceImpl implements IntermediateService {
             crl.setValidUntil(crlCertificate.getNotAfter());
             crl.setStatus(CertificateStatusEnum.Good);
             crl.setType(CertificateTypeEnum.Crl);
-            crl.setUser(user);
             this.certificateRepository.save(crl);
 
             // ocsp
@@ -211,12 +199,12 @@ public class IntermediateServiceImpl implements IntermediateService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setUsage(KeyUsageEnum.X509);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(x509.getPrivate());
+                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
-                key.setUser(user);
                 this.keyRepository.save(key);
                 ocspKey = key;
             }
@@ -247,7 +235,6 @@ public class IntermediateServiceImpl implements IntermediateService {
             ocsp.setValidUntil(ocspCertificate.getNotAfter());
             ocsp.setStatus(CertificateStatusEnum.Good);
             ocsp.setType(CertificateTypeEnum.Ocsp);
-            ocsp.setUser(user);
             this.certificateRepository.save(ocsp);
 
             intermediate.setCrlCertificate(crl);
@@ -255,17 +242,15 @@ public class IntermediateServiceImpl implements IntermediateService {
             this.certificateRepository.save(intermediate);
 
             IntermediateGenerateResponse response = new IntermediateGenerateResponse();
-            response.setId(intermediate.getId());
+            response.setCertificateId(intermediate.getId());
             response.setCertificate(intermediateCertificate);
             response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(intermediateCertificate).getBytes(StandardCharsets.UTF_8)));
             response.setOcspCertificate(ocspCertificate);
             response.setOcspPublicKey(ocspCertificate.getPublicKey());
-            response.setOcspPrivateKey(ocspKey.getPrivateKey());
+            response.setOcspPrivateKey(PrivateKeyUtils.convert(ocspKey.getPrivateKey()));
             response.setCrlCertificate(crlCertificate);
             response.setCrlPublicKey(crlKey.getPublicKey());
-            response.setCrlPrivateKey(crlKey.getPrivateKey());
-            String hex = String.format("%012X", intermediateCertificate.getSerialNumber().longValue());
-            response.setSshCa(sshApi + "/openssh/" + hex + ".pub");
+            response.setCrlPrivateKey(PrivateKeyUtils.convert(crlKey.getPrivateKey()));
 
             PivSession session = sessions.get(_intermediateKey.getYubicoSerial());
             if (session != null) {

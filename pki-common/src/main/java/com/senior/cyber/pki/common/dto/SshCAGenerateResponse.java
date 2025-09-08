@@ -8,9 +8,15 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class YubicoKeyGenerateResponse implements Serializable {
+public class SshCAGenerateResponse implements Serializable {
 
     @JsonProperty("keyId")
     private String keyId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
+
+    @JsonProperty("sshCa")
+    private String sshCa;
 
 }

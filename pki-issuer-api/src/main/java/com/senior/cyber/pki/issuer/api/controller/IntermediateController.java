@@ -3,7 +3,6 @@ package com.senior.cyber.pki.issuer.api.controller;
 import com.senior.cyber.pki.common.dto.IntermediateGenerateRequest;
 import com.senior.cyber.pki.common.dto.IntermediateGenerateResponse;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
@@ -56,16 +55,8 @@ public class IntermediateController {
     @Autowired
     protected CertificateRepository certificateRepository;
 
-    @Autowired
-    protected KeyRepository keyRepository;
-
-    @Autowired
-    protected UserService userService;
-
     @RequestMapping(path = "/intermediate/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IntermediateGenerateResponse> intermediateGenerate(RequestEntity<IntermediateGenerateRequest> httpRequest) throws IOException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        User user = this.userService.authenticate(httpRequest.getHeaders().getFirst("Authorization"));
-
         IntermediateGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -86,7 +77,7 @@ public class IntermediateController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(user, request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der", this.sshApi + "/" + serial + ".pub");
+        IntermediateGenerateResponse response = this.intermediateService.intermediateGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 

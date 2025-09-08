@@ -16,8 +16,8 @@ import java.security.cert.X509Certificate;
 @Getter
 public class RootGenerateResponse implements Serializable {
 
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("certificateId")
+    private String certificateId;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
@@ -39,9 +39,6 @@ public class RootGenerateResponse implements Serializable {
 
     @JsonProperty("privateKeyBase64")
     private String privateKeyBase64;
-
-    @JsonProperty("sshCa")
-    private String sshCa;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

@@ -5,17 +5,16 @@ import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
+import org.bouncycastle.operator.OperatorCreationException;
 
 import java.io.IOException;
 
 public interface KeyService {
 
-    JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request, User user);
+    JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException;
 
-    YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request, User user) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
+    YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
 
-    JcaKeyRegisterResponse register(JcaKeyRegisterRequest request, User user);
-
-    YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request, User user) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

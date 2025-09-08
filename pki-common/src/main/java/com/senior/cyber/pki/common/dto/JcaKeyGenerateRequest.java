@@ -17,7 +17,4 @@ public class JcaKeyGenerateRequest implements Serializable {
     @JsonProperty("format")
     private KeyFormat format;
 
-    @JsonProperty("password")
-    private String password;
-
 }

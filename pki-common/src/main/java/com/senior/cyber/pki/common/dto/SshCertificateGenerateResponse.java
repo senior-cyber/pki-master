@@ -13,9 +13,6 @@ public class SshCertificateGenerateResponse implements Serializable {
     @JsonProperty("opensshCertificate")
     private String opensshCertificate;
 
-    @JsonProperty("opensshPrivateKey")
-    private String opensshPrivateKey;
-
     @JsonProperty("opensshConfig")
     private String opensshConfig;
 
