@@ -87,8 +87,8 @@ public class LeafController {
     }
 
     @RequestMapping(path = "/mtls/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> mtlsClientGenerate(RequestEntity<LeafGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        LeafGenerateRequest request = httpRequest.getBody();
+    public ResponseEntity<MtlsClientGenerateResponse> mtlsClientGenerate(RequestEntity<MtlsClientGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        MtlsClientGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -109,7 +109,7 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        LeafGenerateResponse response = this.certificateService.mtlsClientGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        MtlsClientGenerateResponse response = this.certificateService.mtlsClientGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
     }
 

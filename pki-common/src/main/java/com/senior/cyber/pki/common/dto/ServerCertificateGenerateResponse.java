@@ -37,10 +37,12 @@ public class ServerCertificateGenerateResponse implements Serializable {
 
     @JsonSerialize(using = X509CertificatesSerializer.class)
     @JsonDeserialize(using = X509CertificatesDeserializer.class)
+    @JsonProperty("chain")
     private List<X509Certificate> chain;
 
     @JsonSerialize(using = X509CertificatesSerializer.class)
     @JsonDeserialize(using = X509CertificatesDeserializer.class)
+    @JsonProperty("fullchain")
     private List<X509Certificate> fullchain;
 
 }

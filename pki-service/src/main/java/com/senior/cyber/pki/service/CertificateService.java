@@ -19,6 +19,6 @@ public interface CertificateService {
 
     SshCertificateGenerateResponse sshClientGenerate(SshCertificateGenerateRequest request) throws Exception;
 
-    LeafGenerateResponse mtlsClientGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    MtlsClientGenerateResponse mtlsClientGenerate(MtlsClientGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

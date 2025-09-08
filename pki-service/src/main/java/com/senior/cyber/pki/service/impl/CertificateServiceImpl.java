@@ -1,7 +1,6 @@
 package com.senior.cyber.pki.service.impl;
 
 import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.common.x509.CertificateUtils;
 import com.senior.cyber.pki.common.x509.PkiUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.SubjectUtils;
@@ -408,12 +407,12 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public LeafGenerateResponse mtlsClientGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public MtlsClientGenerateResponse mtlsClientGenerate(MtlsClientGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.Root && _issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
+                (_issuerCertificate.getType() != CertificateTypeEnum.MutualTLS) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
@@ -483,48 +482,9 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setType(CertificateTypeEnum.Leaf);
             this.certificateRepository.save(certificate);
 
-            LeafGenerateResponse response = new LeafGenerateResponse();
+            MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
             response.setCert(leafCertificate);
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey()));
-
-            List<X509Certificate> chain = new ArrayList<>();
-            chain.add(issuerCertificate);
-
-            Certificate temp = _issuerCertificate;
-            while (true) {
-                String id = temp.getIssuerCertificate().getId();
-                Certificate cert = this.certificateRepository.findById(id).orElse(null);
-                if (cert == null) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Root) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
-                    chain.add(cert.getCertificate());
-                    temp = cert;
-                }
-            }
-            response.setChain(chain);
-
-            List<X509Certificate> fullchain = new ArrayList<>();
-            fullchain.add(certificate.getCertificate());
-            temp = certificate;
-            while (true) {
-                String id = temp.getIssuerCertificate().getId();
-                Certificate cert = this.certificateRepository.findById(id).orElse(null);
-                if (cert == null) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Root) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
-                    fullchain.add(cert.getCertificate());
-                    temp = cert;
-                }
-            }
-            response.setFullchain(fullchain);
             return response;
         } finally {
             if (connection != null) {

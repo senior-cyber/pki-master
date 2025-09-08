@@ -3,18 +3,20 @@ package com.senior.cyber.pki.common.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.senior.cyber.pki.common.converter.*;
+import com.senior.cyber.pki.common.converter.PrivateKeyDeserializer;
+import com.senior.cyber.pki.common.converter.PrivateKeySerializer;
+import com.senior.cyber.pki.common.converter.X509CertificateDeserializer;
+import com.senior.cyber.pki.common.converter.X509CertificateSerializer;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Service;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import java.util.List;
 
-@Setter
 @Getter
-public class LeafGenerateResponse implements Serializable {
+@Setter
+public class MtlsClientGenerateResponse {
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
@@ -25,15 +27,5 @@ public class LeafGenerateResponse implements Serializable {
     @JsonDeserialize(using = PrivateKeyDeserializer.class)
     @JsonProperty("privkey")
     private PrivateKey privkey;
-
-    @JsonSerialize(using = X509CertificatesSerializer.class)
-    @JsonDeserialize(using = X509CertificatesDeserializer.class)
-    @JsonProperty("chain")
-    private List<X509Certificate> chain;
-
-    @JsonSerialize(using = X509CertificatesSerializer.class)
-    @JsonDeserialize(using = X509CertificatesDeserializer.class)
-    @JsonProperty("fullchain")
-    private List<X509Certificate> fullchain;
 
 }
