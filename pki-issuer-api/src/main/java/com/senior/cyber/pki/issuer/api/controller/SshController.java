@@ -2,7 +2,6 @@ package com.senior.cyber.pki.issuer.api.controller;
 
 import com.senior.cyber.pki.common.dto.SshCAGenerateRequest;
 import com.senior.cyber.pki.common.dto.SshCAGenerateResponse;
-import com.senior.cyber.pki.service.IntermediateService;
 import com.senior.cyber.pki.service.SshCAService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -29,9 +28,6 @@ import java.security.cert.CertificateException;
 public class SshController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SshController.class);
-
-    @Autowired
-    protected IntermediateService intermediateService;
 
     @Value("${api.crl}")
     protected String crlApi;

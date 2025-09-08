@@ -38,7 +38,7 @@ public class OpenSSHController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
         }
 
-        Key key = this.keyRepository.findById(serial).orElseThrow();
+        Key key = this.keyRepository.findById(FilenameUtils.getBaseName(serial)).orElseThrow();
 
         switch (key.getKeyFormat()) {
             case RSA -> {

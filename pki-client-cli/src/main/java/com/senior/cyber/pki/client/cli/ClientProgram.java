@@ -26,6 +26,71 @@ public class ClientProgram implements CommandLineRunner {
         SpringApplication.run(ClientProgram.class, args);
     }
 
+    public void run(String... args) throws Exception {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            Map<String, Object> sshCaKey = null;
+            {
+                Map<String, Object> request = new HashMap<>();
+                request.put("size", "2048");
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/ssh/generate"))
+                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json")
+                        .build();
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                sshCaKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
+                });
+            }
+
+            Map<String, Object> mtlsClientKey = null;
+//            {
+//                Map<String, Object> request = new HashMap<>();
+//                request.put("size", "2048");
+//                request.put("format", "RSA");
+//                HttpRequest req = HttpRequest.newBuilder()
+//                        .uri(URI.create("https://pki-key-api.khmer.name/api/jca/generate"))
+//                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+//                        .header("Content-Type", "application/json")
+//                        .header("Accept", "application/json")
+//                        .build();
+//                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+//                mtlsClientKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
+//                });
+//            }
+//            Map<String, Object> mtlsClient = null;
+//            {
+//                Map<String, Object> request = new HashMap<>();
+//                request.put("issuerCertificateId", mtlsServer.get("issuerCertificateId"));
+//                request.put("issuerKeyPassword", mtlsServer.get("issuerKeyPassword"));
+//                request.put("keyId", mtlsClientKey.get("keyId"));
+//                request.put("keyPassword", mtlsClientKey.get("keyPassword"));
+//                request.put("locality", "Phnom Penh");
+//                request.put("province", "Kandal");
+//                request.put("country", "KH");
+//                request.put("commonName", "mTLS Client");
+//                request.put("organization", "Ministry of Post and Telecommunications");
+//                request.put("organizationalUnit", "Digital Government Committee");
+//
+//                HttpRequest req = HttpRequest.newBuilder()
+//                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/mtls/client/generate"))
+//                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+//                        .header("Content-Type", "application/json")
+//                        .header("Accept", "application/json")
+//                        .build();
+//                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+//                mtlsClient = MAPPER.readValue(resp.body(), new TypeReference<>() {
+//                });
+//            }
+//            FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
+//            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
+//            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
+//            System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
+
+        }
+        System.exit(0);
+    }
+
     public void run2(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> mtlsServerKey = null;
@@ -114,7 +179,7 @@ public class ClientProgram implements CommandLineRunner {
         System.exit(0);
     }
 
-    public void run(String... args) throws Exception {
+    public void run1(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> rootCaKey = null;
             {
