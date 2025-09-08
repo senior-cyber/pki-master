@@ -1,6 +1,5 @@
 package com.senior.cyber.pki.client.cli;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
@@ -27,7 +26,15 @@ public class ClientProgram implements CommandLineRunner {
         SpringApplication.run(ClientProgram.class, args);
     }
 
+    @Override
     public void run(String... args) throws Exception {
+        x509(args);
+        mtls(args);
+        sshCa(args);
+        System.exit(0);
+    }
+
+    public void sshCa(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> sshCaKey = null;
             {
@@ -46,9 +53,11 @@ public class ClientProgram implements CommandLineRunner {
 
             Map<String, Object> sshClient = null;
             {
+                Map<String, Object> issuer = new HashMap<>();
+                issuer.put("keyId", sshCaKey.get("keyId"));
+                issuer.put("keyPassword", sshCaKey.get("keyPassword"));
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerKeyId", sshCaKey.get("keyId"));
-                request.put("issuerKeyPassword", sshCaKey.get("keyPassword"));
+                request.put("issuer", issuer);
                 request.put("opensshPublicKey", "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQClwFPqhyptjv9av32YK09AqXDCIgcYzIrapN8sBtvZxZvjSo3rp5LkBC5Cerhh23VKHr2gwFUvW/szKQEcS5Zgu0I4vrVwMcKGFbDz/CAgdBsoiscjO/d7vLK01MS/TvsU1uKMKArZPArqwQpYoT7TLZTKVd7RwPm/udSi/jNTSzIL1+/xDUtZpcuu9sIxS2jPBEZvvSgaJcnc1uDlL03HPrRNqx5O/CXGDCyUH+ATea9IQGqbflUB3DDXFSDM8oOOMNXGMOhre8HM5B7pCOekH93U+Gbzw9HHsZfxFsmqT19uvtZe9LeqelbabYMMZvTAJjBsNaS4+Z4IPa/hs7PBIuASKjtFI73sA28wa32MDz8iDAygL97vW9wLo1zPbyELh9CEF/haAd4JPm04Zx3pq7osfaiWQ8tc1APH9cqNY+lbnMKnWGN8HLMaia+/RYKT03alAnW7HMvCk1f7oXBkqdeAbDZ2nLy5zvaKgw9UgOa7a6VTSUKwgJg6nDdod18= dev");
                 request.put("principal", "socheat");
                 request.put("server", "192.168.1.1");
@@ -68,12 +77,10 @@ public class ClientProgram implements CommandLineRunner {
 //            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
 //            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
             System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
-
         }
-        System.exit(0);
     }
 
-    public void run2(String... args) throws Exception {
+    public void mtls(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> mtlsServerKey = null;
             {
@@ -130,9 +137,11 @@ public class ClientProgram implements CommandLineRunner {
             }
             Map<String, Object> mtlsClient = null;
             {
+                Map<String, Object> issuer = new HashMap<>();
+                issuer.put("certificateId", mtlsServer.get("certificateId"));
+                issuer.put("keyPassword", mtlsServer.get("keyPassword"));
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerCertificateId", mtlsServer.get("issuerCertificateId"));
-                request.put("issuerKeyPassword", mtlsServer.get("issuerKeyPassword"));
+                request.put("issuer", issuer);
                 request.put("keyId", mtlsClientKey.get("keyId"));
                 request.put("keyPassword", mtlsClientKey.get("keyPassword"));
                 request.put("locality", "Phnom Penh");
@@ -156,12 +165,10 @@ public class ClientProgram implements CommandLineRunner {
             FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
             FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
             System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
-
         }
-        System.exit(0);
     }
 
-    public void run1(String... args) throws Exception {
+    public void x509(String... args) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Map<String, Object> rootCaKey = null;
             {
@@ -217,9 +224,11 @@ public class ClientProgram implements CommandLineRunner {
             }
             Map<String, Object> subCa = null;
             {
+                Map<String, Object> issuer = new HashMap<>();
+                issuer.put("certificateId", rootCa.get("certificateId"));
+                issuer.put("keyPassword", rootCa.get("keyPassword"));
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerCertificateId", rootCa.get("issuerCertificateId"));
-                request.put("issuerKeyPassword", rootCa.get("issuerKeyPassword"));
+                request.put("issuer", issuer);
                 request.put("keyId", subCaKey.get("keyId"));
                 request.put("keyPassword", subCaKey.get("keyPassword"));
                 request.put("locality", "Phnom Penh");
@@ -240,9 +249,11 @@ public class ClientProgram implements CommandLineRunner {
                 });
             }
             {
+                Map<String, Object> issuer = new HashMap<>();
+                issuer.put("certificateId", rootCa.get("certificateId"));
+                issuer.put("keyPassword", rootCa.get("keyPassword"));
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerCertificateId", rootCa.get("issuerCertificateId"));
-                request.put("issuerKeyPassword", rootCa.get("issuerKeyPassword"));
+                request.put("issuer", issuer);
                 request.put("keyId", subCaKey.get("keyId"));
                 request.put("keyPassword", subCaKey.get("keyPassword"));
                 request.put("locality", "Phnom Penh");
@@ -279,9 +290,11 @@ public class ClientProgram implements CommandLineRunner {
             }
             Map<String, Object> leaf = null;
             {
+                Map<String, Object> issuer = new HashMap<>();
+                issuer.put("certificateId", subCa.get("certificateId"));
+                issuer.put("keyPassword", subCa.get("keyPassword"));
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerCertificateId", subCa.get("issuerCertificateId"));
-                request.put("issuerKeyPassword", subCa.get("issuerKeyPassword"));
+                request.put("issuer", issuer);
                 request.put("keyId", leafKey.get("keyId"));
                 request.put("keyPassword", leafKey.get("keyPassword"));
                 request.put("locality", "Phnom Penh");
@@ -308,7 +321,6 @@ public class ClientProgram implements CommandLineRunner {
             System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
 
         }
-        System.exit(0);
     }
 
 }
