@@ -112,7 +112,7 @@ public class MtlsServiceImpl implements MtlsService {
             root.setValidFrom(rootCertificate.getNotBefore());
             root.setValidUntil(rootCertificate.getNotAfter());
             root.setStatus(CertificateStatusEnum.Good);
-            root.setType(CertificateTypeEnum.MutualTLS);
+            root.setType(CertificateTypeEnum.mTLS_SERVER);
             this.certificateRepository.save(root);
 
             MtlsCertificateGenerateResponse response = new MtlsCertificateGenerateResponse();

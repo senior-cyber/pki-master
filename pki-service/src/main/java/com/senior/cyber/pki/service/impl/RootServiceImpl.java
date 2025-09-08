@@ -32,11 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -112,7 +110,7 @@ public class RootServiceImpl implements RootService {
             root.setValidFrom(rootCertificate.getNotBefore());
             root.setValidUntil(rootCertificate.getNotAfter());
             root.setStatus(CertificateStatusEnum.Good);
-            root.setType(CertificateTypeEnum.Root);
+            root.setType(CertificateTypeEnum.ROOT);
             this.certificateRepository.save(root);
 
             // crl
@@ -147,7 +145,7 @@ public class RootServiceImpl implements RootService {
             crl.setValidFrom(crlCertificate.getNotBefore());
             crl.setValidUntil(crlCertificate.getNotAfter());
             crl.setStatus(CertificateStatusEnum.Good);
-            crl.setType(CertificateTypeEnum.Crl);
+            crl.setType(CertificateTypeEnum.CRL);
             this.certificateRepository.save(crl);
 
             // ocsp
@@ -191,7 +189,7 @@ public class RootServiceImpl implements RootService {
             ocsp.setValidFrom(ocspCertificate.getNotBefore());
             ocsp.setValidUntil(ocspCertificate.getNotAfter());
             ocsp.setStatus(CertificateStatusEnum.Good);
-            ocsp.setType(CertificateTypeEnum.Ocsp);
+            ocsp.setType(CertificateTypeEnum.OCSP);
             this.certificateRepository.save(ocsp);
 
             root.setCrlCertificate(crl);

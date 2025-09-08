@@ -12,8 +12,6 @@ import java.security.cert.CertificateException;
 
 public interface CertificateService {
 
-    ServerGenerateResponse leafGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
-
     ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
     SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws Exception;

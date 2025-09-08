@@ -30,11 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -155,7 +153,7 @@ public class IntermediateServiceImpl implements IntermediateService {
             intermediate.setValidFrom(intermediateCertificate.getNotBefore());
             intermediate.setValidUntil(intermediateCertificate.getNotAfter());
             intermediate.setStatus(CertificateStatusEnum.Good);
-            intermediate.setType(CertificateTypeEnum.Intermediate);
+            intermediate.setType(CertificateTypeEnum.INTERMEDIATE);
             this.certificateRepository.save(intermediate);
 
             // crl
@@ -190,7 +188,7 @@ public class IntermediateServiceImpl implements IntermediateService {
             crl.setValidFrom(crlCertificate.getNotBefore());
             crl.setValidUntil(crlCertificate.getNotAfter());
             crl.setStatus(CertificateStatusEnum.Good);
-            crl.setType(CertificateTypeEnum.Crl);
+            crl.setType(CertificateTypeEnum.CRL);
             this.certificateRepository.save(crl);
 
             // ocsp
@@ -234,7 +232,7 @@ public class IntermediateServiceImpl implements IntermediateService {
             ocsp.setValidFrom(ocspCertificate.getNotBefore());
             ocsp.setValidUntil(ocspCertificate.getNotAfter());
             ocsp.setStatus(CertificateStatusEnum.Good);
-            ocsp.setType(CertificateTypeEnum.Ocsp);
+            ocsp.setType(CertificateTypeEnum.OCSP);
             this.certificateRepository.save(ocsp);
 
             intermediate.setCrlCertificate(crl);

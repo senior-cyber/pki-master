@@ -74,7 +74,7 @@ public class IntermediateController {
         }
         Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate && issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE && issuerCertificate.getType() != CertificateTypeEnum.ROOT) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {

@@ -6,9 +6,7 @@ import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
-import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
-import com.senior.cyber.pki.service.UserService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -68,7 +66,7 @@ public class IntermediateController {
         }
         Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate && issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE && issuerCertificate.getType() != CertificateTypeEnum.ROOT) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {

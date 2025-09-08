@@ -58,139 +58,12 @@ public class CertificateServiceImpl implements CertificateService {
     protected KeyRepository keyRepository;
 
     @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public ServerGenerateResponse leafGenerate(LeafGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        Date _now = LocalDate.now().toDate();
-
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
-        if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.Root && _issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
-                _issuerCertificate.getValidFrom().after(_now) ||
-                _issuerCertificate.getValidUntil().before(_now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
-        }
-
-        X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
-
-        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
-
-        SmartCardConnection connection = null;
-
-        Provider issuerProvider = null;
-        PrivateKey issuerPrivateKey = null;
-        switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
-                issuerProvider = new BouncyCastleProvider();
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuerKeyPassword());
-            }
-            case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
-                if (device == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
-                }
-                connection = device.openConnection(SmartCardConnection.class);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(issuerKey.getYubicoManagementKey()));
-                issuerProvider = new PivProvider(session);
-                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(issuerKey.getYubicoPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, issuerKey.getYubicoPin());
-            }
-        }
-
-        try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
-            if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
-            }
-            PublicKey publicKey = certificateKey.getPublicKey();
-
-            LocalDate now = LocalDate.now();
-            X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
-            Certificate certificate = new Certificate();
-            certificate.setIssuerCertificate(_issuerCertificate);
-            certificate.setCountryCode(request.getCountry());
-            certificate.setOrganization(request.getOrganization());
-            certificate.setOrganizationalUnit(request.getOrganizationalUnit());
-            certificate.setCommonName(request.getCommonName());
-            certificate.setLocalityName(request.getLocality());
-            certificate.setStateOrProvinceName(request.getProvince());
-            certificate.setEmailAddress(request.getEmailAddress());
-            certificate.setKey(certificateKey);
-            certificate.setCertificate(leafCertificate);
-            certificate.setSerial(leafCertificate.getSerialNumber().longValueExact());
-            certificate.setCreatedDatetime(new Date());
-            certificate.setValidFrom(leafCertificate.getNotBefore());
-            certificate.setValidUntil(leafCertificate.getNotAfter());
-            certificate.setStatus(CertificateStatusEnum.Good);
-            certificate.setType(CertificateTypeEnum.Leaf);
-            this.certificateRepository.save(certificate);
-
-            ServerGenerateResponse response = new ServerGenerateResponse();
-            response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
-
-            List<X509Certificate> chain = new ArrayList<>();
-            chain.add(issuerCertificate);
-
-            Certificate temp = _issuerCertificate;
-            while (true) {
-                String id = temp.getIssuerCertificate().getId();
-                Certificate cert = this.certificateRepository.findById(id).orElse(null);
-                if (cert == null) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Root) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
-                    chain.add(cert.getCertificate());
-                    temp = cert;
-                }
-            }
-            response.setChain(chain);
-
-            List<X509Certificate> fullchain = new ArrayList<>();
-            temp = certificate;
-            while (true) {
-                String id = temp.getIssuerCertificate().getId();
-                Certificate cert = this.certificateRepository.findById(id).orElse(null);
-                if (cert == null) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Root) {
-                    break;
-                }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
-                    fullchain.add(cert.getCertificate());
-                    temp = cert;
-                }
-            }
-            fullchain.add(certificate.getCertificate());
-            response.setFullchain(fullchain);
-            return response;
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-    }
-
-    @Override
     public ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.Root && _issuerCertificate.getType() != CertificateTypeEnum.Intermediate) ||
+                (_issuerCertificate.getType() != CertificateTypeEnum.ROOT && _issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
@@ -271,7 +144,7 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setValidFrom(leafCertificate.getNotBefore());
             certificate.setValidUntil(leafCertificate.getNotAfter());
             certificate.setStatus(CertificateStatusEnum.Good);
-            certificate.setType(CertificateTypeEnum.Leaf);
+            certificate.setType(CertificateTypeEnum.TLS_SERVER);
             this.certificateRepository.save(certificate);
 
             ServerGenerateResponse response = new ServerGenerateResponse();
@@ -288,10 +161,10 @@ public class CertificateServiceImpl implements CertificateService {
                 if (cert == null) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.Root) {
+                if (cert.getType() == CertificateTypeEnum.ROOT) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
+                if (cert.getType() == CertificateTypeEnum.INTERMEDIATE) {
                     chain.add(cert.getCertificate());
                     temp = cert;
                 }
@@ -306,10 +179,10 @@ public class CertificateServiceImpl implements CertificateService {
                 if (cert == null) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.Root) {
+                if (cert.getType() == CertificateTypeEnum.ROOT) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.Intermediate) {
+                if (cert.getType() == CertificateTypeEnum.INTERMEDIATE) {
                     fullchain.add(cert.getCertificate());
                     temp = cert;
                 }
@@ -412,7 +285,7 @@ public class CertificateServiceImpl implements CertificateService {
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.MutualTLS) ||
+                (_issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
@@ -479,7 +352,7 @@ public class CertificateServiceImpl implements CertificateService {
             certificate.setValidFrom(leafCertificate.getNotBefore());
             certificate.setValidUntil(leafCertificate.getNotAfter());
             certificate.setStatus(CertificateStatusEnum.Good);
-            certificate.setType(CertificateTypeEnum.Leaf);
+            certificate.setType(CertificateTypeEnum.mTLS_CLIENT);
             this.certificateRepository.save(certificate);
 
             MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();

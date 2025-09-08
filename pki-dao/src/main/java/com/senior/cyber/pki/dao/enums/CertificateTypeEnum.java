@@ -2,6 +2,6 @@ package com.senior.cyber.pki.dao.enums;
 
 public enum CertificateTypeEnum {
 
-    Root, Intermediate, Leaf, Crl, Ocsp, SshCA, MutualTLS
+    ROOT, INTERMEDIATE, TLS_SERVER, CRL, OCSP, mTLS_SERVER, mTLS_CLIENT
 
 }

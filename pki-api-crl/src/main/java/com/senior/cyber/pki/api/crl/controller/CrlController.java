@@ -87,7 +87,7 @@ public class CrlController {
         }
 
         switch (issuerCertificate.getType()) {
-            case Root, Intermediate -> {
+            case ROOT, INTERMEDIATE -> {
                 Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElse(null);
                 if (_c == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");

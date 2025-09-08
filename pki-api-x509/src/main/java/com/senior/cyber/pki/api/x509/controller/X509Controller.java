@@ -41,7 +41,7 @@ public class X509Controller {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
             }
             switch (certificate.getType()) {
-                case Root, Intermediate, MutualTLS -> {
+                case ROOT, INTERMEDIATE, mTLS_SERVER -> {
                     if ("DER".equalsIgnoreCase(extension)) {
                         HttpHeaders headers = new HttpHeaders();
                         headers.add("Content-Disposition", "inline");

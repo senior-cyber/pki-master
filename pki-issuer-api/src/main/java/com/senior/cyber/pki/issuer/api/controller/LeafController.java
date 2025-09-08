@@ -68,8 +68,8 @@ public class LeafController {
         Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE &&
+                        issuerCertificate.getType() != CertificateTypeEnum.ROOT) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
@@ -96,7 +96,7 @@ public class LeafController {
         Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.MutualTLS) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
