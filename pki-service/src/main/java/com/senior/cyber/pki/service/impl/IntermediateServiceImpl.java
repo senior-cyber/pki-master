@@ -242,7 +242,8 @@ public class IntermediateServiceImpl implements IntermediateService {
             this.certificateRepository.save(intermediate);
 
             IntermediateGenerateResponse response = new IntermediateGenerateResponse();
-            response.setCertificateId(intermediate.getId());
+            response.setIssuerCertificateId(intermediate.getId());
+            response.setIssuerKeyPassword(request.getKeyPassword());
             response.setCertificate(intermediateCertificate);
             response.setCertificateBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(intermediateCertificate).getBytes(StandardCharsets.UTF_8)));
             response.setOcspCertificate(ocspCertificate);

@@ -16,8 +16,11 @@ import java.security.cert.X509Certificate;
 @Getter
 public class RootGenerateResponse implements Serializable {
 
-    @JsonProperty("certificateId")
-    private String certificateId;
+    @JsonProperty("issuerCertificateId")
+    private String issuerCertificateId;
+
+    @JsonProperty("issuerKeyPassword")
+    private String issuerKeyPassword;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
