@@ -114,10 +114,16 @@ public class OcspController {
                                     cert.checkValidity();
                                     ocspRespBuilder.addResponse(respCertId, CertificateStatus.GOOD);
                                 } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                                    ocspRespBuilder.addResponse(respCertId, new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
+                                    if (certificate.getRevokedDate() == null) {
+                                        certificate.setRevokedDate(new Date());
+                                        certificateRepository.save(certificate);
+                                        ocspRespBuilder.addResponse(respCertId, new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
+                                    }
                                 }
                             }
                             case Revoked -> {
+                                certificate.setRevokedDate(new Date());
+                                certificateRepository.save(certificate);
                                 ocspRespBuilder.addResponse(respCertId, new RevokedStatus(certificate.getRevokedDate(), CRLReason.cessationOfOperation));
                             }
                         }

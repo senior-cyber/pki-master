@@ -37,6 +37,7 @@ import java.security.Security;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -114,6 +115,10 @@ public class CrlController {
                             }
                         }
                         case Revoked -> {
+                            if (certificate.getRevokedDate() == null) {
+                                certificate.setRevokedDate(new Date());
+                                certificateRepository.save(certificate);
+                            }
                             builder.addCRLEntry(cert.getSerialNumber(), certificate.getRevokedDate(), CRLReason.cessationOfOperation);
                         }
                     }
