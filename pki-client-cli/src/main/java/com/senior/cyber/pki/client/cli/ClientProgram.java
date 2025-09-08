@@ -51,7 +51,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("locality", "Phnom Penh");
                 request.put("province", "Kandal");
                 request.put("country", "KH");
-                request.put("commonName", "Cambodia National CA");
+                request.put("commonName", "mTLS Server");
                 request.put("organization", "Ministry of Post and Telecommunications");
                 request.put("organizationalUnit", "Digital Government Committee");
 
@@ -84,14 +84,14 @@ public class ClientProgram implements CommandLineRunner {
             Map<String, Object> mtlsClient = null;
             {
                 Map<String, Object> request = new HashMap<>();
-                request.put("issuerCertificateId", mtlsServerKey.get("issuerCertificateId"));
-                request.put("issuerKeyPassword", mtlsServerKey.get("issuerKeyPassword"));
+                request.put("issuerCertificateId", mtlsServer.get("issuerCertificateId"));
+                request.put("issuerKeyPassword", mtlsServer.get("issuerKeyPassword"));
                 request.put("keyId", mtlsClientKey.get("keyId"));
                 request.put("keyPassword", mtlsClientKey.get("keyPassword"));
                 request.put("locality", "Phnom Penh");
                 request.put("province", "Kandal");
                 request.put("country", "KH");
-                request.put("commonName", "Leaf");
+                request.put("commonName", "mTLS Client");
                 request.put("organization", "Ministry of Post and Telecommunications");
                 request.put("organizationalUnit", "Digital Government Committee");
 
@@ -105,8 +105,8 @@ public class ClientProgram implements CommandLineRunner {
                 mtlsClient = MAPPER.readValue(resp.body(), new TypeReference<>() {
                 });
             }
-            FileUtils.write(new File("pki-rootCa.pem"), (String) mtlsServer.get("certificate"));
-            FileUtils.write(new File("pki-leaf.pem"), (String) mtlsClient.get("fullchain"));
+            FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
+            FileUtils.write(new File("pki-mtls-client.pem"), (String) mtlsClient.get("certificate"));
             System.out.println("openssl verify -CAfile pki-rootCa.pem pki-subCa.pem pki-leaf.pem");
 
         }

@@ -58,30 +58,6 @@ public class LeafController {
     @Autowired
     protected UserService userService;
 
-    @RequestMapping(path = "/leaf/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeafGenerateResponse> leafGenerate(RequestEntity<LeafGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        LeafGenerateRequest request = httpRequest.getBody();
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow();
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.Intermediate &&
-                        issuerCertificate.getType() != CertificateTypeEnum.Root) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuerCertificateId() + " is not valid");
-        }
-
-        String serial = String.format("%012X", issuerCertificate.getSerial());
-
-        LeafGenerateResponse response = this.certificateService.leafGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
-        return ResponseEntity.ok(response);
-    }
-
     @RequestMapping(path = "/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeafGenerateResponse> serverGenerate(RequestEntity<ServerCertificateGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
         ServerCertificateGenerateRequest request = httpRequest.getBody();
