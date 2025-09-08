@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.x509.controller;
 
+import com.senior.cyber.pki.common.x509.CertificateUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 
 @RestController
@@ -49,7 +51,7 @@ public class X509Controller {
                         HttpHeaders headers = new HttpHeaders();
                         headers.add("Content-Disposition", "inline");
                         headers.add("Content-Type", MediaType.TEXT_PLAIN_VALUE);
-                        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(certificate.getCertificate().getEncoded());
+                        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(CertificateUtils.convert(certificate.getCertificate()).getBytes(StandardCharsets.UTF_8));
                     }
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
                 }
