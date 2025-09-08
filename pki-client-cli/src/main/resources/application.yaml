@@ -1,38 +1,6 @@
-server:
-  port: ${override.server.port}
-  error:
-    include-message: always
 spring:
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: validate
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    database: mysql
-    database-platform: com.senior.cyber.pki.dao.dialect.MySQLDialect
-  mvc:
-    servlet:
-      path: /api
-      load-on-startup: 1
-  datasource:
-    username: ${override.datasource.username}
-    password: ${override.datasource.password}
-    url: ${override.datasource.url}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  flyway:
-    locations: classpath:com/senior/cyber/pki/dao/flyway
-api:
-  aia: ${override.api.aia}
-  crl: ${override.api.crl}
-logging:
-  file:
-    path: ${override.logging.file.path}
-    name: ${override.logging.file.name}
-  pattern:
-    console: "%d %-5level %logger : %msg%n"
-    file: "%d %-5level [%thread] %logger : %msg%n"
-  level:
-    root: info
-    sql: info
-    web: info
+  application:
+    name: pki-client-cli
+  threads:
+    virtual:
+      enabled: true

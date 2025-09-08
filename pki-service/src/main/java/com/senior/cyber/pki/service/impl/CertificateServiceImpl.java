@@ -163,7 +163,6 @@ public class CertificateServiceImpl implements CertificateService {
             response.setChain(chain);
 
             List<X509Certificate> fullchain = new ArrayList<>();
-            fullchain.add(certificate.getCertificate());
             temp = certificate;
             while (true) {
                 String id = temp.getIssuerCertificate().getId();
@@ -179,6 +178,7 @@ public class CertificateServiceImpl implements CertificateService {
                     temp = cert;
                 }
             }
+            fullchain.add(certificate.getCertificate());
             response.setFullchain(fullchain);
             return response;
         } finally {
