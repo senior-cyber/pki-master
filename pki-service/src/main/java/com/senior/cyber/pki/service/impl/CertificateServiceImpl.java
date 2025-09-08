@@ -139,7 +139,7 @@ public class CertificateServiceImpl implements CertificateService {
             response.setCertificateId(certificate.getId());
             response.setCert(leafCertificate);
             response.setCertBase64(Base64.getEncoder().encodeToString(CertificateUtils.convert(leafCertificate).getBytes(StandardCharsets.UTF_8)));
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey()));
+            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
             response.setPrivkeyBase64(Base64.getEncoder().encodeToString(PrivateKeyUtils.convert(response.getPrivkey()).getBytes(StandardCharsets.UTF_8)));
 
             List<X509Certificate> chain = new ArrayList<>();
