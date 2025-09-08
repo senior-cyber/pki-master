@@ -41,4 +41,6 @@ public interface CertificateRepository extends JpaRepository<Certificate, String
 
     List<Certificate> findByIssuerCertificateAndType(Certificate issuerCertificate, CertificateTypeEnum type);
 
+    List<Certificate> findByKey(Key key);
+
 }

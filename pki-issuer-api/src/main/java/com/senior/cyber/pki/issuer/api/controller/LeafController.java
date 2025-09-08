@@ -5,6 +5,7 @@ import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.CertificateService;
@@ -75,9 +76,14 @@ public class LeafController {
         ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-        if (issuerKey == null) {
-            throw new IllegalArgumentException("issuerKey not found");
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
@@ -102,9 +108,15 @@ public class LeafController {
         ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElse(null);
-        if (issuerKey == null) {
-            throw new IllegalArgumentException("issuerKey not found");
+
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
@@ -121,6 +133,9 @@ public class LeafController {
         }
 
         Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow();
+        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
         switch (issuerKey.getUsage()) {
             case SSH -> {

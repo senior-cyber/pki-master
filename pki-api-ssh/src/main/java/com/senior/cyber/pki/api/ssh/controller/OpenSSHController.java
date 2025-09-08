@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.api.ssh.controller;
 
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -39,6 +40,9 @@ public class OpenSSHController {
         }
 
         Key key = this.keyRepository.findById(FilenameUtils.getBaseName(serial)).orElseThrow();
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        }
 
         switch (key.getKeyFormat()) {
             case RSA -> {

@@ -26,6 +26,7 @@ CREATE TABLE tbl_key
     key_format            VARCHAR(3)   NULL,
     key_size              INT(11)      NULL,
     `usage`               VARCHAR(30)  NULL,
+    `status`              VARCHAR(10)  NULL,
     `type`                VARCHAR(30)  NOT NULL,
     created_datetime      DATETIME     NOT NULL,
     INDEX (created_datetime),

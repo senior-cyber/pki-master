@@ -3,8 +3,10 @@ package com.senior.cyber.pki.root.api.controller;
 import com.senior.cyber.pki.common.dto.IntermediateGenerateRequest;
 import com.senior.cyber.pki.common.dto.IntermediateGenerateResponse;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
+import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
@@ -68,10 +70,8 @@ public class IntermediateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElse(null);
-        if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not found");
-        }
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
+
         Date now = LocalDate.now().toDate();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (issuerCertificate.getType() != CertificateTypeEnum.INTERMEDIATE && issuerCertificate.getType() != CertificateTypeEnum.ROOT) ||
@@ -79,6 +79,16 @@ public class IntermediateController {
                 issuerCertificate.getValidUntil().before(now)
         ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
+        }
+
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());

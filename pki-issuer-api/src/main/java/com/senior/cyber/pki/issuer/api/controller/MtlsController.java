@@ -2,6 +2,8 @@ package com.senior.cyber.pki.issuer.api.controller;
 
 import com.senior.cyber.pki.common.dto.MtlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.MtlsGenerateResponse;
+import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IntermediateService;
@@ -64,6 +66,11 @@ public class MtlsController {
     public ResponseEntity<MtlsGenerateResponse> mtlsGenerate(RequestEntity<MtlsGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
         MtlsGenerateRequest request = httpRequest.getBody();
         if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 

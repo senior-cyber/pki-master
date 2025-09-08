@@ -2,6 +2,7 @@ package com.senior.cyber.pki.dao.entity.pki;
 
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.rbac.User;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
@@ -41,6 +42,10 @@ public class Key implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "`usage`")
     private KeyUsageEnum usage;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`status`")
+    private KeyStatusEnum status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "key_format")

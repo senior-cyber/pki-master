@@ -3,6 +3,7 @@ package com.senior.cyber.pki.api.crl.controller;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -90,10 +91,17 @@ public class CrlController {
             case ROOT, INTERMEDIATE -> {
                 Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElseThrow();
                 Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
+                if (_k.getStatus() == KeyStatusEnum.Revoked) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+
                 X509Certificate crlCertificate = _c.getCertificate();
                 PrivateKey crlPrivateKey = PrivateKeyUtils.convert(_k.getPrivateKey());
 
                 Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+                if (_issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
 
                 String hex = String.format("%012X", issuerCertificate.getSerial());
 

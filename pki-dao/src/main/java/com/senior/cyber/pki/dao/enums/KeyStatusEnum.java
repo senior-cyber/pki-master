@@ -1,5 +1,5 @@
 package com.senior.cyber.pki.dao.enums;
 
-public enum CertificateStatusEnum {
+public enum KeyStatusEnum {
     Good, Revoked
 }

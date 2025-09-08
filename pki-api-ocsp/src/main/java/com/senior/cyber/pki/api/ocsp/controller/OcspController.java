@@ -3,6 +3,7 @@ package com.senior.cyber.pki.api.ocsp.controller;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.asn1.x509.CRLReason;
@@ -70,6 +71,11 @@ public class OcspController {
             case ROOT, INTERMEDIATE -> {
                 Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElseThrow();
                 Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
+
+                if (_k.getStatus() == KeyStatusEnum.Revoked) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+
                 X509Certificate ocspCertificate = _c.getCertificate();
                 PrivateKey ocspPrivateKey = PrivateKeyUtils.convert(_k.getPrivateKey());
 

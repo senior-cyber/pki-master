@@ -6,6 +6,7 @@ import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -39,6 +40,7 @@ public class SshCAServiceImpl implements SshCAService {
                 String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
                 KeyPair _key = KeyUtils.generate(KeyFormat.RSA, request.getSize());
                 Key key = new Key();
+                key.setStatus(KeyStatusEnum.Good);
                 key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
                 key.setPublicKey(_key.getPublic());
                 key.setType(KeyTypeEnum.ServerKeyJCE);

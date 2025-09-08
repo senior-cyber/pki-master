@@ -5,10 +5,7 @@ import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
+import com.senior.cyber.pki.dao.enums.*;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
@@ -118,6 +115,7 @@ public class RootServiceImpl implements RootService {
             {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
+                key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
@@ -153,6 +151,7 @@ public class RootServiceImpl implements RootService {
             {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
+                key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);

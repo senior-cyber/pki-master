@@ -6,6 +6,7 @@ import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.Yubico;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -44,6 +45,7 @@ public class KeyServiceImpl implements KeyService {
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
+        key.setStatus(KeyStatusEnum.Good);
         key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
         key.setPublicKey(_key.getPublic());
         key.setType(KeyTypeEnum.ServerKeyJCE);
@@ -98,6 +100,7 @@ public class KeyServiceImpl implements KeyService {
             }
 
             Key key = new Key();
+            key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
             key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
@@ -136,6 +139,7 @@ public class KeyServiceImpl implements KeyService {
 
 
             Key key = new Key();
+            key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
             key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
