@@ -1,6 +1,9 @@
 package com.senior.cyber.pki.api.revoke.controller;
 
-import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.dto.RevokeCertificateRequest;
+import com.senior.cyber.pki.common.dto.RevokeCertificateResponse;
+import com.senior.cyber.pki.common.dto.RevokeKeyRequest;
+import com.senior.cyber.pki.common.dto.RevokeKeyResponse;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -47,7 +50,7 @@ public class RevokeController {
         if (certificate.getStatus() == CertificateStatusEnum.Good) {
             List<Certificate> certificates = new ArrayList<>();
             certificates.add(certificate);
-            if (certificate.getType() == CertificateTypeEnum.ROOT || certificate.getType() == CertificateTypeEnum.INTERMEDIATE) {
+            if (certificate.getType() == CertificateTypeEnum.ROOT_CA || certificate.getType() == CertificateTypeEnum.SUBORDINATE_CA || certificate.getType() == CertificateTypeEnum.ISSUING_CA) {
                 certificates.addAll(lookupCertificates(certificate));
             }
             Key key = this.keyRepository.findById(certificate.getKey().getId()).orElseThrow();
@@ -92,7 +95,7 @@ public class RevokeController {
             List<Certificate> certificates = new ArrayList<>();
             for (Certificate certificate : this.certificateRepository.findByKey(key)) {
                 certificates.add(certificate);
-                if (certificate.getType() == CertificateTypeEnum.ROOT || certificate.getType() == CertificateTypeEnum.INTERMEDIATE) {
+                if (certificate.getType() == CertificateTypeEnum.ROOT_CA || certificate.getType() == CertificateTypeEnum.SUBORDINATE_CA || certificate.getType() == CertificateTypeEnum.ISSUING_CA) {
                     certificates.addAll(lookupCertificates(certificate));
                 }
             }
@@ -116,7 +119,7 @@ public class RevokeController {
         List<Certificate> children = this.certificateRepository.findByIssuerCertificate(certificate);
         for (Certificate child : children) {
             certificates.add(child);
-            if (child.getType() == CertificateTypeEnum.ROOT || child.getType() == CertificateTypeEnum.INTERMEDIATE) {
+            if (child.getType() == CertificateTypeEnum.ROOT_CA || child.getType() == CertificateTypeEnum.SUBORDINATE_CA) {
                 certificates.addAll(lookupCertificates(child));
             }
         }

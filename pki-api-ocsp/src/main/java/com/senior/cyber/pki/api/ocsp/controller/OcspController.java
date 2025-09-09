@@ -68,7 +68,7 @@ public class OcspController {
         }
 
         switch (issuerCertificate.getType()) {
-            case ROOT, INTERMEDIATE -> {
+            case ROOT_CA, SUBORDINATE_CA -> {
                 Certificate _c = this.certificateRepository.findById(issuerCertificate.getOcspCertificate().getId()).orElseThrow();
                 Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
 

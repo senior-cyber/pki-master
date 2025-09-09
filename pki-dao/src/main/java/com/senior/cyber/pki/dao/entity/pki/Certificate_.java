@@ -6,6 +6,7 @@ import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.persistence.metamodel.StaticMetamodel;
 
+import java.security.cert.X509Certificate;
 import java.util.Date;
 
 @StaticMetamodel(Certificate.class)
@@ -22,7 +23,7 @@ public abstract class Certificate_ {
     public static volatile SingularAttribute<Certificate, String> stateOrProvinceName;
     public static volatile SingularAttribute<Certificate, String> emailAddress;
     public static volatile SingularAttribute<Certificate, Key> key;
-    public static volatile SingularAttribute<Certificate, String> certificate;
+    public static volatile SingularAttribute<Certificate, X509Certificate> certificate;
     public static volatile SingularAttribute<Certificate, Date> createdDatetime;
     public static volatile SingularAttribute<Certificate, Date> validFrom;
     public static volatile SingularAttribute<Certificate, Date> validUntil;

@@ -66,6 +66,13 @@ public class PkiUtils {
      * @param caIssuer          URI of the issuer certificate file (*.der)
      * @param publicKey         public key which issuer want to sign
      * @param subject           subject which issuer want to sign
+     * @param ca                is ca
+     * @param notBefore         Date
+     * @param notAfter          Date
+     * @param serial            serial
+     * @param keyUsages         keyUsages
+     * @param extendedKeyUsages extendedKeyUsages
+     * @param sans              Subject Alternative Name (IP, DNS)
      * @return a signed certificate which signed by issuerPrivateKey
      */
     public static X509Certificate issue(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate,
@@ -78,6 +85,36 @@ public class PkiUtils {
         X500Name issuerSubject = X500Name.getInstance(issuerCertificate.getSubjectX500Principal().getEncoded());
         PublicKey issuerPublicKey = issuerCertificate.getPublicKey();
         return issue(issuerProvider, issuerPrivateKey, issuerPublicKey, issuerSubject, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, sans);
+    }
+
+    /**
+     * @param issuerProvider    issuerProvider
+     * @param issuerPrivateKey  issuerPrivateKey
+     * @param issuerCertificate issuerCertificate
+     * @param crl               URI of crl repository, crl repository have to be signed by CRL Certificate which sign by certificate issuer (*.crl)
+     * @param ocsp              URI of ocsp request/response signer, the OCSP certificate which sign by certificate issuer
+     * @param caIssuer          URI of the issuer certificate file (*.der)
+     * @param publicKey         public key which issuer want to sign
+     * @param subject           subject which issuer want to sign
+     * @param pathLenConstraint pathLenConstraint
+     * @param notBefore         Date
+     * @param notAfter          Date
+     * @param serial            serial
+     * @param keyUsages         keyUsages
+     * @param extendedKeyUsages extendedKeyUsages
+     * @param sans              Subject Alternative Name (IP, DNS)
+     * @return a signed certificate which signed by issuerPrivateKey
+     */
+    public static X509Certificate issue(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate,
+                                        String crl, String ocsp, String caIssuer, String crlIssuer,
+                                        PublicKey publicKey, X500Name subject,
+                                        int pathLenConstraint, Date notBefore, Date notAfter, long serial,
+                                        List<Integer> keyUsages,
+                                        List<KeyPurposeId> extendedKeyUsages,
+                                        List<String> sans) throws CertIOException, NoSuchAlgorithmException, OperatorCreationException, CertificateException {
+        X500Name issuerSubject = X500Name.getInstance(issuerCertificate.getSubjectX500Principal().getEncoded());
+        PublicKey issuerPublicKey = issuerCertificate.getPublicKey();
+        return issue(issuerProvider, issuerPrivateKey, issuerPublicKey, issuerSubject, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, pathLenConstraint, notBefore, notAfter, serial, keyUsages, extendedKeyUsages, sans);
     }
 
     /**
@@ -110,7 +147,7 @@ public class PkiUtils {
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
         JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerSubject, BigInteger.valueOf(serial), notBefore, notAfter, subject, publicKey);
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(ca));
-        return internalIssue(utils, builder, issuerProvider, issuerPrivateKey, issuerPublicKey, issuerSubject, crl, ocsp, caIssuer, crlIssuer, publicKey, keyUsages, extendedKeyUsages, sans);
+        return internalIssue(utils, builder, issuerProvider, issuerPrivateKey, issuerPublicKey, crl, ocsp, caIssuer, crlIssuer, publicKey, keyUsages, extendedKeyUsages, sans);
     }
 
     /**
@@ -124,7 +161,7 @@ public class PkiUtils {
      * @param crlIssuer         TODO
      * @param publicKey         public key which issuer want to sign
      * @param subject           subject which issuer want to sign
-     * @param caPathLeng        caPathLeng
+     * @param pathLenConstraint pathLenConstraint
      * @param notBefore         Date
      * @param notAfter          Date
      * @param serial            serial
@@ -136,22 +173,22 @@ public class PkiUtils {
     public static X509Certificate issue(Provider issuerProvider, PrivateKey issuerPrivateKey, PublicKey issuerPublicKey, X500Name issuerSubject,
                                         String crl, String ocsp, String caIssuer, String crlIssuer,
                                         PublicKey publicKey, X500Name subject,
-                                        int caPathLeng, Date notBefore, Date notAfter, long serial,
+                                        int pathLenConstraint, Date notBefore, Date notAfter, long serial,
                                         List<Integer> keyUsages,
                                         List<KeyPurposeId> extendedKeyUsages,
                                         List<String> sans) throws CertIOException, NoSuchAlgorithmException, OperatorCreationException, CertificateException {
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
         JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerSubject, BigInteger.valueOf(serial), notBefore, notAfter, subject, publicKey);
-        builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(caPathLeng));
-        return internalIssue(utils, builder, issuerProvider, issuerPrivateKey, issuerPublicKey, issuerSubject, crl, ocsp, caIssuer, crlIssuer, publicKey, keyUsages, extendedKeyUsages, sans);
+        builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(pathLenConstraint));
+        return internalIssue(utils, builder, issuerProvider, issuerPrivateKey, issuerPublicKey, crl, ocsp, caIssuer, crlIssuer, publicKey, keyUsages, extendedKeyUsages, sans);
     }
 
-    private static X509Certificate internalIssue(JcaX509ExtensionUtils utils, JcaX509v3CertificateBuilder builder, Provider issuerProvider, PrivateKey issuerPrivateKey, PublicKey issuerPublicKey, X500Name issuerSubject,
+    private static X509Certificate internalIssue(JcaX509ExtensionUtils utils, JcaX509v3CertificateBuilder builder, Provider issuerProvider, PrivateKey issuerPrivateKey, PublicKey issuerPublicKey,
                                                  String crl, String ocsp, String caIssuer, String crlIssuer,
                                                  PublicKey publicKey,
                                                  List<Integer> keyUsages,
                                                  List<KeyPurposeId> extendedKeyUsages,
-                                                 List<String> sans) throws CertIOException, NoSuchAlgorithmException, OperatorCreationException, CertificateException {
+                                                 List<String> sans) throws CertIOException, OperatorCreationException, CertificateException {
         builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
         builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerPublicKey));
         if (keyUsages != null && !keyUsages.isEmpty()) {
@@ -233,7 +270,7 @@ public class PkiUtils {
         return certificateConverter.getCertificate(holder);
     }
 
-    public static X509Certificate issueRootCertificate(Provider issuerProvider, PrivateKey privateKey, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+    public static X509Certificate issueRootCa(Provider issuerProvider, PrivateKey privateKey, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
         List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
         return issue(issuerProvider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, true, notBefore, notAfter, serial, keyUsages, null, null);
     }
@@ -243,19 +280,55 @@ public class PkiUtils {
         return issue(issuerProvider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, true, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
-    public static X509Certificate issueIntermediateCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+    public static X509Certificate issueIssuingCa(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
         List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
-        return issue(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, true, notBefore, notAfter, serial, keyUsages, null, null);
+        return issue(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, 0, notBefore, notAfter, serial, keyUsages, null, null);
+    }
+
+    /**
+     * Subordinate CA (SubCA)     *
+     * Any CA that is not the Root CA.     *
+     * Issued by another CA (either the Root or another SubCA).     *
+     * Can be used for multiple purposes, depending on its certificate extensions and policies:     *
+     * Intermediate CA: may sign other SubCAs.     *
+     * Issuing CA: may issue end-entity (leaf) certificates.     *
+     * It’s a broad category — includes both intermediates and issuers.
+     *
+     * @param issuerProvider
+     * @param issuerPrivateKey
+     * @param issuerCertificate
+     * @param crl
+     * @param ocsp
+     * @param caIssuer
+     * @param crlIssuer
+     * @param publicKey
+     * @param subject
+     * @param notBefore
+     * @param notAfter
+     * @param serial
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws CertificateException
+     * @throws OperatorCreationException
+     * @throws CertIOException
+     */
+    public static X509Certificate issueSubordinateCA(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+        List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
+        // 1 - meaning allow this certificate to issue 1 sub-level ca
+        int pathLenConstraint = 1;
+        return issue(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, pathLenConstraint, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
     public static X509Certificate mtlsServerCertificate(Provider issuerProvider, PrivateKey privateKey, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
         List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
-        return issue(issuerProvider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, 0, notBefore, notAfter, serial, keyUsages, null, null);
+        // 0 - this certificate can sign only leaf
+        int pathLenConstraint = 0;
+        return issue(issuerProvider, privateKey, publicKey, subject, null, null, null, null, publicKey, subject, pathLenConstraint, notBefore, notAfter, serial, keyUsages, null, null);
     }
 
     public static CrossSignRoot issueCrossSignRootCertificate(Provider issuerProvider, PrivateKey issuerPrivateKey, X509Certificate issuerCertificate, String crl, String ocsp, String caIssuer, String crlIssuer, Provider provider, PrivateKey privateKey, PublicKey publicKey, X500Name subject, Date notBefore, Date notAfter, long serial) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
-        X509Certificate root = issueRootCertificate(provider, privateKey, publicKey, subject, notBefore, notAfter, serial);
-        X509Certificate crossRoot = issueIntermediateCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, notBefore, notAfter, serial + 1);
+        X509Certificate root = issueRootCa(provider, privateKey, publicKey, subject, notBefore, notAfter, serial);
+        X509Certificate crossRoot = issueSubordinateCA(issuerProvider, issuerPrivateKey, issuerCertificate, crl, ocsp, caIssuer, crlIssuer, publicKey, subject, notBefore, notAfter, serial + 1);
         return new CrossSignRoot(root, crossRoot);
     }
 

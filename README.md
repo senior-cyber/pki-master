@@ -171,33 +171,37 @@ scp pki-api-crl/build/libs/pki-api-crl.jar       lenovo:/opt/apps/pki-master/pki
 scp pki-api-ocsp/build/libs/pki-api-ocsp.jar     lenovo:/opt/apps/pki-master/pki-api-ocsp
 scp pki-api-x509/build/libs/pki-api-x509.jar     lenovo:/opt/apps/pki-master/pki-api-x509
 scp pki-api-ssh/build/libs/pki-api-ssh.jar       lenovo:/opt/apps/pki-master/pki-api-ssh
-scp pki-root-api/build/libs/pki-root-api.jar     lenovo:/opt/apps/pki-master/pki-root-api
-scp pki-issuer-api/build/libs/pki-issuer-api.jar lenovo:/opt/apps/pki-master/pki-issuer-api
-scp pki-key-api/build/libs/pki-key-api.jar       lenovo:/opt/apps/pki-master/pki-key-api
+scp pki-api-root/build/libs/pki-api-root.jar     lenovo:/opt/apps/pki-master/pki-api-root
+scp pki-api-issuer/build/libs/pki-api-issuer.jar lenovo:/opt/apps/pki-master/pki-api-issuer
+scp pki-api-key/build/libs/pki-api-key.jar       lenovo:/opt/apps/pki-master/pki-api-key
+scp pki-api-revoke/build/libs/pki-api-revoke.jar       lenovo:/opt/apps/pki-master/pki-api-revoke
 
 cp pki-api-crl/build/libs/pki-api-crl.jar       /opt/apps/pki-master/pki-api-crl
 cp pki-api-ocsp/build/libs/pki-api-ocsp.jar     /opt/apps/pki-master/pki-api-ocsp
 cp pki-api-x509/build/libs/pki-api-x509.jar     /opt/apps/pki-master/pki-api-x509
 cp pki-api-ssh/build/libs/pki-api-ssh.jar       /opt/apps/pki-master/pki-api-ssh
-cp pki-root-api/build/libs/pki-root-api.jar     /opt/apps/pki-master/pki-root-api
-cp pki-issuer-api/build/libs/pki-issuer-api.jar /opt/apps/pki-master/pki-issuer-api
-cp pki-key-api/build/libs/pki-key-api.jar       /opt/apps/pki-master/pki-key-api
+cp pki-api-root/build/libs/pki-api-root.jar     /opt/apps/pki-master/pki-api-root
+cp pki-api-issuer/build/libs/pki-api-issuer.jar /opt/apps/pki-master/pki-api-issuer
+cp pki-api-key/build/libs/pki-api-key.jar       /opt/apps/pki-master/pki-api-key
+cp pki-api-revoke/build/libs/pki-api-revoke.jar       /opt/apps/pki-master/pki-api-revoke
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
 sudo service pki-api-ssh    restart
-sudo service pki-root-api   restart
-sudo service pki-issuer-api restart
-sudo service pki-key-api    restart
+sudo service pki-api-root   restart
+sudo service pki-api-issuer restart
+sudo service pki-api-key    restart
+sudo service pki-api-revoke    restart
 
 sudo systemctl enable pki-api-crl    
 sudo systemctl enable pki-api-ocsp   
 sudo systemctl enable pki-api-x509
 sudo systemctl enable pki-api-ssh   
-sudo systemctl enable pki-root-api   
-sudo systemctl enable pki-issuer-api
-sudo systemctl enable pki-key-api
+sudo systemctl enable pki-api-root   
+sudo systemctl enable pki-api-issuer
+sudo systemctl enable pki-api-key
+sudo systemctl enable pki-api-revoke
 
 telegram endpoint, expose webhook for load test,
 update access denied page, change session expired, please try again 

@@ -91,7 +91,7 @@ public class RootServiceImpl implements RootService {
                     request.getEmailAddress()
             );
 
-            X509Certificate rootCertificate = PkiUtils.issueRootCertificate(provider, rootPrivateKey, rootKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
+            X509Certificate rootCertificate = PkiUtils.issueRootCa(provider, rootPrivateKey, rootKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
             Certificate root = new Certificate();
             root.setCountryCode(request.getCountry());
             root.setOrganization(request.getOrganization());
@@ -107,7 +107,7 @@ public class RootServiceImpl implements RootService {
             root.setValidFrom(rootCertificate.getNotBefore());
             root.setValidUntil(rootCertificate.getNotAfter());
             root.setStatus(CertificateStatusEnum.Good);
-            root.setType(CertificateTypeEnum.ROOT);
+            root.setType(CertificateTypeEnum.ROOT_CA);
             this.certificateRepository.save(root);
 
             // crl

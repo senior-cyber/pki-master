@@ -7,10 +7,10 @@ include(
         ":pki-api-x509",
         ":pki-api-ssh",
         ":pki-api-revoke",
-        ":pki-root-api",
-        ":pki-key-api",
+        ":pki-api-root",
+        ":pki-api-key",
 //        ":pki-root-web",
-        ":pki-issuer-api",
+        ":pki-api-issuer",
 //        ":pki-issuer-web",
         ":pki-client-cli",
 //        ":pki-client-web",
@@ -20,10 +20,10 @@ include(
 project(":pki-service").projectDir = file("./pki-service")
 project(":pki-common").projectDir = file("./pki-common")
 project(":pki-dao").projectDir = file("./pki-dao")
-project(":pki-root-api").projectDir = file("./pki-root-api")
-project(":pki-key-api").projectDir = file("./pki-key-api")
+project(":pki-api-root").projectDir = file("./pki-api-root")
+project(":pki-api-key").projectDir = file("./pki-api-key")
 //project(":pki-root-web").projectDir = file("./pki-root-web")
-project(":pki-issuer-api").projectDir = file("./pki-issuer-api")
+project(":pki-api-issuer").projectDir = file("./pki-api-issuer")
 //project(":pki-issuer-web").projectDir = file("./pki-issuer-web")
 project(":pki-api-crl").projectDir = file("./pki-api-crl")
 project(":pki-api-ocsp").projectDir = file("./pki-api-ocsp")
