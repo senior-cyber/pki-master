@@ -18,10 +18,11 @@ public class SshClientGenerateRequest implements Serializable {
     @JsonProperty("issuer")
     private Issuer issuer;
 
-    @JsonProperty("opensshPublicKey")
-    @JsonSerialize(using = OpenSshPublicKeySerializer.class)
-    @JsonDeserialize(using = OpenSshPublicKeyDeserializer.class)
-    private PublicKey opensshPublicKey;
+    @JsonProperty("keyId")
+    private String keyId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
 
     @JsonProperty("principal")
     private String principal;

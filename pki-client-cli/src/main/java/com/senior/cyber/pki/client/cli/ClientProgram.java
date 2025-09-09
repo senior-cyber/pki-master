@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.CertificateUtils;
 import com.senior.cyber.pki.common.x509.KeyFormat;
-import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
@@ -18,8 +17,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.security.PublicKey;
 import java.util.List;
 
 @SpringBootApplication
@@ -33,8 +30,8 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-        x509(args);
-        mtls(args);
+//        x509(args);
+//        mtls(args);
         sshCa(args);
         System.exit(0);
     }
@@ -43,8 +40,11 @@ public class ClientProgram implements CommandLineRunner {
 
         SshGenerateResponse sshCaKey = generateSshKey();
 
-        KeyPair sshClientKey = KeyUtils.generate(KeyFormat.RSA, 2048);
-        SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey.getPublic(), "socheat", "192.168.1.1", 1000);
+        JcaKeyGenerateResponse sshClientKey = generateKey();
+
+        SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
+        System.out.println(MAPPER.writeValueAsString(sshClient));
+        MAPPER.readValue(MAPPER.writeValueAsString(sshClient), SshClientGenerateResponse.class);
 //            FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
 //            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
 //            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
@@ -79,17 +79,18 @@ public class ClientProgram implements CommandLineRunner {
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), PrivateKeyUtils.convert(server.getPrivkey()));
     }
 
-    protected static SshClientGenerateResponse generateSshClient(SshGenerateResponse issuer, PublicKey key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
+    protected static SshClientGenerateResponse generateSshClient(SshGenerateResponse issuer, JcaKeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SshClientGenerateRequest request = new SshClientGenerateRequest();
             request.setIssuer(new Issuer(null, issuer.getKeyId(), issuer.getKeyPassword()));
-            request.setOpensshPublicKey(key);
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
             request.setPrincipal(principal);
             request.setServer(server);
             request.setValidityPeriod(validityPeriod);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create("https://pki-issuer-api.khmer.name/api/ssh/client/generate"))
+                    .uri(URI.create("https://pki-api-issuer.khmer.name/api/ssh/client/generate"))
                     .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")

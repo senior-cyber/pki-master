@@ -235,7 +235,11 @@ public class LeafServiceImpl implements LeafService {
         }
 
         try {
-            PublicKey publicKey = request.getOpensshPublicKey();
+            Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+            if (key.getType() == KeyTypeEnum.ServerKeyYubico) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
+            }
+            PublicKey publicKey = key.getPublicKey();
 
             OpenSshCertificateBuilder openSshCertificateBuilder = OpenSshCertificateBuilder.userCertificate();
             openSshCertificateBuilder.provider(issuerProvider);
@@ -259,12 +263,14 @@ public class LeafServiceImpl implements LeafService {
             }
             OpenSshCertificate certificate = openSshCertificateBuilder.sign(issuerKey, org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
             SshClientGenerateResponse response = new SshClientGenerateResponse();
-            response.setOpensshCertificate(certificate);
+            response.setPublicKey(publicKey);
+            response.setPrivateKey(PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()));
+            response.setCertificate(certificate);
             response.setOpensshConfig("Host " + request.getServer() + "\n" +
                     "  HostName " + request.getServer() + "\n" +
                     "  User " + request.getPrincipal() + "\n" +
-                    "  IdentityFile pk\n" +
-                    "  CertificateFile pk-cert.pub");
+                    "  IdentityFile id_rsa\n" +
+                    "  CertificateFile id_rsa-cert.pub");
             return response;
         } finally {
             if (connection != null) {
