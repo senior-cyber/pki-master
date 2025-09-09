@@ -2,8 +2,7 @@ package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senior.cyber.pki.common.dto.JcaKeyGenerateRequest;
-import com.senior.cyber.pki.common.dto.JcaKeyGenerateResponse;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
@@ -32,8 +31,7 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-        JcaKeyGenerateResponse key = generateKey();
-//        x509(args);
+        x509(args);
 //        mtls(args);
 //        sshCa(args);
         System.exit(0);
@@ -173,170 +171,25 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    public void x509(String... args) throws Exception {
+    public void x509(String... args) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            Map<String, Object> rootCaKey = null;
-            {
-                Map<String, Object> request = new HashMap<>();
-                request.put("size", "2048");
-                request.put("format", "RSA");
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                rootCaKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            Map<String, Object> rootCa = null;
-            {
-                Map<String, Object> request = new HashMap<>();
-                request.put("keyId", rootCaKey.get("keyId"));
-                request.put("keyPassword", rootCaKey.get("keyPassword"));
-                request.put("locality", "Phnom Penh");
-                request.put("province", "Kandal");
-                request.put("country", "KH");
-                request.put("commonName", "Cambodia National CA");
-                request.put("organization", "Ministry of Post and Telecommunications");
-                request.put("organizationalUnit", "Digital Government Committee");
+            JcaKeyGenerateResponse rootCaKey = generateKey();
+            RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
 
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-root.khmer.name/api/root/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                rootCa = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            Map<String, Object> subCaKey = null;
-            {
-                Map<String, Object> request = new HashMap<>();
-                request.put("size", "2048");
-                request.put("format", "RSA");
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                subCaKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            Map<String, Object> subCa = null;
-            {
-                Map<String, Object> issuer = new HashMap<>();
-                issuer.put("certificateId", rootCa.get("certificateId"));
-                issuer.put("keyPassword", rootCa.get("keyPassword"));
-                Map<String, Object> request = new HashMap<>();
-                request.put("issuer", issuer);
-                request.put("keyId", subCaKey.get("keyId"));
-                request.put("keyPassword", subCaKey.get("keyPassword"));
-                request.put("locality", "Phnom Penh");
-                request.put("province", "Kandal");
-                request.put("country", "KH");
-                request.put("commonName", "Cambodia National RootCA");
-                request.put("organization", "Ministry of Post and Telecommunications");
-                request.put("organizationalUnit", "Digital Government Committee");
+            JcaKeyGenerateResponse subordinateCaKey = generateKey();
+            SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
 
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-root.khmer.name/api/intermediate/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                subCa = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            {
-                Map<String, Object> issuer = new HashMap<>();
-                issuer.put("certificateId", rootCa.get("certificateId"));
-                issuer.put("keyPassword", rootCa.get("keyPassword"));
-                Map<String, Object> request = new HashMap<>();
-                request.put("issuer", issuer);
-                request.put("keyId", subCaKey.get("keyId"));
-                request.put("keyPassword", subCaKey.get("keyPassword"));
-                request.put("locality", "Phnom Penh");
-                request.put("province", "Kandal");
-                request.put("country", "KH");
-                request.put("commonName", "Cambodia National Intermediate CA");
-                request.put("organization", "Ministry of Post and Telecommunications");
-                request.put("organizationalUnit", "Digital Government Committee");
+            JcaKeyGenerateResponse issuingCaKey = generateKey();
+            IssuerGenerateResponse issuingCa = generateIssuingCA(rootCa, issuingCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
 
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-issuer.khmer.name/api/intermediate/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                subCa = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            Map<String, Object> leafKey = null;
-            {
-                Map<String, Object> request = new HashMap<>();
-                request.put("size", "2048");
-                request.put("format", "RSA");
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                leafKey = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            Map<String, Object> leaf = null;
-            {
-                Map<String, Object> issuer = new HashMap<>();
-                issuer.put("certificateId", subCa.get("certificateId"));
-                issuer.put("keyPassword", subCa.get("keyPassword"));
-                Map<String, Object> request = new HashMap<>();
-                request.put("issuer", issuer);
-                request.put("keyId", leafKey.get("keyId"));
-                request.put("keyPassword", leafKey.get("keyPassword"));
-                request.put("locality", "Phnom Penh");
-                request.put("province", "Kandal");
-                request.put("country", "KH");
-                request.put("commonName", "127.0.0.1");
-                request.put("organization", "Ministry of Post and Telecommunications");
-                request.put("organizationalUnit", "Digital Government Committee");
-                request.put("sans", List.of("127.0.0.1", "localhost"));
+            JcaKeyGenerateResponse serverKey = generateKey();
+            ServerGenerateResponse server = generateServer(issuingCa, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
 
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/server/generate"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                leaf = MAPPER.readValue(resp.body(), new TypeReference<>() {
-                });
-            }
-            {
-                Map<String, Object> request = new HashMap<>();
-                request.put("keyId", rootCaKey.get("keyId"));
-                request.put("keyPassword", rootCaKey.get("keyPassword"));
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-api-revoke.khmer.name/api/revoke/key"))
-                        .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json")
-                        .build();
-                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                System.out.println(resp.statusCode());
-            }
-            FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), (String) rootCa.get("certificate"));
-            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
-            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
-            System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
+            System.out.println("");
+//            FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), (String) rootCa.get("certificate"));
+//            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
+//            FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
+//            System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
         }
     }
 
@@ -354,6 +207,102 @@ public class ClientProgram implements CommandLineRunner {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), JcaKeyGenerateResponse.class);
+        }
+    }
+
+    protected static ServerGenerateResponse generateServer(IssuerGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou, List<String> sans) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            ServerGenerateRequest request = new ServerGenerateRequest();
+            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
+            request.setLocality(locality);
+            request.setProvince(province);
+            request.setCountry(country);
+            request.setOrganization(o);
+            request.setOrganizationalUnit(ou);
+            request.setCommonName(cn);
+            request.setSans(sans);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-issuer.khmer.name/api/server/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), ServerGenerateResponse.class);
+        }
+    }
+
+    protected static IssuerGenerateResponse generateIssuingCA(RootGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            IssuerGenerateRequest request = new IssuerGenerateRequest();
+            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
+            request.setLocality(locality);
+            request.setProvince(province);
+            request.setCountry(country);
+            request.setOrganization(o);
+            request.setOrganizationalUnit(ou);
+            request.setCommonName(cn);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-root.khmer.name/api/issuer/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
+        }
+    }
+
+    protected static SubordinateGenerateResponse generateSubordinateCA(RootGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            SubordinateGenerateRequest request = new SubordinateGenerateRequest();
+            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
+            request.setLocality(locality);
+            request.setProvince(province);
+            request.setCountry(country);
+            request.setOrganization(o);
+            request.setOrganizationalUnit(ou);
+            request.setCommonName(cn);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-root.khmer.name/api/subordinate/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), SubordinateGenerateResponse.class);
+        }
+    }
+
+    protected static RootGenerateResponse generateRootCA(JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            RootGenerateRequest request = new RootGenerateRequest();
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
+            request.setLocality(locality);
+            request.setProvince(province);
+            request.setCountry(country);
+            request.setOrganization(o);
+            request.setOrganizationalUnit(ou);
+            request.setCommonName(cn);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-root.khmer.name/api/root/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), RootGenerateResponse.class);
         }
     }
 

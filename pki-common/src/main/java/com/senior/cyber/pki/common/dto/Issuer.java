@@ -17,4 +17,13 @@ public class Issuer {
     @JsonProperty("keyId")
     private String keyId;
 
+    public Issuer(String certificateId, String keyId, String keyPassword) {
+        this.certificateId = certificateId;
+        this.keyPassword = keyPassword;
+        this.keyId = keyId;
+    }
+
+    public Issuer() {
+    }
+
 }

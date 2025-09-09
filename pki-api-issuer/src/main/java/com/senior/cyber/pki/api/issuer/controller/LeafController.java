@@ -69,7 +69,7 @@ public class LeafController {
         Date now = LocalDate.now().toDate();
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.ISSUING_CA) ||
+                (issuerCertificate.getType() != CertificateTypeEnum.ISSUING_CA && issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) ||
                 issuerCertificate.getValidFrom().after(now) ||
                 issuerCertificate.getValidUntil().before(now)
         ) {
