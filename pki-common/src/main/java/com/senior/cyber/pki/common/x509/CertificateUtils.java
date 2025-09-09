@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -112,6 +113,23 @@ public class CertificateUtils {
             return null;
         }
         return pem.toString();
+    }
+
+    public static String convert(List<X509Certificate> values) {
+        StringWriter buf = new StringWriter();
+        for (Certificate value : values) {
+            if (value == null) {
+                return null;
+            }
+            StringWriter pem = new StringWriter();
+            try (JcaPEMWriter writer = new JcaPEMWriter(pem)) {
+                writer.writeObject(value);
+            } catch (IOException e) {
+                return null;
+            }
+            buf.write(pem.toString());
+        }
+        return buf.toString();
     }
 
 }
