@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.service.impl;
 
 import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.PkiUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.SubjectUtils;
@@ -236,7 +237,7 @@ public class LeafServiceImpl implements LeafService {
 
         try {
             Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
-            if (key.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (key.getType() == KeyTypeEnum.ServerKeyYubico || key.getKeyFormat() != KeyFormat.RSA) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
             }
             PublicKey publicKey = key.getPublicKey();
