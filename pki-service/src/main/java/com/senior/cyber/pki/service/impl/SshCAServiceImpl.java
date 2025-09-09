@@ -53,7 +53,7 @@ public class SshCAServiceImpl implements SshCAService {
                 SshGenerateResponse response = new SshGenerateResponse();
                 response.setKeyPassword(password);
                 response.setKeyId(key.getId());
-                response.setSshCa(sshApi + "/" + key.getId() + ".pub");
+                response.setSshCa(_key.getPublic());
                 return response;
             }
             default -> {
