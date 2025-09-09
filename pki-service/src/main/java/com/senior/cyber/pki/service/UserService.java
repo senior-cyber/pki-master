@@ -6,7 +6,6 @@ import com.senior.cyber.pki.dao.repository.rbac.UserRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
-import org.jasypt.util.password.PasswordEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,8 @@ public class UserService {
     @Autowired
     protected UserRepository userRepository;
 
-    @Autowired
-    protected PasswordEncryptor passwordEncryptor;
+//    @Autowired
+//    protected PasswordEncryptor passwordEncryptor;
 
     public User authenticate(String authorization) throws ResponseStatusException {
         if (authorization == null || authorization.isEmpty()) {

@@ -2,12 +2,16 @@ package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senior.cyber.pki.common.dto.JcaKeyGenerateRequest;
+import com.senior.cyber.pki.common.dto.JcaKeyGenerateResponse;
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,13 +26,14 @@ public class ClientProgram implements CommandLineRunner {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         SpringApplication.run(ClientProgram.class, args);
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        x509(args);
+    public void run(String... args) throws IOException, InterruptedException {
+        JcaKeyGenerateResponse key = generateKey();
+//        x509(args);
 //        mtls(args);
 //        sshCa(args);
         System.exit(0);
@@ -176,7 +181,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("size", "2048");
                 request.put("format", "RSA");
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-key-api.khmer.name/api/jca/generate"))
+                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -198,7 +203,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("organizationalUnit", "Digital Government Committee");
 
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-root-api.khmer.name/api/root/generate"))
+                        .uri(URI.create("https://pki-api-root.khmer.name/api/root/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -213,7 +218,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("size", "2048");
                 request.put("format", "RSA");
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-key-api.khmer.name/api/jca/generate"))
+                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -239,7 +244,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("organizationalUnit", "Digital Government Committee");
 
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-root-api.khmer.name/api/intermediate/generate"))
+                        .uri(URI.create("https://pki-api-root.khmer.name/api/intermediate/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -264,7 +269,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("organizationalUnit", "Digital Government Committee");
 
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-issuer-api.khmer.name/api/intermediate/generate"))
+                        .uri(URI.create("https://pki-api-issuer.khmer.name/api/intermediate/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -279,7 +284,7 @@ public class ClientProgram implements CommandLineRunner {
                 request.put("size", "2048");
                 request.put("format", "RSA");
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://pki-key-api.khmer.name/api/jca/generate"))
+                        .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json")
@@ -332,6 +337,23 @@ public class ClientProgram implements CommandLineRunner {
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), (String) leaf.get("fullchain"));
             FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), (String) leaf.get("privkey"));
             System.out.println("openssl verify -CAfile /opt/apps/tls/root-ca.pem /opt/apps/tls/127.0.0.1/fullchain.pem");
+        }
+    }
+
+    protected static JcaKeyGenerateResponse generateKey() throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            JcaKeyGenerateRequest request = new JcaKeyGenerateRequest();
+            request.setSize(2048);
+            request.setFormat(KeyFormat.RSA);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-key.khmer.name/api/jca/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), JcaKeyGenerateResponse.class);
         }
     }
 
