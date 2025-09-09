@@ -3,15 +3,10 @@ package com.senior.cyber.pki.common.converter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import com.senior.cyber.pki.common.x509.OpenSshCertificateUtils;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
-import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.List;
 
 public class OpenSshCertificateDeserializer extends JsonDeserializer<OpenSshCertificate> {
 
@@ -21,12 +16,7 @@ public class OpenSshCertificateDeserializer extends JsonDeserializer<OpenSshCert
         if (value == null || value.isBlank()) {
             return null;
         }
-        List<AuthorizedKeyEntry> authorizedKeyEntries = AuthorizedKeyEntry.readAuthorizedKeys(new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8)), true);
-        try {
-            return (OpenSshCertificate) authorizedKeyEntries.getFirst().resolvePublicKey(null, PublicKeyEntryResolver.IGNORING);
-        } catch (GeneralSecurityException e) {
-            throw new IOException(e);
-        }
+        return OpenSshCertificateUtils.convert(value);
     }
 
 }

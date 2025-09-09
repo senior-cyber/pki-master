@@ -22,6 +22,7 @@ dependencies {
     implementation "commons-io:commons-io:${commons_io}"
     implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"
+    implementation "org.apache.sshd:sshd-core:${sshd_common}"
 }
 
 bootJar {

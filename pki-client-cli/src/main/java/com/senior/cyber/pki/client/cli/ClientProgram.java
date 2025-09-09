@@ -2,9 +2,7 @@ package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.common.x509.CertificateUtils;
-import com.senior.cyber.pki.common.x509.KeyFormat;
-import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
+import com.senior.cyber.pki.common.x509.*;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -41,14 +39,12 @@ public class ClientProgram implements CommandLineRunner {
         SshGenerateResponse sshCaKey = generateSshKey();
 
         JcaKeyGenerateResponse sshClientKey = generateKey();
-
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
-        System.out.println(MAPPER.writeValueAsString(sshClient));
-        MAPPER.readValue(MAPPER.writeValueAsString(sshClient), SshClientGenerateResponse.class);
-//            FileUtils.write(new File("pki-mtls-server.pem"), (String) mtlsServer.get("certificate"));
-//            FileUtils.write(new File("pki-mtls-client-cert.pem"), (String) mtlsClient.get("cert"));
-//            FileUtils.write(new File("pki-mtls-client-privkey.pem"), (String) mtlsClient.get("privkey"));
-        System.out.println("openssl verify -CAfile pki-mtls-server.pem pki-mtls-client-cert.pem");
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getSshCa()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getOpensshConfig());
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
