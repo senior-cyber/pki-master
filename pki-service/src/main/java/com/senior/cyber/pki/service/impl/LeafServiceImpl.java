@@ -63,7 +63,7 @@ public class LeafServiceImpl implements LeafService {
 
         Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.ROOT_CA && _issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) ||
+                (_issuerCertificate.getType() != CertificateTypeEnum.ISSUING_CA && _issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
                 _issuerCertificate.getValidUntil().before(_now)
         ) {
