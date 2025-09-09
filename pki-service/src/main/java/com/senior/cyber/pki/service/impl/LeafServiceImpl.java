@@ -166,7 +166,7 @@ public class LeafServiceImpl implements LeafService {
                 if (cert.getType() == CertificateTypeEnum.ROOT_CA) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.SUBORDINATE_CA) {
+                if (cert.getType() == CertificateTypeEnum.SUBORDINATE_CA || cert.getType() == CertificateTypeEnum.ISSUING_CA) {
                     chain.add(cert.getCertificate());
                     temp = cert;
                 }
@@ -185,7 +185,7 @@ public class LeafServiceImpl implements LeafService {
                 if (cert.getType() == CertificateTypeEnum.ROOT_CA) {
                     break;
                 }
-                if (cert.getType() == CertificateTypeEnum.SUBORDINATE_CA) {
+                if (cert.getType() == CertificateTypeEnum.SUBORDINATE_CA || cert.getType() == CertificateTypeEnum.ISSUING_CA) {
                     fullchain.add(cert.getCertificate());
                     temp = cert;
                 }
