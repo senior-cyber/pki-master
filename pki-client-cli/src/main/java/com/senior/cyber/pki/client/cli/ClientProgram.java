@@ -64,11 +64,14 @@ public class ClientProgram implements CommandLineRunner {
         JcaKeyGenerateResponse subordinateCaKey = generateKey();
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
 
-        JcaKeyGenerateResponse issuingCaKey = generateKey();
-        IssuerGenerateResponse issuingCa = generateIssuingCA(rootCa, issuingCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        JcaKeyGenerateResponse issuingCaKey1 = generateKey();
+        IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+
+        JcaKeyGenerateResponse issuingCaKey2 = generateKey();
+        IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
 
         JcaKeyGenerateResponse serverKey = generateKey();
-        ServerGenerateResponse server = generateServer(issuingCa, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
+        ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
 
         FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), CertificateUtils.convert(rootCa.getCertificate()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), CertificateUtils.convert(server.getFullchain()));
@@ -218,6 +221,30 @@ public class ClientProgram implements CommandLineRunner {
 
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create("https://pki-api-root.khmer.name/api/issuer/generate"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
+        }
+    }
+
+    protected static IssuerGenerateResponse generateIssuingCA(SubordinateGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            IssuerGenerateRequest request = new IssuerGenerateRequest();
+            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
+            request.setLocality(locality);
+            request.setProvince(province);
+            request.setCountry(country);
+            request.setOrganization(o);
+            request.setOrganizationalUnit(ou);
+            request.setCommonName(cn);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-issuer.khmer.name/api/issuer/generate"))
                     .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
