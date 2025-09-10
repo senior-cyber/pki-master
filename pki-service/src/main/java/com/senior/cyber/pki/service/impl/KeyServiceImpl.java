@@ -8,7 +8,6 @@ import com.senior.cyber.pki.common.x509.Yubico;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
@@ -49,7 +48,6 @@ public class KeyServiceImpl implements KeyService {
         key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
         key.setPublicKey(_key.getPublic());
         key.setType(KeyTypeEnum.ServerKeyJCE);
-        key.setUsage(KeyUsageEnum.X509);
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setCreatedDatetime(new Date());
@@ -102,7 +100,6 @@ public class KeyServiceImpl implements KeyService {
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
-            key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
             key.setKeySize(request.getSize());
             key.setYubicoSerial(request.getSerialNumber());
@@ -137,11 +134,9 @@ public class KeyServiceImpl implements KeyService {
             session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
             PublicKey publicKey = YubicoProviderUtils.lookupPublicKey(session, pivSlot);
 
-
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
-            key.setUsage(KeyUsageEnum.X509);
             key.setType(KeyTypeEnum.ServerKeyYubico);
             if (publicKey instanceof RSAKey) {
                 key.setKeyFormat(KeyFormat.RSA);

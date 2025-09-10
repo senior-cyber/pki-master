@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-public class MtlsGenerateResponse implements Serializable {
+public class MtlsGenerateResponse extends BaseResponse {
 
     @JsonProperty("certificateId")
     private String certificateId;

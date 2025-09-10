@@ -14,7 +14,7 @@ import java.security.PublicKey;
 
 @Setter
 @Getter
-public class SshClientGenerateResponse implements Serializable {
+public class SshClientGenerateResponse extends BaseResponse {
 
     @JsonProperty("id_rsa-cert.pub")
     @JsonSerialize(using = OpenSshCertificateSerializer.class)

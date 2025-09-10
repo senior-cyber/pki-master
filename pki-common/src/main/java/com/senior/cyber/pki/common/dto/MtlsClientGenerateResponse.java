@@ -16,7 +16,7 @@ import java.security.cert.X509Certificate;
 
 @Getter
 @Setter
-public class MtlsClientGenerateResponse {
+public class MtlsClientGenerateResponse extends BaseResponse{
 
     @JsonProperty("certificateId")
     private String certificateId;

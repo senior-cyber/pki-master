@@ -14,7 +14,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class ServerGenerateResponse implements Serializable {
+public class ServerGenerateResponse extends BaseResponse {
 
     @JsonProperty("certificateId")
     private String certificateId;

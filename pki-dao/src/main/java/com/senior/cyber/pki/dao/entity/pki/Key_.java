@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.persistence.metamodel.StaticMetamodel;
 
@@ -23,7 +22,6 @@ public abstract class Key_ {
     public static volatile SingularAttribute<Key, String> yubicoPin;
     public static volatile SingularAttribute<Key, Date> createdDatetime;
     public static volatile SingularAttribute<Key, KeyTypeEnum> type;
-    public static volatile SingularAttribute<Key, KeyUsageEnum> usage;
     public static volatile SingularAttribute<Key, KeyStatusEnum> status;
     public static volatile SingularAttribute<Key, String> password;
     public static volatile SingularAttribute<Key, KeyFormat> keyFormat;

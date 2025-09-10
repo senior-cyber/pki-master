@@ -4,7 +4,6 @@ import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,10 +37,6 @@ public class Key implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "`type`")
     private KeyTypeEnum type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "`usage`")
-    private KeyUsageEnum usage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "`status`")

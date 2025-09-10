@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Setter
 @Getter
-public class RevokeCertificateResponse {
+public class RevokeCertificateResponse extends BaseResponse {
 
     @JsonProperty("serverTime")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

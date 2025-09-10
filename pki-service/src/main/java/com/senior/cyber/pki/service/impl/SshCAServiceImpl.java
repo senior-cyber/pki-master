@@ -8,7 +8,6 @@ import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
-import com.senior.cyber.pki.dao.enums.KeyUsageEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.SshCAService;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -46,7 +45,6 @@ public class SshCAServiceImpl implements SshCAService {
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(request.getSize());
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setUsage(KeyUsageEnum.SSH);
                 key.setCreatedDatetime(new Date());
                 this.keyRepository.save(key);
 

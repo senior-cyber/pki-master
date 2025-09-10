@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.ssh.controller;
 
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
@@ -29,9 +30,6 @@ public class OpenSSHController {
     @Autowired
     protected KeyRepository keyRepository;
 
-    @Autowired
-    protected CertificateRepository certificateRepository;
-
     @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String serial) throws IOException {
         LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
@@ -44,20 +42,10 @@ public class OpenSSHController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
 
-        switch (key.getKeyFormat()) {
-            case RSA -> {
-                switch (key.getUsage()) {
-                    case SSH -> {
-                        return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
-                    }
-                    default -> {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-                    }
-                }
-            }
-            default -> {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
-            }
+        if (key.getKeyFormat() == KeyFormat.RSA) {
+            return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
         }
     }
 

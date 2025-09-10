@@ -119,7 +119,6 @@ public class RootServiceImpl implements RootService {
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setUsage(KeyUsageEnum.X509);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
@@ -155,7 +154,6 @@ public class RootServiceImpl implements RootService {
                 key.setType(KeyTypeEnum.ServerKeyJCE);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
-                key.setUsage(KeyUsageEnum.X509);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());

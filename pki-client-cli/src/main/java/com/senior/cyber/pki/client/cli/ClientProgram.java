@@ -28,8 +28,8 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-//        x509(args);
-//        mtls(args);
+        x509(args);
+        mtls(args);
         sshCa(args);
         System.exit(0);
     }

@@ -13,7 +13,7 @@ import java.security.PublicKey;
 
 @Setter
 @Getter
-public class SshGenerateResponse implements Serializable {
+public class SshGenerateResponse extends BaseResponse {
 
     @JsonProperty("keyId")
     private String keyId;

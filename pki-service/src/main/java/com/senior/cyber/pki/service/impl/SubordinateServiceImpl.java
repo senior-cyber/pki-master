@@ -160,7 +160,6 @@ public class SubordinateServiceImpl implements SubordinateService {
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.ServerKeyJCE);
-                key.setUsage(KeyUsageEnum.X509);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
@@ -196,7 +195,6 @@ public class SubordinateServiceImpl implements SubordinateService {
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.ServerKeyJCE);
-                key.setUsage(KeyUsageEnum.X509);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));

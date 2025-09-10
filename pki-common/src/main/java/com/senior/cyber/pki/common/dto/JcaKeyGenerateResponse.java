@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class JcaKeyGenerateResponse implements Serializable {
+public class JcaKeyGenerateResponse extends BaseResponse{
 
     @JsonProperty("keyId")
     private String keyId;

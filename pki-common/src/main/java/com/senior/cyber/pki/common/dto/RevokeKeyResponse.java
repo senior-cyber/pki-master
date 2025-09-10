@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Setter
 @Getter
-public class RevokeKeyResponse {
+public class RevokeKeyResponse extends BaseResponse {
 
     @JsonProperty("serverTime")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

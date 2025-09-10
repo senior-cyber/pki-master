@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class YubicoKeyGenerateResponse implements Serializable {
+public class YubicoKeyGenerateResponse extends BaseResponse {
 
     @JsonProperty("keyId")
     private String keyId;

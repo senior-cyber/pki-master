@@ -18,7 +18,7 @@ import java.util.Date;
 
 @Setter
 @Getter
-public class KeyInfoResponse implements Serializable {
+public class KeyInfoResponse extends BaseResponse{
 
     @JsonProperty("id")
     private String id;
