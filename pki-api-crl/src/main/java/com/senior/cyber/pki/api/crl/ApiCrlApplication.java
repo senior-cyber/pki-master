@@ -20,8 +20,10 @@ import java.security.Security;
 @EntityScan("com.senior.cyber.pki.dao.entity")
 public class ApiCrlApplication {
 
+    public static final BouncyCastleProvider BC = new BouncyCastleProvider();
+
     static {
-        if (Security.getProperty(BouncyCastleProvider.PROVIDER_NAME) == null) {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
     }

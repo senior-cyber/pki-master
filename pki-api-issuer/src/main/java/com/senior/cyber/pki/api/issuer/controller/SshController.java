@@ -10,7 +10,6 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -29,18 +28,6 @@ public class SshController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SshController.class);
 
-    @Value("${api.crl}")
-    protected String crlApi;
-
-    @Value("${api.ocsp}")
-    protected String ocspApi;
-
-    @Value("${api.x509}")
-    protected String x509Api;
-
-    @Value("${api.ssh}")
-    protected String sshApi;
-
     @Autowired
     protected SshCAService sshcaService;
 
@@ -52,7 +39,7 @@ public class SshController {
         }
         switch (request.getSize()) {
             case 1024, 2048 -> {
-                SshGenerateResponse response = this.sshcaService.sshcaGenerate(request, this.sshApi);
+                SshGenerateResponse response = this.sshcaService.sshcaGenerate(request);
                 return ResponseEntity.ok(response);
             }
             default -> {

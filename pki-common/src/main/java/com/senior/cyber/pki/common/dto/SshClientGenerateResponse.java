@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.sshd.common.config.keys.OpenSshCertificate;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 

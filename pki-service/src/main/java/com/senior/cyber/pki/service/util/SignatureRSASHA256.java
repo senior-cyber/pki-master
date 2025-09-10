@@ -4,7 +4,10 @@ import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.common.signature.SignatureRSA;
 
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.Provider;
+import java.security.Signature;
 
 /**
  * @author <a href="mailto:dev@mina.apache.org">Apache MINA SSHD Project</a>

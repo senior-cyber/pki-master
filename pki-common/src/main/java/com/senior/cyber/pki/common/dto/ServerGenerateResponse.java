@@ -7,7 +7,6 @@ import com.senior.cyber.pki.common.converter.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;

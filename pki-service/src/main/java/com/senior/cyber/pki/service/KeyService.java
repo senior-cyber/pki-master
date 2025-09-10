@@ -1,7 +1,6 @@
 package com.senior.cyber.pki.service;
 
 import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;

@@ -33,7 +33,7 @@ public class SshCAServiceImpl implements SshCAService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public SshGenerateResponse sshcaGenerate(SshGenerateRequest request, String sshApi) throws OperatorCreationException {
+    public SshGenerateResponse sshcaGenerate(SshGenerateRequest request) throws OperatorCreationException {
         switch (request.getSize()) {
             case 1024, 2048 -> {
                 String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);

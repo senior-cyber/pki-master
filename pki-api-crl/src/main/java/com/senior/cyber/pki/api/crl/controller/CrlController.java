@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.crl.controller;
 
+import com.senior.cyber.pki.api.crl.ApiCrlApplication;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -16,7 +17,6 @@ import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v2CRLBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Security;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
@@ -50,14 +49,6 @@ import java.util.List;
 public class CrlController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CrlController.class);
-
-    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
-
-    static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
 
     @Autowired
     protected CertificateRepository certificateRepository;
@@ -152,7 +143,7 @@ public class CrlController {
 
                 int shaSize = 256;
                 JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
-                contentSignerBuilder.setProvider(PROVIDER);
+                contentSignerBuilder.setProvider(ApiCrlApplication.BC);
                 ContentSigner contentSigner = contentSignerBuilder.build(crlPrivateKey);
 
                 X509CRLHolder holder = builder.build(contentSigner);

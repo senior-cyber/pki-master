@@ -3,11 +3,11 @@ package com.senior.cyber.pki.common.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.senior.cyber.pki.common.converter.*;
+import com.senior.cyber.pki.common.converter.X509CertificateDeserializer;
+import com.senior.cyber.pki.common.converter.X509CertificateSerializer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.security.cert.X509Certificate;
 
 @Setter

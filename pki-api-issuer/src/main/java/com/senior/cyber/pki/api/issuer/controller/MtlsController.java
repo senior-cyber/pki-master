@@ -10,8 +10,6 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,8 +26,6 @@ import java.security.cert.CertificateException;
 
 @RestController
 public class MtlsController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MtlsController.class);
 
     @Autowired
     protected KeyRepository keyRepository;

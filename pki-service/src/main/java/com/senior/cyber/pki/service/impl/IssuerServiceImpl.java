@@ -5,10 +5,14 @@ import com.senior.cyber.pki.common.dto.IssuerGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.IssuerService;
+import com.senior.cyber.pki.service.Utils;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
@@ -24,7 +28,6 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -63,7 +66,7 @@ public class IssuerServiceImpl implements IssuerService {
         PrivateKey issuerPrivateKey = null;
         switch (_issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = new BouncyCastleProvider();
+                issuerProvider = Utils.BC;
                 issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
@@ -92,7 +95,7 @@ public class IssuerServiceImpl implements IssuerService {
         PrivateKey privateKey = null;
         switch (_intermediateKey.getType()) {
             case ServerKeyJCE -> {
-                provider = new BouncyCastleProvider();
+                provider = Utils.BC;
                 privateKey = PrivateKeyUtils.convert(_intermediateKey.getPrivateKey(), request.getKeyPassword());
             }
             case ServerKeyYubico -> {

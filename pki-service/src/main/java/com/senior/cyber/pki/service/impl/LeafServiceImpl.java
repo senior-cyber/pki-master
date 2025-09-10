@@ -13,6 +13,7 @@ import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.LeafService;
+import com.senior.cyber.pki.service.Utils;
 import com.senior.cyber.pki.service.util.OpenSshCertificateBuilder;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
@@ -76,7 +77,7 @@ public class LeafServiceImpl implements LeafService {
         PrivateKey issuerPrivateKey = null;
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = new BouncyCastleProvider();
+                issuerProvider = Utils.BC;
                 issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
@@ -206,7 +207,7 @@ public class LeafServiceImpl implements LeafService {
         Provider issuerProvider = null;
         switch (_issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = new BouncyCastleProvider();
+                issuerProvider = Utils.BC;
                 issuerKey = new KeyPair(_issuerKey.getPublicKey(), PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword()));
             }
             case ServerKeyYubico -> {
@@ -304,7 +305,7 @@ public class LeafServiceImpl implements LeafService {
         PrivateKey issuerPrivateKey = null;
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = new BouncyCastleProvider();
+                issuerProvider = Utils.BC;
                 issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {

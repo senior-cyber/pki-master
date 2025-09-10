@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.ocsp.controller;
 
+import com.senior.cyber.pki.api.ocsp.ApiOcspApplication;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -16,7 +17,6 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.ocsp.*;
 import org.bouncycastle.cert.ocsp.jcajce.JcaBasicOCSPRespBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculator;
 import org.bouncycastle.operator.DigestCalculatorProvider;
@@ -48,8 +48,6 @@ import java.util.Date;
 public class OcspController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcspController.class);
-
-    private static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     @Autowired
     protected CertificateRepository certificateRepository;
@@ -108,7 +106,7 @@ public class OcspController {
                         format = "ECDSA";
                     }
                 }
-                DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(PROVIDER).build();
+                DigestCalculatorProvider digCalcProv = new JcaDigestCalculatorProviderBuilder().setProvider(ApiOcspApplication.BC).build();
                 BasicOCSPRespBuilder ocspRespBuilder = new JcaBasicOCSPRespBuilder(ocspCertificate.getPublicKey(), digCalcProv.get(RespID.HASH_SHA1));
 
                 OCSPReq ocspReq = new OCSPReq(requestBody);
@@ -148,7 +146,7 @@ public class OcspController {
 
                 int keySize = 256;
                 JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + keySize + "WITH" + format);
-                contentSignerBuilder.setProvider(PROVIDER);
+                contentSignerBuilder.setProvider(ApiOcspApplication.BC);
                 ContentSigner contentSigner = contentSignerBuilder.build(ocspPrivateKey);
 
                 X509CertificateHolder holder = new JcaX509CertificateHolder(ocspCertificate);

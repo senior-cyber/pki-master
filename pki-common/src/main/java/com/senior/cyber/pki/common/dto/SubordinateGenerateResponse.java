@@ -8,7 +8,6 @@ import com.senior.cyber.pki.common.converter.X509CertificateSerializer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.security.cert.X509Certificate;
 
 @Getter

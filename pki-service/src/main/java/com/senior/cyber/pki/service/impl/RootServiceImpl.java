@@ -5,10 +5,14 @@ import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.*;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
+import com.senior.cyber.pki.service.Utils;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
@@ -75,7 +79,7 @@ public class RootServiceImpl implements RootService {
                 rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, rootKey.getYubicoPin());
             }
             case ServerKeyJCE -> {
-                provider = new BouncyCastleProvider();
+                provider = Utils.BC;
                 rootPrivateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
             }
         }

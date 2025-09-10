@@ -12,6 +12,7 @@ import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.MtlsService;
+import com.senior.cyber.pki.service.Utils;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
@@ -81,7 +82,7 @@ public class MtlsServiceImpl implements MtlsService {
                 rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, rootKey.getYubicoPin());
             }
             case ServerKeyJCE -> {
-                provider = new BouncyCastleProvider();
+                provider = Utils.BC;
                 rootPrivateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
             }
         }

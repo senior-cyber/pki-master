@@ -8,7 +8,6 @@ import com.senior.cyber.pki.common.converter.OpenSshPublicKeySerializer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.security.PublicKey;
 
 @Setter

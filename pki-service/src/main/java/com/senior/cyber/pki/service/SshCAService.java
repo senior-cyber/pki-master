@@ -13,6 +13,6 @@ import java.security.cert.CertificateException;
 
 public interface SshCAService {
 
-    SshGenerateResponse sshcaGenerate(SshGenerateRequest request, String sshApi) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    SshGenerateResponse sshcaGenerate(SshGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }
