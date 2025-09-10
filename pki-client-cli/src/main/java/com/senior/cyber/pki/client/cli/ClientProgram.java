@@ -28,31 +28,57 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-        x509(args);
-        mtls(args);
-        sshCa(args);
+//        x509(args);
+//        mtls(args);
+        SshGenerateResponse ca = sshCa(args);
+        System.out.println("");
+//        ca
+
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            KeyInfoRequest request = new KeyInfoRequest();
+            request.setKeyId(ca.getKeyId());
+            request.setKeyPassword(ca.getKeyPassword());
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://pki-api-key.khmer.name/api/info"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            KeyInfoResponse response = MAPPER.readValue(resp.body(), KeyInfoResponse.class);
+            System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+        }
+        System.out.println("");
         System.exit(0);
     }
 
-    public void sshCa(String... args) throws IOException, InterruptedException {
-
+    public SshGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
         SshGenerateResponse sshCaKey = generateSshKey();
         System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + sshCaKey.getKeyId() + ".pub");
 
         JcaKeyGenerateResponse sshClientKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getSshCa()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getOpensshConfig());
+        return sshCaKey;
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
         JcaKeyGenerateResponse mtlsServerKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
+
         JcaKeyGenerateResponse mtlsClientKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
         MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
+
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-server.pem"), CertificateUtils.convert(mtlsServer.getCertificate()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-client-cert.pem"), CertificateUtils.convert(mtlsClient.getCert()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-client-privkey.pem"), PrivateKeyUtils.convert(mtlsClient.getPrivkey()));
@@ -60,19 +86,29 @@ public class ClientProgram implements CommandLineRunner {
 
     public void x509(String... args) throws IOException, InterruptedException {
         JcaKeyGenerateResponse rootCaKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
         JcaKeyGenerateResponse subordinateCaKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
         JcaKeyGenerateResponse issuingCaKey1 = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
 
         JcaKeyGenerateResponse issuingCaKey2 = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
 
         JcaKeyGenerateResponse serverKey = generateKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + serverKey.getKeyId() + ".pub");
         ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
+        System.out.println("https://pki-api-x509.khmer.name/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
 
         FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), CertificateUtils.convert(rootCa.getCertificate()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), CertificateUtils.convert(server.getFullchain()));
