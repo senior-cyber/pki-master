@@ -168,7 +168,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setCommonName(cn);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create("https://pki-issuer-api.khmer.name/api/mtls/generate"))
+                    .uri(URI.create("https://pki-api-issuer.khmer.name/api/mtls/generate"))
                     .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
