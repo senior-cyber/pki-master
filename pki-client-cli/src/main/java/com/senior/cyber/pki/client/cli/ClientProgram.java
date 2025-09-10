@@ -36,7 +36,7 @@ public class ClientProgram implements CommandLineRunner {
 
         try (HttpClient client = HttpClient.newHttpClient()) {
             KeyInfoRequest request = new KeyInfoRequest();
-            request.setKeyId(ca.getKeyId());
+            request.setKeyId(ca.getKeyId()+"1");
             request.setKeyPassword(ca.getKeyPassword());
 
             HttpRequest req = HttpRequest.newBuilder()
