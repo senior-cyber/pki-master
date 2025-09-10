@@ -9,7 +9,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.sshd.common.config.keys.PublicKeyEntry;
-import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Date;
 
 @RestController
 public class OpenSSHController {
@@ -41,7 +41,7 @@ public class OpenSSHController {
             String[] temp = StringUtils.split(xForwardedFor, ",");
             remoteAddress = StringUtils.trim(temp[0]);
         }
-        LocalDate now = LocalDate.now();
+        Date now = new Date();
         LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
 
         String keyId = FilenameUtils.getBaseName(serial);

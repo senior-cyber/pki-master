@@ -150,7 +150,7 @@
 //            this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
 //        }
 //
-//        LocalDate now = LocalDate.now();
+//        Date now = new Date();
 //
 //        this.valid_from_value = DateFormatUtils.format(now.toDate(), "dd/MM/yyyy");
 //        this.valid_until_value = DateFormatUtils.format(now.plusYears(3).toDate(), "dd/MM/yyyy");

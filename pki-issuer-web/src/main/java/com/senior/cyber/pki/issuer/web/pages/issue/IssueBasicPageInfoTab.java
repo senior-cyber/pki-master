@@ -105,7 +105,7 @@
 //            this.issuer_provider.add(new Option(String.valueOf(certificate.getSerial()), certificate.getCommonName()));
 //        }
 //
-//        LocalDate now = LocalDate.now();
+//        Date now = new Date();
 //
 //        this.valid_from_value = now.toDate();
 //        this.valid_until_value = now.plusYears(1).toDate();

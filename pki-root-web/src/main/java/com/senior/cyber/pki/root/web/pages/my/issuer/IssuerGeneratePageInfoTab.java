@@ -144,7 +144,7 @@ public class IssuerGeneratePageInfoTab extends ContentPanel {
             this.issuer_value = new Option(String.valueOf(this.issuerCertificate.getSerial()), this.issuerCertificate.getCommonName());
         }
 
-        LocalDate now = LocalDate.now();
+        Date now = new Date();
 
         this.valid_from_value = now.toDate();
         this.valid_until_value = now.plusYears(3).toDate();

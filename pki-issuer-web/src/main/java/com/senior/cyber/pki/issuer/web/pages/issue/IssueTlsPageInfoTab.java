@@ -125,7 +125,7 @@
 //        for (Certificate certificate : certificateRepository.findByUserAndStatusAndType(user, CertificateStatusEnum.Good, CertificateTypeEnum.Issuer)) {
 //            this.issuer_provider.add(new Option(String.valueOf(certificate.getSerial()), certificate.getCommonName()));
 //        }
-//        LocalDate now = LocalDate.now();
+//        Date now = new Date();
 //
 //        this.valid_from_value = DateFormatUtils.format(now.toDate(), "dd/MM/yyyy");
 //        this.valid_until_value = DateFormatUtils.format(now.plusYears(1).toDate(), "dd/MM/yyyy");

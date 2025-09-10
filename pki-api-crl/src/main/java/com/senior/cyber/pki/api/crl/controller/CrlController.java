@@ -68,7 +68,7 @@ public class CrlController {
             remoteAddress = StringUtils.trim(temp[0]);
         }
         LocalDate now = LocalDate.now();
-        LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
+        LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now.toDate()), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
 
         long serial = -1;

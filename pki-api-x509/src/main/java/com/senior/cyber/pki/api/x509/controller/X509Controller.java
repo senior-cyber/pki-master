@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
+import java.util.Date;
 
 @RestController
 public class X509Controller {
@@ -39,7 +39,7 @@ public class X509Controller {
             String[] temp = StringUtils.split(xForwardedFor, ",");
             remoteAddress = StringUtils.trim(temp[0]);
         }
-        LocalDate now = LocalDate.now();
+        Date now = new Date();
         LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
 
         String extension = StringUtils.lowerCase(FilenameUtils.getExtension(_serial));

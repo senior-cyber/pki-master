@@ -37,6 +37,7 @@ public class ClientProgram implements CommandLineRunner {
     public void sshCa(String... args) throws IOException, InterruptedException {
 
         SshGenerateResponse sshCaKey = generateSshKey();
+        System.out.println("https://pki-api-ssh.khmer.name/api/openssh/" + sshCaKey.getKeyId() + ".pub");
 
         JcaKeyGenerateResponse sshClientKey = generateKey();
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);

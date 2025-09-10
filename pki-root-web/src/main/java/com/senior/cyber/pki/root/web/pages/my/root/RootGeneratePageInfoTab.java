@@ -135,7 +135,7 @@ public class RootGeneratePageInfoTab extends ContentPanel {
             this.email_address_value = root.getEmailAddress();
         }
 
-        LocalDate now = LocalDate.now();
+        Date now = new Date();
 
         this.valid_from_value = now.toDate();
         this.valid_until_value = now.plusYears(5).toDate();
