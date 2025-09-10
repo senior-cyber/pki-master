@@ -116,6 +116,9 @@ public class CertificateUtils {
     }
 
     public static String convert(List<X509Certificate> values) {
+        if (values == null) {
+            return null;
+        }
         StringWriter buf = new StringWriter();
         for (Certificate value : values) {
             if (value == null) {
