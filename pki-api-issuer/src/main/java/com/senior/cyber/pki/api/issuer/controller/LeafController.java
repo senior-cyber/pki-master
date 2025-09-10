@@ -7,7 +7,6 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.LeafService;
@@ -69,7 +68,7 @@ public class LeafController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "issuer certificate is not found"));
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate is not found"));
         if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate have been revoked");
         }
@@ -82,12 +81,12 @@ public class LeafController {
             LOGGER.info("issuer certificate valid from [{}] valid until [{}] and now [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidFrom()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidUntil()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(now));
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate has expired");
         }
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "issuer key is not found"));
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key is not found"));
         if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key have been revoked");
         }
 
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "key is not found"));
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getStatus() == KeyStatusEnum.Revoked) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
@@ -105,24 +104,28 @@ public class LeafController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate have been revoked");
+        }
+        if (issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) {
+            LOGGER.info("issuer certificate type is {}", issuerCertificate.getType());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate is not type of [" + CertificateTypeEnum.mTLS_SERVER.name() + "]");
+        }
         Date now = LocalDate.now().toDate();
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
+        if (issuerCertificate.getValidFrom().after(now) || issuerCertificate.getValidUntil().before(now)) {
+            LOGGER.info("issuer certificate valid from [{}] valid until [{}] and now [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidFrom()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidUntil()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(now));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate has expired");
         }
 
-        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key is not found"));
         if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
@@ -138,16 +141,17 @@ public class LeafController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow();
+        Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key is not found"));
         if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key have been revoked");
         }
 
-        if (issuerKey.getKeyFormat() == KeyFormat.RSA && issuerKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+        if (issuerKey.getKeyFormat() == KeyFormat.RSA) {
             SshClientGenerateResponse response = this.leafService.sshClientGenerate(request);
             return ResponseEntity.ok(response);
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getKeyId() + " is not found");
+            LOGGER.info("issuer key format type is {}", issuerKey.getType());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormat.RSA.name() + "]");
         }
     }
 

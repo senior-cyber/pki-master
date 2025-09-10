@@ -13,6 +13,7 @@ import com.senior.cyber.pki.service.IssuerService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -63,24 +64,28 @@ public class IssuerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate have been revoked");
+        }
+        if (issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) {
+            LOGGER.info("issuer certificate type is {}", issuerCertificate.getType());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate is not type of [" + CertificateTypeEnum.SUBORDINATE_CA + "]");
+        }
         Date now = LocalDate.now().toDate();
-        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) ||
-                issuerCertificate.getValidFrom().after(now) ||
-                issuerCertificate.getValidUntil().before(now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
+        if (issuerCertificate.getValidFrom().after(now) || issuerCertificate.getValidUntil().before(now)) {
+            LOGGER.info("issuer certificate valid from [{}] valid until [{}] and now [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidFrom()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(issuerCertificate.getValidUntil()), DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT.format(now));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate has expired");
         }
 
-        Key certKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+        Key certKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key is not found"));
         if (certKey.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key have been revoked");
         }
 
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
         String serial = String.format("%012X", issuerCertificate.getSerial());

@@ -10,6 +10,7 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -46,7 +47,7 @@ public class RevokeController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        Certificate certificate = this.certificateRepository.findById(request.getCertificateId()).orElseThrow();
+        Certificate certificate = this.certificateRepository.findById(request.getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
         if (certificate.getStatus() == CertificateStatusEnum.Good) {
             List<Certificate> certificates = new ArrayList<>();
             certificates.add(certificate);
@@ -56,7 +57,7 @@ public class RevokeController {
             Key key = this.keyRepository.findById(certificate.getKey().getId()).orElseThrow();
             if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
                 if (PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()) == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key password is invalid");
                 }
                 List<Certificate> revoked = new ArrayList<>();
                 for (Certificate cert : certificates) {
@@ -69,7 +70,8 @@ public class RevokeController {
                 this.certificateRepository.saveAll(revoked);
                 return ResponseEntity.ok(new RevokeCertificateResponse());
             } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                LOGGER.info("key type is {}", key.getType());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.ServerKeyJCE.name() + "]");
             }
         } else {
             return ResponseEntity.ok(new RevokeCertificateResponse());
@@ -82,12 +84,13 @@ public class RevokeController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getPrivateKey() == null || key.getPrivateKey().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            LOGGER.info("key type is {}", key.getType());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.ServerKeyJCE.name() + "]");
         }
         if (PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()) == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key password is invalid");
         }
         if (key.getStatus() == KeyStatusEnum.Good) {
             key.setStatus(KeyStatusEnum.Revoked);
@@ -119,7 +122,7 @@ public class RevokeController {
         List<Certificate> children = this.certificateRepository.findByIssuerCertificate(certificate);
         for (Certificate child : children) {
             certificates.add(child);
-            if (child.getType() == CertificateTypeEnum.ROOT_CA || child.getType() == CertificateTypeEnum.SUBORDINATE_CA) {
+            if (child.getType() == CertificateTypeEnum.ROOT_CA || child.getType() == CertificateTypeEnum.SUBORDINATE_CA || child.getType() == CertificateTypeEnum.ISSUING_CA) {
                 certificates.addAll(lookupCertificates(child));
             }
         }

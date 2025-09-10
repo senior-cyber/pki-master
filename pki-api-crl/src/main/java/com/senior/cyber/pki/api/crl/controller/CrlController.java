@@ -3,10 +3,15 @@ package com.senior.cyber.pki.api.crl.controller;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
+import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -60,47 +65,50 @@ public class CrlController {
     @Autowired
     protected KeyRepository keyRepository;
 
-    @Value("${api.crl}")
-    protected String crlApi;
-
-    @Value("${api.ocsp}")
-    protected String ocspApi;
-
     @Value("${api.x509}")
     protected String x509Api;
 
     @RequestMapping(path = "/crl/{serial:.+}", method = RequestMethod.GET, produces = "application/pkix-crl")
-    public ResponseEntity<byte[]> crlSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws IOException, NoSuchAlgorithmException, OperatorCreationException {
-        LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
+    public ResponseEntity<byte[]> crlSerial(HttpServletRequest request, RequestEntity<Void> httpRequest, @PathVariable("serial") String _serial) throws IOException, NoSuchAlgorithmException, OperatorCreationException {
+        String remoteAddress = request.getRemoteAddr();
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            String[] temp = StringUtils.split(xForwardedFor, ",");
+            remoteAddress = StringUtils.trim(temp[0]);
+        }
         LocalDate now = LocalDate.now();
+        LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
 
         long serial = -1;
         try {
             serial = Long.parseLong(FilenameUtils.getBaseName(_serial), 16);
         } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial is invalid");
         }
 
         Certificate issuerCertificate = this.certificateRepository.findBySerial(serial);
         if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found");
         }
 
         switch (issuerCertificate.getType()) {
-            case ROOT_CA, SUBORDINATE_CA -> {
-                Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElseThrow();
-                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow();
+            case ROOT_CA, SUBORDINATE_CA, ISSUING_CA -> {
+                Certificate _c = this.certificateRepository.findById(issuerCertificate.getCrlCertificate().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "crl certificate is not found"));
+                if (_c.getStatus() == CertificateStatusEnum.Revoked) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "crl certificate have been revoked");
+                }
+                Key _k = this.keyRepository.findById(_c.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "crl key is not found"));
                 if (_k.getStatus() == KeyStatusEnum.Revoked) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "crl key have been revoked");
                 }
 
                 X509Certificate crlCertificate = _c.getCertificate();
                 PrivateKey crlPrivateKey = PrivateKeyUtils.convert(_k.getPrivateKey());
 
-                Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow();
+                Key _issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
                 if (_issuerKey.getStatus() == KeyStatusEnum.Revoked) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
                 }
 
                 String hex = String.format("%012X", issuerCertificate.getSerial());
@@ -155,7 +163,8 @@ public class CrlController {
                 return ResponseEntity.status(HttpStatus.OK).headers(headers).body(holder.getEncoded());
             }
             default -> {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+                LOGGER.info("certificate type is {}", issuerCertificate.getType());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not type of [" + CertificateTypeEnum.ROOT_CA.name() + ", " + CertificateTypeEnum.SUBORDINATE_CA.name() + ", " + CertificateTypeEnum.ISSUING_CA.name() + "]");
             }
         }
     }

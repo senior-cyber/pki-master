@@ -4,9 +4,9 @@ import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
-import com.senior.cyber.pki.service.UserService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
@@ -17,18 +17,18 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 @RestController
 public class KeyController {
@@ -39,28 +39,35 @@ public class KeyController {
     protected KeyService keyService;
 
     @Autowired
-    protected UserService userService;
-
-    @Autowired
     protected KeyRepository keyRepository;
 
-    @Value("${api.ssh}")
-    protected String sshApi;
+    @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws OperatorCreationException {
+        KeyInfoRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
-    @RequestMapping(path = "/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyInfoResponse> info(RequestEntity<Void> httpRequest, @RequestParam("id") String id) {
-        Key key = this.keyRepository.findById(id).orElseThrow();
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
+        }
 
         KeyInfoResponse response = new KeyInfoResponse();
-        response.setId(key.getId());
         if (key.getType() != null) {
             response.setType(key.getType().name());
         }
         if (key.getKeyFormat() != null) {
             response.setKeyFormat(key.getKeyFormat().name());
         }
-        response.setPrivateKey(PrivateKeyUtils.convert(key.getPrivateKey()));
-        response.setPublicKey(key.getPublicKey());
+        if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
+            PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
+            response.setPrivateKey(privateKey);
+            response.setOpenSshprivateKey(privateKey);
+        }
+        PublicKey publicKey = key.getPublicKey();
+        response.setPublicKey(publicKey);
+        response.setOpenSshPublicKey(publicKey);
         response.setCreatedDatetime(key.getCreatedDatetime());
         if (key.getKeySize() > 0) {
             response.setKeySize(key.getKeySize());

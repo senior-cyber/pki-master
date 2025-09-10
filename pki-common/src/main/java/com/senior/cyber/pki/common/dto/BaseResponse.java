@@ -17,7 +17,7 @@ public abstract class BaseResponse implements Serializable {
     protected Date timestamp;
 
     @JsonProperty("status")
-    protected Integer status;
+    protected Integer status = 200;
 
     @JsonProperty("error")
     protected String error;

@@ -37,6 +37,19 @@ public class RootController {
     @Autowired
     protected KeyRepository keyRepository;
 
+    /**
+     * for issue self sign root ca
+     *
+     * @param httpRequest
+     * @return
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws OperatorCreationException
+     * @throws IOException
+     * @throws ApduException
+     * @throws ApplicationNotAvailableException
+     * @throws BadResponseException
+     */
     @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         RootGenerateRequest request = httpRequest.getBody();
@@ -44,9 +57,9 @@ public class RootController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
         RootGenerateResponse response = this.rootService.rootGenerate(request);

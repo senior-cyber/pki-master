@@ -57,7 +57,7 @@ public class LeafServiceImpl implements LeafService {
     public ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (_issuerCertificate.getType() != CertificateTypeEnum.ISSUING_CA && _issuerCertificate.getType() != CertificateTypeEnum.SUBORDINATE_CA) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
@@ -68,7 +68,7 @@ public class LeafServiceImpl implements LeafService {
 
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
 
-        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
+        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         SmartCardConnection connection = null;
 
@@ -101,7 +101,7 @@ public class LeafServiceImpl implements LeafService {
         }
 
         try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
             if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
             }
@@ -198,7 +198,7 @@ public class LeafServiceImpl implements LeafService {
     @Override
     @Transactional
     public SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws Exception {
-        Key _issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow();
+        Key _issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         SmartCardConnection connection = null;
 
@@ -236,7 +236,7 @@ public class LeafServiceImpl implements LeafService {
         }
 
         try {
-            Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+            Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
             if (key.getType() == KeyTypeEnum.ServerKeyYubico || key.getKeyFormat() != KeyFormat.RSA) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
             }
@@ -285,7 +285,7 @@ public class LeafServiceImpl implements LeafService {
     public MtlsClientGenerateResponse mtlsClientGenerate(MtlsClientGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Date _now = LocalDate.now().toDate();
 
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
         if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
                 (_issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
                 _issuerCertificate.getValidFrom().after(_now) ||
@@ -296,7 +296,7 @@ public class LeafServiceImpl implements LeafService {
 
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
 
-        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
+        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         SmartCardConnection connection = null;
 
@@ -329,7 +329,7 @@ public class LeafServiceImpl implements LeafService {
         }
 
         try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
             if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
             }

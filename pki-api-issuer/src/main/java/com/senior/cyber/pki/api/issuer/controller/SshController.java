@@ -50,9 +50,16 @@ public class SshController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
-        SshGenerateResponse response = this.sshcaService.sshcaGenerate(request, this.sshApi);
-        return ResponseEntity.ok(response);
+        switch (request.getSize()) {
+            case 1024, 2048 -> {
+                SshGenerateResponse response = this.sshcaService.sshcaGenerate(request, this.sshApi);
+                return ResponseEntity.ok(response);
+            }
+            default -> {
+                LOGGER.info("invalid size {}", request.getSize());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not one of 1024, 2048");
+            }
+        }
     }
 
 }

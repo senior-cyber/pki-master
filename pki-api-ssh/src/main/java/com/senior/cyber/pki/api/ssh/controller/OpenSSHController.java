@@ -3,10 +3,13 @@ package com.senior.cyber.pki.api.ssh.controller;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.sshd.common.config.keys.PublicKeyEntry;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,21 +34,31 @@ public class OpenSSHController {
     protected KeyRepository keyRepository;
 
     @RequestMapping(path = "/openssh/{serial:.+}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> opensshSerial(RequestEntity<Void> httpRequest, @PathVariable("serial") String serial) throws IOException {
-        LOGGER.info("PathInfo [{}] UserAgent [{}]", httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
-        if (!"pub".equals(FilenameUtils.getExtension(serial))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is invalid");
+    public ResponseEntity<String> opensshSerial(HttpServletRequest request, RequestEntity<Void> httpRequest, @PathVariable("serial") String serial) throws IOException {
+        String remoteAddress = request.getRemoteAddr();
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            String[] temp = StringUtils.split(xForwardedFor, ",");
+            remoteAddress = StringUtils.trim(temp[0]);
+        }
+        LocalDate now = LocalDate.now();
+        LOGGER.info("[{}] [{}] PathInfo [{}] UserAgent [{}]", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(now), remoteAddress, httpRequest.getUrl(), httpRequest.getHeaders().getFirst("User-Agent"));
+
+        String keyId = FilenameUtils.getBaseName(serial);
+        Key key = this.keyRepository.findById(keyId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        Key key = this.keyRepository.findById(FilenameUtils.getBaseName(serial)).orElseThrow();
-        if (key.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+        if (!"pub".equalsIgnoreCase(FilenameUtils.getExtension(serial))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found");
         }
 
         if (key.getKeyFormat() == KeyFormat.RSA) {
             return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, serial + " is not found");
+            LOGGER.info("key format is {}", key.getKeyFormat());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.RSA + "]");
         }
     }
 

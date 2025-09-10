@@ -23,8 +23,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.security.*;
@@ -54,8 +56,8 @@ public class SubordinateServiceImpl implements SubordinateService {
         Map<String, PivSession> sessions = new HashMap<>();
 
         // issuer
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow();
-        Key _issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow();
+        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
+        Key _issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
         PrivateKey issuerPrivateKey = null;
         switch (_issuerKey.getType()) {
@@ -84,7 +86,7 @@ public class SubordinateServiceImpl implements SubordinateService {
             }
         }
 
-        Key _intermediateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow();
+        Key _intermediateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         PublicKey publicKey = _intermediateKey.getPublicKey();
         PrivateKey privateKey = null;
         switch (_intermediateKey.getType()) {

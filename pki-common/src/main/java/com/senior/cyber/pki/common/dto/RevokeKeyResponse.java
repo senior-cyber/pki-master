@@ -15,8 +15,4 @@ public class RevokeKeyResponse extends BaseResponse {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Date serverTime;
 
-    public RevokeKeyResponse() {
-        this.serverTime = new Date();
-    }
-
 }

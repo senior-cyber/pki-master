@@ -55,7 +55,7 @@ public class SshCAServiceImpl implements SshCAService {
                 return response;
             }
             default -> {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "size is not one of 1024, 2048");
             }
         }
 
