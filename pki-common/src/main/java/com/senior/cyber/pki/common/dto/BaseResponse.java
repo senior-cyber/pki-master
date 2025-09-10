@@ -11,9 +11,9 @@ import java.util.Date;
 
 @Setter
 @Getter
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class BaseResponse implements Serializable {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("timestamp")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "Asia/Phnom_Penh")
     protected Date timestamp;
@@ -21,18 +21,23 @@ public abstract class BaseResponse implements Serializable {
     @JsonProperty("status")
     protected Integer status = 200;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("error")
     protected String error;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("exception")
     protected String exception;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("trace")
     protected String trace;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("message")
     protected String message;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("path")
     protected String path;
 
