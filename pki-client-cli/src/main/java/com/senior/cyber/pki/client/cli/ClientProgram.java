@@ -49,7 +49,8 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public SshGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse sshCaKey = registerYubicoKey();
+        KeyGenerateResponse rootCaKey = registerYubicoKey();
+        SshGenerateResponse sshCaKey = generateSshKey(rootCaKey);
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         KeyGenerateResponse sshClientKey = generateJcaKey();
 
@@ -133,10 +134,11 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static SshGenerateResponse generateSshKey() throws IOException, InterruptedException {
+    protected static SshGenerateResponse generateSshKey(KeyGenerateResponse key) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SshGenerateRequest request = new SshGenerateRequest();
-            request.setSize(2048);
+            request.setKeyId(key.getKeyId());
+            request.setKeyPassword(key.getKeyPassword());
 
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ISSUER + "/api/ssh/generate"))
