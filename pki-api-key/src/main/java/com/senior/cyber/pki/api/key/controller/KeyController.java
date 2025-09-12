@@ -84,15 +84,16 @@ public class KeyController {
 
         if (request.getFormat() == KeyFormat.EC) {
             if (request.getSize() != 256 && request.getSize() != 384) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
             }
         } else if (request.getFormat() == KeyFormat.RSA) {
             if (request.getSize() != 1024 && request.getSize() != 2048) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
         }
+
         KeyGenerateResponse response = this.keyService.generate(request);
         return ResponseEntity.ok(response);
     }
@@ -105,27 +106,27 @@ public class KeyController {
         }
 
         if (request.getManagementKey() == null || request.getManagementKey().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "management key is required");
         }
 
         if (request.getFormat() == KeyFormat.EC) {
             if (request.getSize() != 256 && request.getSize() != 384) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
             }
         } else if (request.getFormat() == KeyFormat.RSA) {
             if (request.getSize() != 1024 && request.getSize() != 2048) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
         }
 
         if (request.getSerialNumber() == null || request.getSerialNumber().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial number is required");
         }
 
         if (request.getSlot() == null || request.getSlot().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "slot is required");
         } else {
             Slot pivSlot = null;
             for (Slot slot : Slot.values()) {
@@ -135,13 +136,13 @@ public class KeyController {
                 }
             }
             if (pivSlot == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "slot is not found");
             }
         }
 
         YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
         if (device == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device is not found");
         }
 
         KeyGenerateResponse response = this.keyService.generate(request);
@@ -156,19 +157,19 @@ public class KeyController {
         }
 
         if (request.getSerialNumber() == null || request.getSerialNumber().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial number is required");
         }
 
         if (request.getPin() == null || request.getPin().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "pin is required");
         }
 
         if (request.getManagementKey() == null || request.getManagementKey().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "management key is required");
         }
 
         if (request.getSlot() == null || request.getSlot().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "slot is required");
         } else {
             Slot pivSlot = null;
             for (Slot slot : Slot.values()) {
@@ -178,13 +179,13 @@ public class KeyController {
                 }
             }
             if (pivSlot == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "slot is not found");
             }
         }
 
         YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
         if (device == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device is not found");
         }
 
         KeyGenerateResponse response = this.keyService.register(request);

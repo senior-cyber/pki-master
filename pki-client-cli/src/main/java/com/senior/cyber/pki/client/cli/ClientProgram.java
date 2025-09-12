@@ -85,6 +85,8 @@ public class ClientProgram implements CommandLineRunner {
 
     public void mtls(String... args) throws IOException, InterruptedException {
         KeyGenerateResponse mtlsServerKey = generateYubicoKey();
+        System.out.println(mtlsServerKey.getKeyId());
+        System.out.println(mtlsServerKey.getKeyPassword());
         System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
