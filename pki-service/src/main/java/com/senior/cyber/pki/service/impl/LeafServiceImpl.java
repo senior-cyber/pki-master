@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.PkiUtils;
@@ -29,6 +30,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,6 +54,9 @@ public class LeafServiceImpl implements LeafService {
 
     @Autowired
     protected KeyRepository keyRepository;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     @Override
     public ServerGenerateResponse serverGenerate(ServerGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
@@ -80,23 +85,27 @@ public class LeafServiceImpl implements LeafService {
                 issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getIssuer().getKeyPassword());
+                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
+
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
                 if (device == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
                 }
                 connection = device.openConnection(SmartCardConnection.class);
                 PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(issuerKey.getYubicoManagementKey()));
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
                 issuerProvider = new PivProvider(session);
                 KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                 Slot slot = null;
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(issuerKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, issuerKey.getYubicoPin());
+                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
             }
         }
 
@@ -210,23 +219,27 @@ public class LeafServiceImpl implements LeafService {
                 issuerKey = new KeyPair(_issuerKey.getPublicKey(), PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword()));
             }
             case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getIssuer().getKeyPassword());
+                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(_issuerKey.getPrivateKey()), YubicoPassword.class);
+
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
                 if (device == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
                 }
                 connection = device.openConnection(SmartCardConnection.class);
                 PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(_issuerKey.getYubicoManagementKey()));
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
                 issuerProvider = new PivProvider(session);
                 KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                 Slot slot = null;
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(_issuerKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, _issuerKey.getYubicoPin());
+                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
                 issuerKey = new KeyPair(_issuerKey.getPublicKey(), issuerPrivateKey);
             }
         }
@@ -308,23 +321,27 @@ public class LeafServiceImpl implements LeafService {
                 issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(issuerKey.getYubicoSerial());
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getIssuer().getKeyPassword());
+                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
+
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
                 if (device == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
                 }
                 connection = device.openConnection(SmartCardConnection.class);
                 PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(issuerKey.getYubicoManagementKey()));
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
                 issuerProvider = new PivProvider(session);
                 KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
                 Slot slot = null;
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(issuerKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, issuerKey.getYubicoPin());
+                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
             }
         }
 

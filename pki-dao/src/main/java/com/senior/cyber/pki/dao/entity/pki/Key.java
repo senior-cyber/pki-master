@@ -49,21 +49,6 @@ public class Key implements Serializable {
     @Column(name = "key_size")
     private int keySize = -1;
 
-    @Column(name = "pwd")
-    private String password;
-
-    @Column(name = "yubico_serial")
-    private String yubicoSerial;
-
-    @Column(name = "yubico_piv_slot")
-    private String yubicoPivSlot;
-
-    @Column(name = "yubico_management_key")
-    private String yubicoManagementKey;
-
-    @Column(name = "yubico_pin")
-    private String yubicoPin;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_datetime")
     private Date createdDatetime;

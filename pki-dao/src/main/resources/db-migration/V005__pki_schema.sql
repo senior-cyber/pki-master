@@ -18,10 +18,6 @@ CREATE TABLE tbl_key
     user_id               VARCHAR(36)  NULL,
     private_key_pem       TEXT         NULL,
     public_key_pem        TEXT         NOT NULL,
-    yubico_piv_slot       VARCHAR(50)  NULL,
-    yubico_pin            VARCHAR(50)  NULL,
-    yubico_management_key VARCHAR(100) NULL,
-    yubico_serial         VARCHAR(50)  NULL,
     pwd                   VARCHAR(100) NULL,
     key_format            VARCHAR(3)   NULL,
     key_size              INT(11)      NULL,
@@ -29,8 +25,6 @@ CREATE TABLE tbl_key
     `type`                VARCHAR(30)  NOT NULL,
     created_datetime      DATETIME     NOT NULL,
     INDEX (created_datetime),
-    INDEX (yubico_piv_slot),
-    INDEX (yubico_serial),
     INDEX (user_id),
     PRIMARY KEY (key_id)
 );

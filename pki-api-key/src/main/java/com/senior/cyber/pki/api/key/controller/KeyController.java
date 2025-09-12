@@ -13,6 +13,7 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
+import jakarta.persistence.Column;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

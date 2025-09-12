@@ -1,7 +1,9 @@
 package com.senior.cyber.pki.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
+import com.senior.cyber.pki.common.dto.YubicoPassword;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -24,6 +26,7 @@ import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,9 @@ public class RootServiceImpl implements RootService {
     @Autowired
     protected KeyRepository keyRepository;
 
+    @Autowired
+    protected ObjectMapper objectMapper;
+
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
@@ -63,19 +69,23 @@ public class RootServiceImpl implements RootService {
         PrivateKey rootPrivateKey = null;
         switch (rootKey.getType()) {
             case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(rootKey.getYubicoSerial());
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getKeyPassword());
+                YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
+
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubico.getSerial());
                 connection = device.openConnection(SmartCardConnection.class);
                 session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(rootKey.getYubicoManagementKey()));
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubico.getManagementKey()));
                 provider = new PivProvider(session);
                 KeyStore ks = YubicoProviderUtils.lookupKeyStore(provider);
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(rootKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubico.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, rootKey.getYubicoPin());
+                rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubico.getPin());
             }
             case ServerKeyJCE -> {
                 provider = Utils.BC;

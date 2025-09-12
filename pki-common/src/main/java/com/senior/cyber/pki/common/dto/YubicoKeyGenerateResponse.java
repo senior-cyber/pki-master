@@ -11,4 +11,7 @@ public class YubicoKeyGenerateResponse extends BaseResponse {
     @JsonProperty("keyId")
     private String keyId;
 
+    @JsonProperty("keyPassword")
+    private String keyPassword;
+
 }

@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
@@ -21,6 +22,7 @@ import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.util.text.AES256TextEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,9 @@ public class KeyServiceImpl implements KeyService {
 
     @Autowired
     private KeyRepository keyRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
@@ -97,23 +102,31 @@ public class KeyServiceImpl implements KeyService {
                 }
             }
 
+            String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
+            AES256TextEncryptor encryptor = new AES256TextEncryptor();
+            encryptor.setPassword(password);
+
+            YubicoPassword yubicoPassword = new YubicoPassword();
+            yubicoPassword.setPin(Yubico.DEFAULT_PIN);
+            yubicoPassword.setManagementKey(request.getManagementKey());
+            if (pivSlot != null) {
+                yubicoPassword.setPivSlot(pivSlot.getStringAlias());
+            }
+            yubicoPassword.setSerial(request.getSerialNumber());
+
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
             key.setType(KeyTypeEnum.ServerKeyYubico);
             key.setKeySize(request.getSize());
-            key.setYubicoSerial(request.getSerialNumber());
-            if (pivSlot != null) {
-                key.setYubicoPivSlot(pivSlot.getStringAlias());
-            }
-            key.setYubicoManagementKey(request.getManagementKey());
-            key.setYubicoPin(Yubico.DEFAULT_PIN);
+            key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
             key.setKeyFormat(request.getFormat());
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 
             YubicoKeyGenerateResponse response = new YubicoKeyGenerateResponse();
             response.setKeyId(key.getId());
+            response.setKeyPassword(password);
             return response;
         }
     }
@@ -134,6 +147,18 @@ public class KeyServiceImpl implements KeyService {
             session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
             PublicKey publicKey = YubicoProviderUtils.lookupPublicKey(session, pivSlot);
 
+            String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
+            AES256TextEncryptor encryptor = new AES256TextEncryptor();
+            encryptor.setPassword(password);
+
+            YubicoPassword yubicoPassword = new YubicoPassword();
+            yubicoPassword.setPin(request.getPin());
+            yubicoPassword.setManagementKey(request.getManagementKey());
+            if (pivSlot != null) {
+                yubicoPassword.setPivSlot(pivSlot.getStringAlias());
+            }
+            yubicoPassword.setSerial(request.getSerialNumber());
+
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
@@ -143,10 +168,7 @@ public class KeyServiceImpl implements KeyService {
             } else if (publicKey instanceof ECKey) {
                 key.setKeyFormat(KeyFormat.EC);
             }
-            key.setYubicoManagementKey(request.getManagementKey());
-            key.setYubicoPin(request.getPin());
-            key.setYubicoPivSlot(pivSlot.getStringAlias());
-            key.setYubicoSerial(request.getSerialNumber());
+            key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 

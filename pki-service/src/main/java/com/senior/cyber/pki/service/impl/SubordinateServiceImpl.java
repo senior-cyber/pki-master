@@ -1,7 +1,9 @@
 package com.senior.cyber.pki.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.SubordinateGenerateRequest;
 import com.senior.cyber.pki.common.dto.SubordinateGenerateResponse;
+import com.senior.cyber.pki.common.dto.YubicoPassword;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -24,6 +26,7 @@ import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +51,9 @@ public class SubordinateServiceImpl implements SubordinateService {
     @Autowired
     protected KeyRepository keyRepository;
 
+    @Autowired
+    protected ObjectMapper objectMapper;
+
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public SubordinateGenerateResponse subordinateGenerate(SubordinateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException {
@@ -69,28 +75,33 @@ public class SubordinateServiceImpl implements SubordinateService {
                 issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
             }
             case ServerKeyYubico -> {
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_issuerKey.getYubicoSerial());
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getIssuer().getKeyPassword());
+                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(_issuerKey.getPrivateKey()), YubicoPassword.class);
+
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
                 SmartCardConnection connection = device.openConnection(SmartCardConnection.class);
-                connections.put(_issuerKey.getYubicoSerial(), connection);
+                connections.put(yubicoIssuer.getSerial(), connection);
                 PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(_issuerKey.getYubicoManagementKey()));
-                sessions.put(_issuerKey.getYubicoSerial(), session);
+                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
+                sessions.put(yubicoIssuer.getSerial(), session);
                 issuerProvider = new PivProvider(session);
                 KeyStore ks = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                keys.put(_issuerKey.getYubicoSerial(), ks);
+                keys.put(yubicoIssuer.getSerial(), ks);
                 Slot slot = null;
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(_issuerKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _issuerKey.getYubicoPin());
+                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubicoIssuer.getPin());
             }
         }
 
         Key _intermediateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         PublicKey publicKey = _intermediateKey.getPublicKey();
+        YubicoPassword yubico = null;
         PrivateKey privateKey = null;
         switch (_intermediateKey.getType()) {
             case ServerKeyJCE -> {
@@ -100,28 +111,33 @@ public class SubordinateServiceImpl implements SubordinateService {
             case ServerKeyYubico -> {
                 SmartCardConnection connection = null;
                 KeyStore ks = null;
-                if (!connections.containsKey(_intermediateKey.getYubicoSerial())) {
-                    YubiKeyDevice device = YubicoProviderUtils.lookupDevice(_intermediateKey.getYubicoSerial());
+
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getKeyPassword());
+                yubico = this.objectMapper.readValue(encryptor.decrypt(_intermediateKey.getPrivateKey()), YubicoPassword.class);
+
+                if (!connections.containsKey(yubico.getSerial())) {
+                    YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubico.getSerial());
                     connection = device.openConnection(SmartCardConnection.class);
-                    connections.put(_intermediateKey.getYubicoSerial(), connection);
+                    connections.put(yubico.getSerial(), connection);
                     PivSession session = new PivSession(connection);
-                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(_intermediateKey.getYubicoManagementKey()));
-                    sessions.put(_intermediateKey.getYubicoSerial(), session);
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubico.getManagementKey()));
+                    sessions.put(yubico.getSerial(), session);
                     provider = new PivProvider(session);
                     ks = YubicoProviderUtils.lookupKeyStore(provider);
                 } else {
                     provider = issuerProvider;
-                    ks = keys.get(_intermediateKey.getYubicoSerial());
+                    ks = keys.get(yubico.getSerial());
                 }
                 Slot slot = null;
                 for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(_intermediateKey.getYubicoPivSlot())) {
+                    if (s.getStringAlias().equalsIgnoreCase(yubico.getPivSlot())) {
                         slot = s;
                         break;
                     }
                 }
-                slots.put(_intermediateKey.getYubicoSerial(), slot);
-                privateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, _intermediateKey.getYubicoPin());
+                slots.put(yubico.getSerial(), slot);
+                privateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubico.getPin());
             }
         }
 
@@ -246,9 +262,9 @@ public class SubordinateServiceImpl implements SubordinateService {
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(subordinateCertificate);
 
-            PivSession session = sessions.get(_intermediateKey.getYubicoSerial());
+            PivSession session = sessions.get(yubico.getSerial());
             if (session != null) {
-                session.putCertificate(slots.get(_intermediateKey.getYubicoSerial()), subordinateCertificate);
+                session.putCertificate(slots.get(yubico.getSerial()), subordinateCertificate);
             }
             return response;
         } finally {
