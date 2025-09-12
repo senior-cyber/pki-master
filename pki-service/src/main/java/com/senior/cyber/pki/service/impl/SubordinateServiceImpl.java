@@ -262,9 +262,11 @@ public class SubordinateServiceImpl implements SubordinateService {
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(subordinateCertificate);
 
-            PivSession session = sessions.get(yubico.getSerial());
-            if (session != null) {
-                session.putCertificate(slots.get(yubico.getSerial()), subordinateCertificate);
+            if (yubico != null) {
+                PivSession session = sessions.get(yubico.getSerial());
+                if (session != null) {
+                    session.putCertificate(slots.get(yubico.getSerial()), subordinateCertificate);
+                }
             }
             return response;
         } finally {

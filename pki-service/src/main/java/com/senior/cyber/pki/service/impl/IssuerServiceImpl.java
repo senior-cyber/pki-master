@@ -262,9 +262,11 @@ public class IssuerServiceImpl implements IssuerService {
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(__issuerCertificate);
 
-            PivSession session = sessions.get(yubico.getSerial());
-            if (session != null) {
-                session.putCertificate(slots.get(yubico.getSerial()), __issuerCertificate);
+            if (yubico != null) {
+                PivSession session = sessions.get(yubico.getSerial());
+                if (session != null) {
+                    session.putCertificate(slots.get(yubico.getSerial()), __issuerCertificate);
+                }
             }
             return response;
         } finally {
