@@ -10,10 +10,10 @@ import java.io.IOException;
 
 public interface KeyService {
 
-    JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException;
+    KeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException;
 
-    YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
+    KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
 
-    YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    KeyGenerateResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

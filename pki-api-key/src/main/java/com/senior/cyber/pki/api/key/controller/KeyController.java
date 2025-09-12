@@ -13,7 +13,6 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
-import jakarta.persistence.Column;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +76,7 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<JcaKeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) throws OperatorCreationException {
         JcaKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -94,12 +93,12 @@ public class KeyController {
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        JcaKeyGenerateResponse response = this.keyService.generate(request);
+        KeyGenerateResponse response = this.keyService.generate(request);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoKeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoKeyGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoKeyGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         YubicoKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -145,12 +144,12 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyGenerateResponse response = this.keyService.generate(request);
+        KeyGenerateResponse response = this.keyService.generate(request);
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/yubico/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<YubicoKeyRegisterResponse> yubicoRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+    public ResponseEntity<KeyGenerateResponse> yubicoRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
         YubicoKeyRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -188,7 +187,7 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        YubicoKeyRegisterResponse response = this.keyService.register(request);
+        KeyGenerateResponse response = this.keyService.register(request);
         return ResponseEntity.ok(response);
     }
 

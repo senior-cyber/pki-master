@@ -45,7 +45,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public JcaKeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException {
+    public KeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException {
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
@@ -58,7 +58,7 @@ public class KeyServiceImpl implements KeyService {
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
-        JcaKeyGenerateResponse response = new JcaKeyGenerateResponse();
+        KeyGenerateResponse response = new KeyGenerateResponse();
         response.setKeyPassword(password);
         response.setKeyId(key.getId());
         return response;
@@ -66,7 +66,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoKeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    public KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -124,7 +124,7 @@ public class KeyServiceImpl implements KeyService {
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 
-            YubicoKeyGenerateResponse response = new YubicoKeyGenerateResponse();
+            KeyGenerateResponse response = new KeyGenerateResponse();
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
             return response;
@@ -133,7 +133,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public YubicoKeyRegisterResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public KeyGenerateResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -172,7 +172,7 @@ public class KeyServiceImpl implements KeyService {
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 
-            YubicoKeyRegisterResponse response = new YubicoKeyRegisterResponse();
+            KeyGenerateResponse response = new KeyGenerateResponse();
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
             return response;

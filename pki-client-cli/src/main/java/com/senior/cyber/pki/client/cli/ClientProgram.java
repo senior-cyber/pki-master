@@ -48,7 +48,7 @@ public class ClientProgram implements CommandLineRunner {
 
         try (HttpClient client = HttpClient.newHttpClient()) {
             KeyInfoRequest request = new KeyInfoRequest();
-            request.setKeyId(ca.getKeyId() + "1");
+            request.setKeyId(ca.getKeyId());
             request.setKeyPassword(ca.getKeyPassword());
 
             HttpRequest req = HttpRequest.newBuilder()
@@ -69,7 +69,7 @@ public class ClientProgram implements CommandLineRunner {
         SshGenerateResponse sshCaKey = generateSshKey();
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
 
-        JcaKeyGenerateResponse sshClientKey = generateKey();
+        KeyGenerateResponse sshClientKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getSshCa()));
@@ -81,12 +81,12 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
-        JcaKeyGenerateResponse mtlsServerKey = generateKey();
+        KeyGenerateResponse mtlsServerKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
 
-        JcaKeyGenerateResponse mtlsClientKey = generateKey();
+        KeyGenerateResponse mtlsClientKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
         MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
@@ -97,27 +97,27 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void x509(String... args) throws IOException, InterruptedException {
-        JcaKeyGenerateResponse rootCaKey = generateKey();
+        KeyGenerateResponse rootCaKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
-        JcaKeyGenerateResponse subordinateCaKey = generateKey();
+        KeyGenerateResponse subordinateCaKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
-        JcaKeyGenerateResponse issuingCaKey1 = generateKey();
+        KeyGenerateResponse issuingCaKey1 = generateKey();
         System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
 
-        JcaKeyGenerateResponse issuingCaKey2 = generateKey();
+        KeyGenerateResponse issuingCaKey2 = generateKey();
         System.out.println(SSH + "/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
 
-        JcaKeyGenerateResponse serverKey = generateKey();
+        KeyGenerateResponse serverKey = generateKey();
         System.out.println(SSH + "/api/openssh/" + serverKey.getKeyId() + ".pub");
         ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
         System.out.println(X509 + "/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
@@ -127,7 +127,7 @@ public class ClientProgram implements CommandLineRunner {
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), PrivateKeyUtils.convert(server.getPrivkey()));
     }
 
-    protected static SshClientGenerateResponse generateSshClient(SshGenerateResponse issuer, JcaKeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
+    protected static SshClientGenerateResponse generateSshClient(SshGenerateResponse issuer, KeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SshClientGenerateRequest request = new SshClientGenerateRequest();
             request.setIssuer(new Issuer(null, issuer.getKeyId(), issuer.getKeyPassword()));
@@ -164,7 +164,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static JcaKeyGenerateResponse generateKey() throws IOException, InterruptedException {
+    protected static KeyGenerateResponse generateKey() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             JcaKeyGenerateRequest request = new JcaKeyGenerateRequest();
             request.setSize(2048);
@@ -177,11 +177,11 @@ public class ClientProgram implements CommandLineRunner {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), JcaKeyGenerateResponse.class);
+            return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
         }
     }
 
-    protected static MtlsClientGenerateResponse generateMtlsClient(MtlsGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static MtlsClientGenerateResponse generateMtlsClient(MtlsGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             MtlsClientGenerateRequest request = new MtlsClientGenerateRequest();
             request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
@@ -206,7 +206,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static MtlsGenerateResponse generateMtlsServer(JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static MtlsGenerateResponse generateMtlsServer(KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             MtlsGenerateRequest request = new MtlsGenerateRequest();
             request.setKeyId(key.getKeyId());
@@ -230,7 +230,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static ServerGenerateResponse generateServer(IssuerGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou, List<String> sans) throws IOException, InterruptedException {
+    protected static ServerGenerateResponse generateServer(IssuerGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou, List<String> sans) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             ServerGenerateRequest request = new ServerGenerateRequest();
             request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
@@ -255,7 +255,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static IssuerGenerateResponse generateIssuingCA(RootGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static IssuerGenerateResponse generateIssuingCA(RootGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             IssuerGenerateRequest request = new IssuerGenerateRequest();
             request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
@@ -279,7 +279,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static IssuerGenerateResponse generateIssuingCA(SubordinateGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static IssuerGenerateResponse generateIssuingCA(SubordinateGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             IssuerGenerateRequest request = new IssuerGenerateRequest();
             request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
@@ -303,7 +303,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static SubordinateGenerateResponse generateSubordinateCA(RootGenerateResponse issuer, JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static SubordinateGenerateResponse generateSubordinateCA(RootGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SubordinateGenerateRequest request = new SubordinateGenerateRequest();
             request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
@@ -327,7 +327,7 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static RootGenerateResponse generateRootCA(JcaKeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
+    protected static RootGenerateResponse generateRootCA(KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             RootGenerateRequest request = new RootGenerateRequest();
             request.setKeyId(key.getKeyId());

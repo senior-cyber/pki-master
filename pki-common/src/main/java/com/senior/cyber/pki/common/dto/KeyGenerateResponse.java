@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class YubicoKeyGenerateResponse extends BaseResponse {
+public class KeyGenerateResponse extends BaseResponse {
 
     @JsonProperty("keyId")
     private String keyId;
