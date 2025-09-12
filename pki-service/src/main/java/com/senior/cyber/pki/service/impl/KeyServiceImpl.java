@@ -174,6 +174,7 @@ public class KeyServiceImpl implements KeyService {
 
             YubicoKeyRegisterResponse response = new YubicoKeyRegisterResponse();
             response.setKeyId(key.getId());
+            response.setKeyPassword(password);
             return response;
         }
     }
