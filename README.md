@@ -195,16 +195,16 @@ sudo service pki-api-ssh    restart
 sudo service pki-api-root   restart
 sudo service pki-api-issuer restart
 sudo service pki-api-key    restart
-sudo service pki-api-revoke    restart
+sudo service pki-api-revoke restart
 
-sudo systemctl enable pki-api-crl    
-sudo systemctl enable pki-api-ocsp   
+sudo systemctl enable pki-api-crl
+sudo systemctl enable pki-api-ocsp
 sudo systemctl enable pki-api-x509
-sudo systemctl enable pki-api-ssh   
-sudo systemctl enable pki-api-root   
+sudo systemctl enable pki-api-ssh
+sudo systemctl enable pki-api-root
 sudo systemctl enable pki-api-issuer
 sudo systemctl enable pki-api-key
-sudo systemctl enable pki-api-revoke 
+sudo systemctl enable pki-api-revoke
 ```
 
 ```shell
