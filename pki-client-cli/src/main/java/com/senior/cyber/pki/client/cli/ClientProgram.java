@@ -46,6 +46,7 @@ public class ClientProgram implements CommandLineRunner {
 //        System.out.println("Done mtls");
         sshCa(args);
         System.out.println("Done ssh-ca");
+        System.exit(0);
     }
 
     public SshGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
