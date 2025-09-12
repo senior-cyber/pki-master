@@ -36,6 +36,7 @@ ssh-keygen -y -f mykey > id_rsa.pub
 ```
 
 ## Convert PKCS#8 to OpenSSH Format vi-versa
+
 ```shell
 # Generate RSA as RSA PRIVATE KEY
 ssh-keygen -t rsa -b 1024 -m PEM -f mykey
@@ -61,6 +62,7 @@ ssh-keygen -p -f mykey -N "" -C ""
 ```
 
 ### OpenSSH CA
+
 ```shell
 
 1. 🔐 Generate Root CA Key
@@ -128,7 +130,8 @@ Host myserver
 
 ```shell
 sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib1g-dev build-essential
-sudo apt-get install opensc-pkcs11 pcscd opensc libusb-dev
+sudo apt-get install opensc-pkcs11 pcscd opensc libusb-dev'
+sudo apt-get install yubikey-manager
 
 git clone https://github.com/Yubico/yubico-piv-tool.git
 cd yubico-piv-tool
@@ -201,10 +204,7 @@ sudo systemctl enable pki-api-ssh
 sudo systemctl enable pki-api-root   
 sudo systemctl enable pki-api-issuer
 sudo systemctl enable pki-api-key
-sudo systemctl enable pki-api-revoke
-
-telegram endpoint, expose webhook for load test,
-update access denied page, change session expired, please try again 
+sudo systemctl enable pki-api-revoke 
 ```
 
 ```shell
@@ -244,7 +244,7 @@ yubihsm-shell --authkey 1 --password-from-prompt
 
 ```
 
-```angular2html
+```text
 ykman otp yubiotp 1 --serial-public-id --generate-private-id --generate-key
 
 ykman otp yubiotp 1 --serial-public-id --generate-private-id --generate-key -O yubicloud.csv
