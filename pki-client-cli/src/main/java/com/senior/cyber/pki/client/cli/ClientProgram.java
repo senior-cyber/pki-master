@@ -42,36 +42,16 @@ public class ClientProgram implements CommandLineRunner {
     public void run(String... args) throws IOException, InterruptedException {
 //        x509(args);
 //        System.out.println("Done x509");
-        mtls(args);
-        System.out.println("Done mtls");
-//        SshGenerateResponse ca = sshCa(args);
-//        System.out.println("");
-//
-//        try (HttpClient client = HttpClient.newHttpClient()) {
-//            KeyInfoRequest request = new KeyInfoRequest();
-//            request.setKeyId(ca.getKeyId());
-//            request.setKeyPassword(ca.getKeyPassword());
-//
-//            HttpRequest req = HttpRequest.newBuilder()
-//                    .uri(URI.create(KEY + "/api/info"))
-//                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-//                    .header("Content-Type", "application/json")
-//                    .header("Accept", "application/json")
-//                    .build();
-//            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-//            KeyInfoResponse response = MAPPER.readValue(resp.body(), KeyInfoResponse.class);
-//            System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-//        }
-//        System.out.println("");
-//        System.exit(0);
+//        mtls(args);
+//        System.out.println("Done mtls");
+        sshCa(args);
+        System.out.println("Done ssh-ca");
     }
 
     public SshGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
-        SshGenerateResponse sshCaKey = generateSshKey();
+        KeyGenerateResponse sshCaKey = registerYubicoKey();
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
-
-//        KeyGenerateResponse sshClientKey = generateJcaKey();
-        KeyGenerateResponse sshClientKey = registerYubicoKey();
+        KeyGenerateResponse sshClientKey = generateJcaKey();
 
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
@@ -207,11 +187,12 @@ public class ClientProgram implements CommandLineRunner {
 
     protected static KeyGenerateResponse generateYubicoKey() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            YubicoKeyRegisterRequest request = new YubicoKeyRegisterRequest();
+            YubicoKeyGenerateRequest request = new YubicoKeyGenerateRequest();
             request.setSerialNumber("23275988");
             request.setSlot("9a");
             request.setManagementKey("010203040506070801020304050607080102030405060708");
-            request.setPin("123456");
+            request.setSize(2048);
+            request.setFormat(KeyFormat.RSA);
 
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/yubico/generate"))

@@ -20,6 +20,9 @@ import java.util.List;
 public class OpenSshPrivateKeyUtils {
 
     public static String convert(PrivateKey value) throws IOException {
+        if (value == null) {
+            return null;
+        }
         try {
             OpenSSHKeyEncryptionContext ctx = new OpenSSHKeyEncryptionContext();
             PublicKey publicKey = KeyUtils.recoverPublicKey(value);

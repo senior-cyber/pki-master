@@ -10,7 +10,10 @@ import java.io.Serializable;
 @Getter
 public class SshGenerateRequest implements Serializable {
 
-    @JsonProperty("size")
-    private int size;
+    @JsonProperty("keyId")
+    private String keyId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
 
 }

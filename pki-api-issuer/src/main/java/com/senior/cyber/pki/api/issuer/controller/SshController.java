@@ -2,6 +2,10 @@ package com.senior.cyber.pki.api.issuer.controller;
 
 import com.senior.cyber.pki.common.dto.SshGenerateRequest;
 import com.senior.cyber.pki.common.dto.SshGenerateResponse;
+import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.SshCAService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -31,22 +35,27 @@ public class SshController {
     @Autowired
     protected SshCAService sshcaService;
 
+    @Autowired
+    protected KeyRepository keyRepository;
+
     @RequestMapping(path = "/ssh/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SshGenerateResponse> rootGenerate(RequestEntity<SshGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         SshGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        switch (request.getSize()) {
-            case 1024, 2048 -> {
-                SshGenerateResponse response = this.sshcaService.sshcaGenerate(request);
-                return ResponseEntity.ok(response);
-            }
-            default -> {
-                LOGGER.info("invalid size {}", request.getSize());
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not one of 1024, 2048");
-            }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
+
+        if (key.getKeyFormat() != KeyFormat.RSA) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not supported");
+        }
+
+        SshGenerateResponse response = this.sshcaService.sshcaGenerate(request);
+        return ResponseEntity.ok(response);
     }
 
 }
