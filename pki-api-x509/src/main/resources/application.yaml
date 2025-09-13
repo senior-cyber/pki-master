@@ -9,7 +9,7 @@ server:
     include-stacktrace: never
 spring:
   application:
-    name: x509 Certificate Repository
+    name: Certificate Repository
   jpa:
     show-sql: true
     hibernate:
