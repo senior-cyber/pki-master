@@ -16,7 +16,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     properties:
       hibernate:
-        generate_statistics: true
+        generate_statistics: false
         format_sql: true
   mvc:
     servlet:
