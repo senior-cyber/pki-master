@@ -139,9 +139,8 @@ public class SshCAServiceImpl implements SshCAService {
                     response.setConfig("Host " + request.getAlias() + "\n" +
                             "    HostName " + request.getServer() + "\n" +
                             "    User " + request.getPrincipal() + "\n" +
-                            "    PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so\n" +
+                            "    PKCS11Provider /usr/local/lib/libykcs11.so\n" +
                             "    CertificateFile id_rsa-cert.pub");
-
                 }
             }
             return response;

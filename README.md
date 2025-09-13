@@ -293,3 +293,14 @@ iOS
   - https://github.com/Yubico/yubikit-swift
   - https://developer.apple.com/documentation/authenticationservices/supporting-passkeys
 ```
+
+```text
+pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so -O
+pkcs11-tool --module /usr/local/lib/libykcs11.so -O
+ssh-keygen -D /usr/local/lib/libykcs11.so
+yubico-piv-tool -s 9a -a read-public-key > yk-9a.pem
+ssh-keygen -i -m PKCS8 -f yk-9a.pem > yk-9a-ssh.pub
+
+ssh -o IdentityAgent=none -o IdentitiesOnly=yes -o PKCS11Provider=/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so -i 'pkcs11:id=01;type=cert' socheat@192.168.1.53
+ssh -o IdentityAgent=none -o IdentitiesOnly=yes -o PKCS11Provider=/usr/local/lib/libykcs11.so -i 'pkcs11:id=01;type=cert' socheat@192.168.1.53
+```
