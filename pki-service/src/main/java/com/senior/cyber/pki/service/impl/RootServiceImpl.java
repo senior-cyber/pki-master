@@ -80,7 +80,7 @@ public class RootServiceImpl implements RootService {
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, rootKey.getId(), yubico);
-                root = new Crypto(providers.get(serials.get(yubico.getSerial())), rootKey.getPublicKey(), privateKey);
+                root = new Crypto(providers.get(serials.get(rootKey.getId())), rootKey.getPublicKey(), privateKey);
             }
             case ServerKeyJCE -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());

@@ -81,7 +81,7 @@ public class IssuerServiceImpl implements IssuerService {
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
-                issuer = new Crypto(providers.get(serials.get(yubico.getSerial())), issuerCertificate.getCertificate(), privateKey);
+                issuer = new Crypto(providers.get(serials.get(issuerKey.getId())), issuerCertificate.getCertificate(), privateKey);
             }
         }
 
@@ -97,7 +97,7 @@ public class IssuerServiceImpl implements IssuerService {
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuingKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuingKey.getId(), yubico);
-                issuing = new Crypto(providers.get(serials.get(yubico.getSerial())), issuingKey.getPublicKey(), privateKey);
+                issuing = new Crypto(providers.get(serials.get(issuerKey.getId())), issuingKey.getPublicKey(), privateKey);
             }
         }
 

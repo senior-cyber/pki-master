@@ -40,10 +40,10 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-//        x509(args);
-//        System.out.println("Done x509");
-//        mtls(args);
-//        System.out.println("Done mtls");
+        x509(args);
+        System.out.println("Done x509");
+        mtls(args);
+        System.out.println("Done mtls");
         sshCa(args);
         System.out.println("Done ssh-ca");
         System.exit(0);
@@ -51,7 +51,7 @@ public class ClientProgram implements CommandLineRunner {
 
     public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
         // KeyGenerateResponse rootCaKey = registerYubicoKey();
-        KeyGenerateResponse sshCaKey = registerYubicoKey();
+        KeyGenerateResponse sshCaKey = registerYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         KeyGenerateResponse sshClientKey = generateJcaKey();
 
@@ -66,14 +66,14 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse mtlsServerKey = generateYubicoKey();
+        KeyGenerateResponse mtlsServerKey = generateYubicoKey("9a");
         System.out.println(mtlsServerKey.getKeyId());
         System.out.println(mtlsServerKey.getKeyPassword());
         System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse mtlsClientKey = generateJcaKey();
+        KeyGenerateResponse mtlsClientKey = generateYubicoKey("9c");
         System.out.println(SSH + "/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
         MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
@@ -84,22 +84,22 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void x509(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse rootCaKey = registerYubicoKey();
+        KeyGenerateResponse rootCaKey = registerYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse subordinateCaKey = registerYubicoKey();
+        KeyGenerateResponse subordinateCaKey = registerYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey1 = registerYubicoKey();
+        KeyGenerateResponse issuingCaKey1 = registerYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey2 = registerYubicoKey();
+        KeyGenerateResponse issuingCaKey2 = registerYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
@@ -152,11 +152,11 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static KeyGenerateResponse registerYubicoKey() throws IOException, InterruptedException {
+    protected static KeyGenerateResponse registerYubicoKey(String slot) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             YubicoKeyRegisterRequest request = new YubicoKeyRegisterRequest();
             request.setSerialNumber("23275988");
-            request.setSlot("9a");
+            request.setSlot(slot);
             request.setManagementKey("010203040506070801020304050607080102030405060708");
             request.setPin("123456");
 
@@ -171,11 +171,11 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static KeyGenerateResponse generateYubicoKey() throws IOException, InterruptedException {
+    protected static KeyGenerateResponse generateYubicoKey(String slot) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             YubicoKeyGenerateRequest request = new YubicoKeyGenerateRequest();
             request.setSerialNumber("23275988");
-            request.setSlot("9a");
+            request.setSlot(slot);
             request.setManagementKey("010203040506070801020304050607080102030405060708");
             request.setSize(2048);
             request.setFormat(KeyFormat.RSA);

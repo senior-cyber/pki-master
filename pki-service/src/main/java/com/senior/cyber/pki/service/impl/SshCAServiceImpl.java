@@ -73,7 +73,7 @@ public class SshCAServiceImpl implements SshCAService {
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
-                issuer = new Crypto(providers.get(serials.get(yubico.getSerial())), issuerKey.getPublicKey(), privateKey);
+                issuer = new Crypto(providers.get(serials.get(issuerKey.getId())), issuerKey.getPublicKey(), privateKey);
             }
         }
 
@@ -99,7 +99,7 @@ public class SshCAServiceImpl implements SshCAService {
                     encryptor.setPassword(request.getIssuer().getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(sshKey.getPrivateKey()), YubicoPassword.class);
                     PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, sshKey.getId(), yubico);
-                    ssh = new Crypto(providers.get(serials.get(yubico.getSerial())), sshKey.getPublicKey(), privateKey);
+                    ssh = new Crypto(providers.get(serials.get(sshKey.getId())), sshKey.getPublicKey(), privateKey);
                 }
             }
 
