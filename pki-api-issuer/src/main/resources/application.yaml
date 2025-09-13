@@ -9,7 +9,7 @@ server:
     include-stacktrace: never
 spring:
   application:
-    name: CA
+    name: Subordinate CA / Issuing CA
   jpa:
     show-sql: true
     hibernate:
