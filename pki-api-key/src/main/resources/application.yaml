@@ -1,8 +1,12 @@
 server:
   port: 3103
+  address: 0.0.0.0
   error:
     include-message: always
-  address: 0.0.0.0
+    include-path: always
+    include-binding-errors: never
+    include-exception: false
+    include-stacktrace: never
 spring:
   application:
     name: Key
