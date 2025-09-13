@@ -20,17 +20,17 @@ import java.util.List;
 @SpringBootApplication
 public class ClientProgram implements CommandLineRunner {
 
-//    private static final String KEY = "https://pki-api-key.khmer.name";
-//    private static final String ROOT = "https://pki-api-root.khmer.name";
-//    private static final String ISSUER = "https://pki-api-issuer.khmer.name";
-//    private static final String SSH = "https://pki-api-ssh.khmer.name";
-//    private static final String X509 = "https://pki-api-x509.khmer.name";
+    private static final String KEY = "https://pki-api-key.khmer.name";
+    private static final String ROOT = "https://pki-api-root.khmer.name";
+    private static final String ISSUER = "https://pki-api-issuer.khmer.name";
+    private static final String SSH = "https://pki-api-ssh.khmer.name";
+    private static final String X509 = "https://pki-api-x509.khmer.name";
 
-    private static final String KEY = "http://127.0.0.1:3103";
-    private static final String ROOT = "http://127.0.0.1:3102";
-    private static final String ISSUER = "http://127.0.0.1:3101";
-    private static final String SSH = "http://127.0.0.1:3004";
-    private static final String X509 = "http://127.0.0.1:3003";
+//    private static final String KEY = "http://127.0.0.1:3103";
+//    private static final String ROOT = "http://127.0.0.1:3102";
+//    private static final String ISSUER = "http://127.0.0.1:3101";
+//    private static final String SSH = "http://127.0.0.1:3004";
+//    private static final String X509 = "http://127.0.0.1:3003";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -40,27 +40,31 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-//        x509(args);
-//        System.out.println("Done x509");
-//        mtls(args);
-//        System.out.println("Done mtls");
-//        sshCa(args);
-        sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
+        x509(args);
+        System.out.println("Done x509");
+        mtls(args);
+        System.out.println("Done mtls");
+        var key = sshCa(args);
+        // sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
+        sshClient(key.getKeyId(), key.getKeyPassword());
         System.out.println("Done ssh-ca");
         System.exit(0);
     }
 
-    public void sshCa(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
+    public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
+        // KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
+        KeyGenerateResponse sshCaKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         System.out.println(sshCaKey.getKeyId());
         System.out.println(sshCaKey.getKeyPassword());
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
+        return sshCaKey;
     }
 
     public void sshClient(String keyId, String keyPassword) throws IOException, InterruptedException {
         Issuer issuer = new Issuer(null, keyId, keyPassword);
-        KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
+        // KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
+        KeyGenerateResponse sshClientKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(issuer, sshClientKey, "socheat", "192.168.1.53", 1);
         System.out.println(sshClient.getConfig());
@@ -71,12 +75,14 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse mtlsServerKey = generateYubicoKey("9a");
+        // KeyGenerateResponse mtlsServerKey = generateYubicoKey("9a");
+        KeyGenerateResponse mtlsServerKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse mtlsClientKey = generateYubicoKey("9c");
+        // KeyGenerateResponse mtlsClientKey = generateYubicoKey("9c");
+        KeyGenerateResponse mtlsClientKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
         MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
@@ -87,17 +93,20 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void x509(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse rootCaKey = generateYubicoKey("9a");
+        // KeyGenerateResponse rootCaKey = generateYubicoKey("9a");
+        KeyGenerateResponse rootCaKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse subordinateCaKey = generateYubicoKey("9c");
+        // KeyGenerateResponse subordinateCaKey = generateYubicoKey("9c");
+        KeyGenerateResponse subordinateCaKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey1 = generateYubicoKey("9d");
+        // KeyGenerateResponse issuingCaKey1 = generateYubicoKey("9d");
+        KeyGenerateResponse issuingCaKey1 = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
@@ -107,7 +116,8 @@ public class ClientProgram implements CommandLineRunner {
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse serverKey = generateYubicoKey("9a");
+        // KeyGenerateResponse serverKey = generateYubicoKey("9a");
+        KeyGenerateResponse serverKey = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + serverKey.getKeyId() + ".pub");
         ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
         System.out.println(X509 + "/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
