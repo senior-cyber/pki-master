@@ -7,7 +7,6 @@ import com.senior.cyber.pki.common.dto.YubicoPassword;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.SshCAService;
 import com.senior.cyber.pki.service.Utils;
@@ -96,7 +95,7 @@ public class SshCAServiceImpl implements SshCAService {
                 }
                 case ServerKeyYubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                    encryptor.setPassword(request.getIssuer().getKeyPassword());
+                    encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(sshKey.getPrivateKey()), YubicoPassword.class);
                     PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, sshKey.getId(), yubico);
                     ssh = new Crypto(providers.get(serials.get(sshKey.getId())), sshKey.getPublicKey(), privateKey);
@@ -126,15 +125,26 @@ public class SshCAServiceImpl implements SshCAService {
             OpenSshCertificate certificate = openSshCertificateBuilder.sign(new KeyPair(issuer.getPublicKey(), issuer.getPrivateKey()), org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
             SshClientGenerateResponse response = new SshClientGenerateResponse();
             response.setPublicKey(ssh.getPublicKey());
-            if (sshKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-                response.setPrivateKey(ssh.getPrivateKey());
-            }
             response.setCertificate(certificate);
-            response.setConfig("Host " + request.getServer() + "\n" +
-                    "  HostName " + request.getServer() + "\n" +
-                    "  User " + request.getPrincipal() + "\n" +
-                    "  IdentityFile id_rsa\n" +
-                    "  CertificateFile id_rsa-cert.pub");
+            switch (sshKey.getType()) {
+                case ServerKeyJCE -> {
+                    response.setPrivateKey(ssh.getPrivateKey());
+                    response.setConfig("Host " + request.getServer() + "\n" +
+                            "    HostName " + request.getServer() + "\n" +
+                            "    User " + request.getPrincipal() + "\n" +
+                            "    IdentityFile id_rsa\n" +
+                            "    CertificateFile id_rsa-cert.pub");
+                }
+                case ServerKeyYubico -> {
+                    response.setConfig("Host " + request.getServer() + "\n" +
+                            "    HostName " + request.getServer() + "\n" +
+                            "    User " + request.getPrincipal() + "\n" +
+                            "    PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so\n" +
+                            "    IdentityFile id_rsa\n" +
+                            "    CertificateFile id_rsa-cert.pub");
+
+                }
+            }
             return response;
         } finally {
             for (SmartCardConnection connection : connections.values()) {
