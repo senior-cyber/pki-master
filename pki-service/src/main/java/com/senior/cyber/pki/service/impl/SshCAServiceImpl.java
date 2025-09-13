@@ -130,7 +130,7 @@ public class SshCAServiceImpl implements SshCAService {
                 response.setPrivateKey(ssh.getPrivateKey());
             }
             response.setCertificate(certificate);
-            response.setOpensshConfig("Host " + request.getServer() + "\n" +
+            response.setConfig("Host " + request.getServer() + "\n" +
                     "  HostName " + request.getServer() + "\n" +
                     "  User " + request.getPrincipal() + "\n" +
                     "  IdentityFile id_rsa\n" +

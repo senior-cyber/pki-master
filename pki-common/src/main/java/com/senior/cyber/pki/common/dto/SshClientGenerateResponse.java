@@ -30,7 +30,7 @@ public class SshClientGenerateResponse extends BaseResponse {
     @JsonProperty("id_rsa")
     private PrivateKey privateKey;
 
-    @JsonProperty("opensshConfig")
-    private String opensshConfig;
+    @JsonProperty("config")
+    private String config;
 
 }

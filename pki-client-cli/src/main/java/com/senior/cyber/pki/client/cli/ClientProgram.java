@@ -42,8 +42,8 @@ public class ClientProgram implements CommandLineRunner {
     public void run(String... args) throws IOException, InterruptedException {
 //        x509(args);
 //        System.out.println("Done x509");
-        mtls(args);
-        System.out.println("Done mtls");
+//        mtls(args);
+//        System.out.println("Done mtls");
         sshCa(args);
         System.out.println("Done ssh-ca");
         System.exit(0);
@@ -51,17 +51,18 @@ public class ClientProgram implements CommandLineRunner {
 
     public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
         // KeyGenerateResponse rootCaKey = registerYubicoKey();
-        KeyGenerateResponse sshCaKey = registerYubicoKey("9a");
+        KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
-        KeyGenerateResponse sshClientKey = generateJcaKey();
 
+        KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
+        System.out.println(sshClient.getConfig());
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getOpensshConfig());
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getConfig());
         return sshCaKey;
     }
 
@@ -82,27 +83,27 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     public void x509(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse rootCaKey = registerYubicoKey("9a");
+        KeyGenerateResponse rootCaKey = generateYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse subordinateCaKey = registerYubicoKey("9a");
+        KeyGenerateResponse subordinateCaKey = generateYubicoKey("9c");
         System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey1 = registerYubicoKey("9a");
+        KeyGenerateResponse issuingCaKey1 = generateYubicoKey("9d");
         System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey2 = registerYubicoKey("9a");
+        KeyGenerateResponse issuingCaKey2 = generateJcaKey();
         System.out.println(SSH + "/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse serverKey = generateJcaKey();
+        KeyGenerateResponse serverKey = generateYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + serverKey.getKeyId() + ".pub");
         ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
         System.out.println(X509 + "/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
