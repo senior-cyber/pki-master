@@ -17,122 +17,16 @@
 | 13 | Swift            |
 | 14 | Objective-C      |
 
-## Convert PKCS#1 to PKCS#8
-
-```shell
-openssl pkcs8 -topk8 -inform PEM -outform PEM -in input.pem -out output.pem -nocrypt
-```
-
-## Convert PKCS#8 to OpenSSH Format
-
-```shell
-
-# Public Key ==> OpenSSH Public Key
-ssh-keygen -f mykey -i -m PKCS8 > mykey.pub
-ssh-keygen -f mykey -e -m RFC4716 > mykey.pem
-
-# Private Key ==> OpenSSH Public Key
-ssh-keygen -y -f mykey > id_rsa.pub
-```
-
-## Convert PKCS#8 to OpenSSH Format vi-versa
-
-```shell
-# Generate RSA as RSA PRIVATE KEY
-ssh-keygen -t rsa -b 1024 -m PEM -f mykey
-
-# Generate RSA as OPENSSH PRIVATE KEY
-ssh-keygen -t rsa -b 1024 -f pk
-
-# Generate EC as EC PRIVATE KEY
-ssh-keygen -t ecdsa -b 256 -m PEM -f mykey
-
-# Generate EC as OPENSSH PRIVATE KEY
-ssh-keygen -t ecdsa -b 256 -f mykey
-
-# Convert Any Key ==> EC PRIVATE KEY or RSA PRIVATE KEY (According to its format)
-ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
-ssh-keygen -p -f mykey -m PEM -m RFC4716 -N ""
-
-# Convert Any Key ==> PRIVATE KEY 
-ssh-keygen -p -f mykey -m PEM -m PKCS8 -N ""
-
-# Convert Any Key ==> OPENSSH PRIVATE KEY
-ssh-keygen -p -f mykey -N "" -C ""
-```
-
-### OpenSSH CA
-
-```shell
-
-1. 🔐 Generate Root CA Key
-ssh-keygen -t rsa -b 1024 -f ssh_ca
-# Creates:
-# - ssh_ca        (private key)
-# - ssh_ca.pub    (public key to copy to server)
-
-2. 🔐 Generate User Key Pair
-ssh-keygen -t rsa -b 1024 -f id_rsa_user
-# Creates:
-# - id_rsa_user        (user private key)
-# - id_rsa_user.pub    (user public key)
-
-3. 🖋️ Sign User Public Key with CA to Create SSH Certificate
-ssh-keygen -s ssh_ca -I user-cert-id -n socheat -V +52w id_rsa_user.pub
-# Flags:
-# -s ssh_ca             : CA private key
-# -I user-cert-id       : Certificate identity
-# -n socheat            : Valid principal (username to match at login)
-# -V +52w               : Valid for 52 weeks
-This will generate id_rsa_user-cert.pub which is the signed certificate.
-
-
-4. 🖥️ SSH Server Configuration (on the remote server)
-4.1 Copy the CA public key to /etc/ssh/trusted-user-ca-keys.pem:
-sudo cp ssh_ca.pub /etc/ssh/trusted-user-ca-keys.pem
-# sudo wget http://192.168.1.53:3004/api/openssh/1981b9cb5e6.pub -O /etc/ssh/trusted-user-ca-keys.pem
-
-4.2 Edit /etc/ssh/sshd_config:
-# Add or uncomment the following line:
-TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
-
-Then restart SSH:
-sudo systemctl restart sshd
-
-5. 🔐 Login Using Certificate
-
-Ensure these files are in your ~/.ssh on the client:
-~/.ssh/id_rsa_user             <- private key
-~/.ssh/id_rsa_user-cert.pub    <- certificate
-
-Ensure permissions are correct:
-chmod 600 ~/.ssh/id_rsa_user
-chmod 644 ~/.ssh/id_rsa_user-cert.pub
-
-Then login:
-ssh -i ~/.ssh/id_rsa_user socheat@your.server.ip
-ssh -i ~/.ssh/id_rsa_user -o CertificateFile=/absolute/path/to/id_rsa_user-cert.pub socheat@host.example.com
-
-/opt/homebrew/Cellar/openssh/9.9p2/bin/ssh-keygen -t ed25519-sk -C "`basename \`pwd\``-yubico" -f `pwd`/id_ed25519_sk
-```
-
-```text
-Host myserver
-  HostName your.server.ip
-  User socheat
-  IdentityFile ~/.ssh/id_rsa_user
-  CertificateFile ~/.ssh/custom-cert.pub
-```
-
 ## Prerequisite
-
-### Yubico Integration
 
 ```shell
 sudo apt-get install cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man cmake libtool libssl-dev pkg-config check libpcsclite-dev gengetopt help2man zlib1g-dev build-essential
 sudo apt-get install opensc-pkcs11 pcscd opensc libusb-dev
-sudo apt-get install yubikey-manager
+# sudo apt-get install yubikey-manager
+sudo apt update && sudo apt install ykcs11
+```
 
+```shell
 git clone https://github.com/Yubico/yubico-piv-tool.git
 cd yubico-piv-tool
 mkdir build; cd build
@@ -140,12 +34,16 @@ cmake ..
 make
 sudo make install
 sudo ldconfig
+```
 
+# Server Configuration
+
+```shell
 sudo addgroup scard
 sudo usermod -aG scard "$USER"
 ```
 
-### sudo nano /etc/polkit-1/rules.d/49-pcscd.rules
+## sudo nano /etc/polkit-1/rules.d/49-pcscd.rules
 
 ```text
 // Allow members of "scard" (or "plugdev") to use pcscd
@@ -207,30 +105,15 @@ sudo systemctl enable pki-api-key
 sudo systemctl enable pki-api-revoke
 ```
 
+## Disable Touch
+
 ```shell
 yubico-piv-tool -a verify-pin --sign -s 9c -A RSA2048 -H SHA256 -i data.txt -o data.sig
 yubico-piv-tool -a set-touch -S 9c -T never -k 010203040506070801020304050607080102030405060708
 ykman piv keys set-touch "9c" never
 ```
 
-```text
-Write API Integration, with OAuth2
-```
-
-```text
-export KUBECONFIG=~/.kube/config-talos
-kubectl get pod -n shopping
-```
-
-```text
-1. Ansible
-2. Docker
-3. Kubernetes
-4. Linux Command
-5. AWS Cloud
-7. Azure Cloud
-8. Nginx
-```
+## Enable Feature
 
 ```text
 # 1. Make sure CCID is on (not needed on default config)
@@ -241,8 +124,9 @@ yubihsm-auth setup --keyset-id 1 --label "Admin" --password-from-prompt
 
 # 3. Connect to the HSM using those credentials
 yubihsm-shell --authkey 1 --password-from-prompt
-
 ```
+
+## Yubico OTP Integration
 
 ```text
 ykman otp yubiotp 1 --serial-public-id --generate-private-id --generate-key
@@ -252,6 +136,8 @@ https://upgrade.yubico.com/getapikey/
 
 https://upload.yubico.com/
 ```
+
+## Abbreviation
 
 ```text
 Home / OTP / Short Touch (Slot 1) or Home / OTP / Long Touch (Slot 2)
@@ -266,8 +152,9 @@ TOTP: it is Time-Base One-Time Password, 6 digit
 
 PIN : it is PIN
 PUK : it is PIN Unlock Code
-
 ```
+
+# Platform SSO Reference
 
 ```shell
 https://www.youtube.com/watch?v=INi-xKpYjbE&t=474s
@@ -294,13 +181,139 @@ iOS
   - https://developer.apple.com/documentation/authenticationservices/supporting-passkeys
 ```
 
-```text
-pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so -O
-pkcs11-tool --module /usr/local/lib/libykcs11.so -O
-ssh-keygen -D /usr/local/lib/libykcs11.so
-yubico-piv-tool -s 9a -a read-public-key > yk-9a.pem
-ssh-keygen -i -m PKCS8 -f yk-9a.pem > yk-9a-ssh.pub
+# OpenSSH CA
 
-ssh -o IdentityAgent=none -o IdentitiesOnly=yes -o PKCS11Provider=/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so -i 'pkcs11:id=01;type=cert' socheat@192.168.1.53
-ssh -o IdentityAgent=none -o IdentitiesOnly=yes -o PKCS11Provider=/usr/local/lib/libykcs11.so -i 'pkcs11:id=01;type=cert' socheat@192.168.1.53
+```text
+Reference
+https://support.yubico.com/hc/en-us/articles/21010414002588-Using-the-YubiKey-PIV-application-for-SSH-authentication
+```
+
+## Create CA KEY
+
+### Key in Yubico
+
+```shell
+curl --location 'https://pki-api-key.khmer.name/api/yubico/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "size": 2048,
+    "format": "RSA",
+    "serialNumber": "23275988",
+    "slot": "9a",
+    "managementKey": "010203040506070801020304050607080102030405060708"
+}'
+```
+
+### Key
+
+```shell
+curl --location 'https://pki-api-key.khmer.name/api/jca/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "size": 2048,
+    "format": "RSA"
+}'
+```
+
+## Download CA KEY and load into SSH Server
+
+```shell
+sudo wget https://pki-api-key.khmer.name/api/openssh/60455daf-d120-4665-b258-aa1a5891509b.pub -O /etc/ssh/trusted-ca-keys.pub
+```
+
+## Globally Trusted
+
+### sudo nano /etc/ssh/sshd_config.d/ssh-ca.conf
+
+```text
+TrustedUserCAKeys /etc/ssh/trusted-ca-keys.pub
+```
+
+### restart ssh server
+
+```shell
+sudo systemctl restart ssh
+```
+
+## Individual User Trusted
+
+### nano ~/.ssh/authorized_keys
+
+```text
+cert-authority ${trusted-ca-keys.pub}
+```
+
+## Create SSH Client Key
+
+### Key in Yubico
+
+```shell
+curl --location 'https://pki-api-key.khmer.name/api/yubico/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "size": 2048,
+    "format": "RSA",
+    "serialNumber": "23275988",
+    "slot": "9a",
+    "managementKey": "010203040506070801020304050607080102030405060708"
+}'
+```
+
+### Key
+
+```shell
+curl --location 'https://pki-api-key.khmer.name/api/jca/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "size": 2048,
+    "format": "RSA"
+}'
+```
+
+## Sign SSH Client Key 
+
+```shell
+curl --location 'https://pki-issuer-api.khmer.name/api/ssh/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+  "issuer" : {
+    "keyPassword" : "H2lDFsmr273kue4cAtU5",
+    "keyId" : "60455daf-d120-4665-b258-aa1a5891509b"
+  },
+  "alias" : "test",
+  "keyId" : "5db24db0-4726-4c66-874b-dc1fd0fc635f",
+  "keyPassword" : "J2RsDKMpiRZKKgu3Gy94",
+  "principal" : "socheat",
+  "server" : "192.168.1.53",
+  "validityPeriod" : 1
+}'
+```
+
+## SSH Client Configuration
+
+### PKCS#11 module for YubiKeys, libykcs11(yubico-piv-tool), it is support any slots
+
+```text
+libykcs11.so will be available after compile PKCS#11 module for YubiKeys
+```
+
+### nano ~/.ssh/config
+
+```text
+Host {alias}
+    HostName {ip}
+    User {user}
+    PKCS11Provider /usr/local/lib/libykcs11.so
+    IdentityFile id_rsa.pub
+    CertificateFile id_rsa-cert.pub
+```
+
+### PKCS#11 module provided by OpenSC, it is support only 9a slot
+
+```text
+Host {alias}
+    HostName {ip}
+    User {user}
+    PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
+    CertificateFile id_rsa-cert.pub
 ```

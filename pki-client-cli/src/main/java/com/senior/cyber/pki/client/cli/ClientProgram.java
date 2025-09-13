@@ -44,25 +44,30 @@ public class ClientProgram implements CommandLineRunner {
 //        System.out.println("Done x509");
 //        mtls(args);
 //        System.out.println("Done mtls");
-        sshCa(args);
+//        sshCa(args);
+        sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
         System.out.println("Done ssh-ca");
         System.exit(0);
     }
 
-    public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
+    public void sshCa(String... args) throws IOException, InterruptedException {
         KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
+        System.out.println(sshCaKey.getKeyId());
+        System.out.println(sshCaKey.getKeyPassword());
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
+    }
 
+    public void sshClient(String keyId, String keyPassword) throws IOException, InterruptedException {
+        Issuer issuer = new Issuer(null, keyId, keyPassword);
         KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
-        SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.53", 1000);
+        SshClientGenerateResponse sshClient = generateSshClient(issuer, sshClientKey, "socheat", "192.168.1.53", 1);
         System.out.println(sshClient.getConfig());
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getConfig());
-        return sshCaKey;
     }
 
     public void mtls(String... args) throws IOException, InterruptedException {
@@ -112,16 +117,16 @@ public class ClientProgram implements CommandLineRunner {
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), PrivateKeyUtils.convert(server.getPrivkey()));
     }
 
-    protected static SshClientGenerateResponse generateSshClient(KeyGenerateResponse issuer, KeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
+    protected static SshClientGenerateResponse generateSshClient(Issuer issuer, KeyGenerateResponse key, String principal, String server, long validityMinutes) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SshClientGenerateRequest request = new SshClientGenerateRequest();
-            request.setIssuer(new Issuer(null, issuer.getKeyId(), issuer.getKeyPassword()));
+            request.setIssuer(issuer);
             request.setKeyId(key.getKeyId());
             request.setKeyPassword(key.getKeyPassword());
             request.setPrincipal(principal);
             request.setServer(server);
             request.setAlias("test");
-            request.setValidityPeriod(validityPeriod);
+            request.setValidityPeriod(validityMinutes);
 
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ISSUER + "/api/ssh/client/generate"))
