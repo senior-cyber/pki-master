@@ -15,8 +15,8 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.SubordinateService;
 import com.senior.cyber.pki.service.Utils;
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
-import com.yubico.yubikit.core.YubiKeyDevice;
+import com.senior.cyber.pki.service.util.Crypto;
+import com.senior.cyber.pki.service.util.PivUtils;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -35,7 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -57,87 +60,44 @@ public class SubordinateServiceImpl implements SubordinateService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public SubordinateGenerateResponse subordinateGenerate(SubordinateGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException {
-        Provider issuerProvider = null;
-        Provider provider = null;
         Map<String, SmartCardConnection> connections = new HashMap<>();
         Map<String, KeyStore> keys = new HashMap<>();
-        Map<String, Slot> slots = new HashMap<>();
+        Map<String, PivProvider> providers = new HashMap<>();
         Map<String, PivSession> sessions = new HashMap<>();
+        Map<String, Slot> slots = new HashMap<>();
+        Map<String, String> serials = new HashMap<>();
 
         // issuer
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
-        Key _issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-        X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
-        PrivateKey issuerPrivateKey = null;
-        switch (_issuerKey.getType()) {
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+        Crypto issuer = null;
+        switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = Utils.BC;
-                issuerPrivateKey = PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
+                PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
+                issuer = new Crypto(Utils.BC, issuerCertificate.getCertificate(), privateKey);
             }
             case ServerKeyYubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
-                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(_issuerKey.getPrivateKey()), YubicoPassword.class);
-
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
-                SmartCardConnection connection = device.openConnection(SmartCardConnection.class);
-                connections.put(yubicoIssuer.getSerial(), connection);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
-                sessions.put(yubicoIssuer.getSerial(), session);
-                issuerProvider = new PivProvider(session);
-                KeyStore ks = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                keys.put(yubicoIssuer.getSerial(), ks);
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubicoIssuer.getPin());
+                YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
+                PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
+                issuer = new Crypto(providers.get(yubico.getSerial()), issuerCertificate.getCertificate(), privateKey);
             }
         }
 
-        Key _intermediateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-        PublicKey publicKey = _intermediateKey.getPublicKey();
-        YubicoPassword yubico = null;
-        PrivateKey privateKey = null;
-        switch (_intermediateKey.getType()) {
+        Key subordinateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+        Crypto subordinate = null;
+        switch (subordinateKey.getType()) {
             case ServerKeyJCE -> {
-                provider = Utils.BC;
-                privateKey = PrivateKeyUtils.convert(_intermediateKey.getPrivateKey(), request.getKeyPassword());
+                PrivateKey privateKey = PrivateKeyUtils.convert(subordinateKey.getPrivateKey(), request.getKeyPassword());
+                subordinate = new Crypto(Utils.BC, subordinateKey.getPublicKey(), privateKey);
             }
             case ServerKeyYubico -> {
-                SmartCardConnection connection = null;
-                KeyStore ks = null;
-
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());
-                yubico = this.objectMapper.readValue(encryptor.decrypt(_intermediateKey.getPrivateKey()), YubicoPassword.class);
-
-                if (!connections.containsKey(yubico.getSerial())) {
-                    YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubico.getSerial());
-                    connection = device.openConnection(SmartCardConnection.class);
-                    connections.put(yubico.getSerial(), connection);
-                    PivSession session = new PivSession(connection);
-                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubico.getManagementKey()));
-                    sessions.put(yubico.getSerial(), session);
-                    provider = new PivProvider(session);
-                    ks = YubicoProviderUtils.lookupKeyStore(provider);
-                } else {
-                    provider = issuerProvider;
-                    ks = keys.get(yubico.getSerial());
-                }
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubico.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                slots.put(yubico.getSerial(), slot);
-                privateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubico.getPin());
+                YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(subordinateKey.getPrivateKey()), YubicoPassword.class);
+                PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, subordinateKey.getId(), yubico);
+                subordinate = new Crypto(providers.get(serials.get(yubico.getSerial())), subordinateKey.getPublicKey(), privateKey);
             }
         }
 
@@ -154,25 +114,27 @@ public class SubordinateServiceImpl implements SubordinateService {
                     request.getEmailAddress()
             );
             long serial = System.currentTimeMillis();
-            X509Certificate subordinateCertificate = PkiUtils.issueSubordinateCA(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(5).toDate(), serial);
-            Certificate subordinate = new Certificate();
-            subordinate.setIssuerCertificate(_issuerCertificate);
-            subordinate.setCountryCode(request.getCountry());
-            subordinate.setOrganization(request.getOrganization());
-            subordinate.setOrganizationalUnit(request.getOrganizationalUnit());
-            subordinate.setCommonName(request.getCommonName());
-            subordinate.setLocalityName(request.getLocality());
-            subordinate.setStateOrProvinceName(request.getProvince());
-            subordinate.setEmailAddress(request.getEmailAddress());
-            subordinate.setKey(_intermediateKey);
+
+            X509Certificate subordinateCertificate = PkiUtils.issueSubordinateCA(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, subordinate.getPublicKey(), subject, now.toDate(), now.plusYears(5).toDate(), serial);
             subordinate.setCertificate(subordinateCertificate);
-            subordinate.setSerial(serial);
-            subordinate.setCreatedDatetime(new Date());
-            subordinate.setValidFrom(subordinateCertificate.getNotBefore());
-            subordinate.setValidUntil(subordinateCertificate.getNotAfter());
-            subordinate.setStatus(CertificateStatusEnum.Good);
-            subordinate.setType(CertificateTypeEnum.SUBORDINATE_CA);
-            this.certificateRepository.save(subordinate);
+            Certificate _subordinateCertificate = new Certificate();
+            _subordinateCertificate.setIssuerCertificate(issuerCertificate);
+            _subordinateCertificate.setCountryCode(request.getCountry());
+            _subordinateCertificate.setOrganization(request.getOrganization());
+            _subordinateCertificate.setOrganizationalUnit(request.getOrganizationalUnit());
+            _subordinateCertificate.setCommonName(request.getCommonName());
+            _subordinateCertificate.setLocalityName(request.getLocality());
+            _subordinateCertificate.setStateOrProvinceName(request.getProvince());
+            _subordinateCertificate.setEmailAddress(request.getEmailAddress());
+            _subordinateCertificate.setKey(subordinateKey);
+            _subordinateCertificate.setCertificate(subordinateCertificate);
+            _subordinateCertificate.setSerial(serial);
+            _subordinateCertificate.setCreatedDatetime(new Date());
+            _subordinateCertificate.setValidFrom(subordinateCertificate.getNotBefore());
+            _subordinateCertificate.setValidUntil(subordinateCertificate.getNotAfter());
+            _subordinateCertificate.setStatus(CertificateStatusEnum.Good);
+            _subordinateCertificate.setType(CertificateTypeEnum.SUBORDINATE_CA);
+            this.certificateRepository.save(_subordinateCertificate);
 
             // crl
             Key crlKey = null;
@@ -189,9 +151,9 @@ public class SubordinateServiceImpl implements SubordinateService {
                 this.keyRepository.save(key);
                 crlKey = key;
             }
-            X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(provider, privateKey, subordinateCertificate, crlKey.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), serial + 1);
+            X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(subordinate.getProvider(), subordinate.getPrivateKey(), subordinate.getCertificate(), crlKey.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), serial + 1);
             Certificate crl = new Certificate();
-            crl.setIssuerCertificate(subordinate);
+            crl.setIssuerCertificate(_subordinateCertificate);
             crl.setCountryCode(request.getCountry());
             crl.setOrganization(request.getOrganization());
             crl.setOrganizationalUnit(request.getOrganizationalUnit());
@@ -233,9 +195,9 @@ public class SubordinateServiceImpl implements SubordinateService {
                     request.getProvince(),
                     request.getEmailAddress()
             );
-            X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(provider, privateKey, subordinateCertificate, ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), serial + 2);
+            X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(subordinate.getProvider(), subordinate.getPrivateKey(), subordinate.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), serial + 2);
             Certificate ocsp = new Certificate();
-            ocsp.setIssuerCertificate(subordinate);
+            ocsp.setIssuerCertificate(_subordinateCertificate);
             ocsp.setCountryCode(request.getCountry());
             ocsp.setOrganization(request.getOrganization());
             ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
@@ -253,21 +215,21 @@ public class SubordinateServiceImpl implements SubordinateService {
             ocsp.setType(CertificateTypeEnum.OCSP);
             this.certificateRepository.save(ocsp);
 
-            subordinate.setCrlCertificate(crl);
-            subordinate.setOcspCertificate(ocsp);
-            this.certificateRepository.save(subordinate);
+            _subordinateCertificate.setCrlCertificate(crl);
+            _subordinateCertificate.setOcspCertificate(ocsp);
+            this.certificateRepository.save(_subordinateCertificate);
 
             SubordinateGenerateResponse response = new SubordinateGenerateResponse();
-            response.setCertificateId(subordinate.getId());
+            response.setCertificateId(_subordinateCertificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(subordinateCertificate);
 
-            if (yubico != null) {
-                PivSession session = sessions.get(yubico.getSerial());
-                if (session != null) {
-                    session.putCertificate(slots.get(yubico.getSerial()), subordinateCertificate);
-                }
+            PivSession session = sessions.get(serials.get(subordinateKey.getId()));
+            if (session != null) {
+                Slot slot = slots.get(serials.get(subordinateKey.getId()));
+                session.putCertificate(slot, subordinateCertificate);
             }
+
             return response;
         } finally {
             for (SmartCardConnection connection : connections.values()) {

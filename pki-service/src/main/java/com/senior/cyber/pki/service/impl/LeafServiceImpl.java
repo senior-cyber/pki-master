@@ -1,8 +1,9 @@
 package com.senior.cyber.pki.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.dto.ServerGenerateRequest;
+import com.senior.cyber.pki.common.dto.ServerGenerateResponse;
+import com.senior.cyber.pki.common.dto.YubicoPassword;
 import com.senior.cyber.pki.common.x509.PkiUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.SubjectUtils;
@@ -15,9 +16,8 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.LeafService;
 import com.senior.cyber.pki.service.Utils;
-import com.senior.cyber.pki.service.util.OpenSshCertificateBuilder;
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
-import com.yubico.yubikit.core.YubiKeyDevice;
+import com.senior.cyber.pki.service.util.Crypto;
+import com.senior.cyber.pki.service.util.PivUtils;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -25,7 +25,6 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
-import org.apache.sshd.common.config.keys.OpenSshCertificate;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.KeyUsage;
@@ -35,15 +34,15 @@ import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -71,41 +70,26 @@ public class LeafServiceImpl implements LeafService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
         }
 
-        X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
+        Map<String, SmartCardConnection> connections = new HashMap<>();
+        Map<String, KeyStore> keys = new HashMap<>();
+        Map<String, PivProvider> providers = new HashMap<>();
+        Map<String, PivSession> sessions = new HashMap<>();
+        Map<String, Slot> slots = new HashMap<>();
+        Map<String, String> serials = new HashMap<>();
 
         Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-
-        SmartCardConnection connection = null;
-
-        Provider issuerProvider = null;
-        PrivateKey issuerPrivateKey = null;
+        Crypto issuer = null;
         switch (issuerKey.getType()) {
             case ServerKeyJCE -> {
-                issuerProvider = Utils.BC;
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
+                PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
+                issuer = new Crypto(Utils.BC, _issuerCertificate.getCertificate(), privateKey);
             }
             case ServerKeyYubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
-                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
-
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
-                if (device == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
-                }
-                connection = device.openConnection(SmartCardConnection.class);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
-                issuerProvider = new PivProvider(session);
-                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
+                YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
+                PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
+                issuer = new Crypto(providers.get(yubico.getSerial()), _issuerCertificate.getCertificate(), privateKey);
             }
         }
 
@@ -132,7 +116,7 @@ public class LeafServiceImpl implements LeafService {
             List<KeyPurposeId> extendedKeyUsages = new ArrayList<>();
             extendedKeyUsages.add(KeyPurposeId.id_kp_serverAuth);
             List<String> sans = request.getSans();
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), keyUsages, extendedKeyUsages, sans);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), keyUsages, extendedKeyUsages, sans);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -159,7 +143,7 @@ public class LeafServiceImpl implements LeafService {
             response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
 
             List<X509Certificate> chain = new ArrayList<>();
-            chain.add(issuerCertificate);
+            chain.add(issuer.getCertificate());
 
             Certificate temp = _issuerCertificate;
             while (true) {
@@ -198,190 +182,7 @@ public class LeafServiceImpl implements LeafService {
             response.setFullchain(fullchain);
             return response;
         } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-    }
-
-    @Override
-    @Transactional
-    public SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws Exception {
-        Key _issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-
-        SmartCardConnection connection = null;
-
-        KeyPair issuerKey = null;
-        Provider issuerProvider = null;
-        switch (_issuerKey.getType()) {
-            case ServerKeyJCE -> {
-                issuerProvider = Utils.BC;
-                issuerKey = new KeyPair(_issuerKey.getPublicKey(), PrivateKeyUtils.convert(_issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword()));
-            }
-            case ServerKeyYubico -> {
-                AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(request.getIssuer().getKeyPassword());
-                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(_issuerKey.getPrivateKey()), YubicoPassword.class);
-
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
-                if (device == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
-                }
-                connection = device.openConnection(SmartCardConnection.class);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
-                issuerProvider = new PivProvider(session);
-                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                PrivateKey issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
-                issuerKey = new KeyPair(_issuerKey.getPublicKey(), issuerPrivateKey);
-            }
-        }
-
-        if ((request.getPrincipal() == null || request.getPrincipal().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "principal required");
-        }
-
-        try {
-            Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-            if (key.getType() == KeyTypeEnum.ServerKeyYubico || key.getKeyFormat() != KeyFormat.RSA) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
-            }
-            PublicKey publicKey = key.getPublicKey();
-
-            OpenSshCertificateBuilder openSshCertificateBuilder = OpenSshCertificateBuilder.userCertificate();
-            openSshCertificateBuilder.provider(issuerProvider);
-            openSshCertificateBuilder.id(UUID.randomUUID().toString());
-            openSshCertificateBuilder.serial(System.currentTimeMillis());
-            openSshCertificateBuilder.extensions(Arrays.asList(
-                    new OpenSshCertificate.CertificateOption("permit-user-rc"),
-                    new OpenSshCertificate.CertificateOption("permit-X11-forwarding"),
-                    new OpenSshCertificate.CertificateOption("permit-agent-forwarding"),
-                    new OpenSshCertificate.CertificateOption("permit-port-forwarding"),
-                    new OpenSshCertificate.CertificateOption("permit-pty")));
-            openSshCertificateBuilder.principals(List.of(request.getPrincipal()));
-            openSshCertificateBuilder.publicKey(publicKey);
-            openSshCertificateBuilder.validAfter(Instant.now());
-            if (request.getValidityPeriod() <= 0) {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(10, ChronoUnit.MINUTES));
-            } else if (request.getValidityPeriod() > 480) {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(480, ChronoUnit.MINUTES));
-            } else {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(request.getValidityPeriod(), ChronoUnit.MINUTES));
-            }
-            OpenSshCertificate certificate = openSshCertificateBuilder.sign(issuerKey, org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
-            SshClientGenerateResponse response = new SshClientGenerateResponse();
-            response.setPublicKey(publicKey);
-            response.setPrivateKey(PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()));
-            response.setCertificate(certificate);
-            response.setOpensshConfig("Host " + request.getServer() + "\n" +
-                    "  HostName " + request.getServer() + "\n" +
-                    "  User " + request.getPrincipal() + "\n" +
-                    "  IdentityFile id_rsa\n" +
-                    "  CertificateFile id_rsa-cert.pub");
-            return response;
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public MtlsClientGenerateResponse mtlsClientGenerate(MtlsClientGenerateRequest request, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        Date _now = LocalDate.now().toDate();
-
-        Certificate _issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
-        if (_issuerCertificate.getStatus() == CertificateStatusEnum.Revoked ||
-                (_issuerCertificate.getType() != CertificateTypeEnum.mTLS_SERVER) ||
-                _issuerCertificate.getValidFrom().after(_now) ||
-                _issuerCertificate.getValidUntil().before(_now)
-        ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getIssuer().getCertificateId() + " is not valid");
-        }
-
-        X509Certificate issuerCertificate = _issuerCertificate.getCertificate();
-
-        Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-
-        SmartCardConnection connection = null;
-
-        Provider issuerProvider = null;
-        PrivateKey issuerPrivateKey = null;
-        switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
-                issuerProvider = Utils.BC;
-                issuerPrivateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
-            }
-            case ServerKeyYubico -> {
-                AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(request.getIssuer().getKeyPassword());
-                YubicoPassword yubicoIssuer = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
-
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubicoIssuer.getSerial());
-                if (device == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device not found");
-                }
-                connection = device.openConnection(SmartCardConnection.class);
-                PivSession session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubicoIssuer.getManagementKey()));
-                issuerProvider = new PivProvider(session);
-                KeyStore issuerKeyStore = YubicoProviderUtils.lookupKeyStore(issuerProvider);
-                Slot slot = null;
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubicoIssuer.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                issuerPrivateKey = YubicoProviderUtils.lookupPrivateKey(issuerKeyStore, slot, yubicoIssuer.getPin());
-            }
-        }
-
-        try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-            if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
-            }
-            PublicKey publicKey = certificateKey.getPublicKey();
-
-            LocalDate now = LocalDate.now();
-            X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuerProvider, issuerPrivateKey, issuerCertificate, crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
-            Certificate certificate = new Certificate();
-            certificate.setIssuerCertificate(_issuerCertificate);
-            certificate.setCountryCode(request.getCountry());
-            certificate.setOrganization(request.getOrganization());
-            certificate.setOrganizationalUnit(request.getOrganizationalUnit());
-            certificate.setCommonName(request.getCommonName());
-            certificate.setLocalityName(request.getLocality());
-            certificate.setStateOrProvinceName(request.getProvince());
-            certificate.setEmailAddress(request.getEmailAddress());
-            certificate.setKey(certificateKey);
-            certificate.setCertificate(leafCertificate);
-            certificate.setSerial(leafCertificate.getSerialNumber().longValueExact());
-            certificate.setCreatedDatetime(new Date());
-            certificate.setValidFrom(leafCertificate.getNotBefore());
-            certificate.setValidUntil(leafCertificate.getNotAfter());
-            certificate.setStatus(CertificateStatusEnum.Good);
-            certificate.setType(CertificateTypeEnum.mTLS_CLIENT);
-            this.certificateRepository.save(certificate);
-
-            MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
-            response.setCertificateId(certificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
-            return response;
-        } finally {
-            if (connection != null) {
+            for (SmartCardConnection connection : connections.values()) {
                 connection.close();
             }
         }

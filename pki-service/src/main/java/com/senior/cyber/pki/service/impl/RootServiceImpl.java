@@ -15,8 +15,8 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.Utils;
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
-import com.yubico.yubikit.core.YubiKeyDevice;
+import com.senior.cyber.pki.service.util.Crypto;
+import com.senior.cyber.pki.service.util.PivUtils;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -37,10 +37,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class RootServiceImpl implements RootService {
@@ -59,37 +64,27 @@ public class RootServiceImpl implements RootService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        Provider provider = null;
-        SmartCardConnection connection = null;
-        PivSession session = null;
-        Slot slot = null;
+        Map<String, SmartCardConnection> connections = new HashMap<>();
+        Map<String, KeyStore> keys = new HashMap<>();
+        Map<String, PivProvider> providers = new HashMap<>();
+        Map<String, PivSession> sessions = new HashMap<>();
+        Map<String, Slot> slots = new HashMap<>();
+        Map<String, String> serials = new HashMap<>();
 
         // root
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-        PrivateKey rootPrivateKey = null;
+        Crypto root = null;
         switch (rootKey.getType()) {
             case ServerKeyYubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
-
-                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(yubico.getSerial());
-                connection = device.openConnection(SmartCardConnection.class);
-                session = new PivSession(connection);
-                session.authenticate(YubicoProviderUtils.hexStringToByteArray(yubico.getManagementKey()));
-                provider = new PivProvider(session);
-                KeyStore ks = YubicoProviderUtils.lookupKeyStore(provider);
-                for (Slot s : Slot.values()) {
-                    if (s.getStringAlias().equalsIgnoreCase(yubico.getPivSlot())) {
-                        slot = s;
-                        break;
-                    }
-                }
-                rootPrivateKey = YubicoProviderUtils.lookupPrivateKey(ks, slot, yubico.getPin());
+                PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, rootKey.getId(), yubico);
+                root = new Crypto(providers.get(serials.get(yubico.getSerial())), rootKey.getPublicKey(), privateKey);
             }
             case ServerKeyJCE -> {
-                provider = Utils.BC;
-                rootPrivateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
+                PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
+                root = new Crypto(Utils.BC, rootKey.getPublicKey(), privateKey);
             }
         }
 
@@ -106,24 +101,25 @@ public class RootServiceImpl implements RootService {
                     request.getEmailAddress()
             );
 
-            X509Certificate rootCertificate = PkiUtils.issueRootCa(provider, rootPrivateKey, rootKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
-            Certificate root = new Certificate();
-            root.setCountryCode(request.getCountry());
-            root.setOrganization(request.getOrganization());
-            root.setOrganizationalUnit(request.getOrganizationalUnit());
-            root.setCommonName(request.getCommonName());
-            root.setLocalityName(request.getLocality());
-            root.setStateOrProvinceName(request.getProvince());
-            root.setEmailAddress(request.getEmailAddress());
-            root.setKey(rootKey);
+            X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
             root.setCertificate(rootCertificate);
-            root.setSerial(rootCertificate.getSerialNumber().longValueExact());
-            root.setCreatedDatetime(new Date());
-            root.setValidFrom(rootCertificate.getNotBefore());
-            root.setValidUntil(rootCertificate.getNotAfter());
-            root.setStatus(CertificateStatusEnum.Good);
-            root.setType(CertificateTypeEnum.ROOT_CA);
-            this.certificateRepository.save(root);
+            Certificate _rootCertificate = new Certificate();
+            _rootCertificate.setCountryCode(request.getCountry());
+            _rootCertificate.setOrganization(request.getOrganization());
+            _rootCertificate.setOrganizationalUnit(request.getOrganizationalUnit());
+            _rootCertificate.setCommonName(request.getCommonName());
+            _rootCertificate.setLocalityName(request.getLocality());
+            _rootCertificate.setStateOrProvinceName(request.getProvince());
+            _rootCertificate.setEmailAddress(request.getEmailAddress());
+            _rootCertificate.setKey(rootKey);
+            _rootCertificate.setCertificate(rootCertificate);
+            _rootCertificate.setSerial(rootCertificate.getSerialNumber().longValueExact());
+            _rootCertificate.setCreatedDatetime(new Date());
+            _rootCertificate.setValidFrom(rootCertificate.getNotBefore());
+            _rootCertificate.setValidUntil(rootCertificate.getNotAfter());
+            _rootCertificate.setStatus(CertificateStatusEnum.Good);
+            _rootCertificate.setType(CertificateTypeEnum.ROOT_CA);
+            this.certificateRepository.save(_rootCertificate);
 
             // crl
             Key crlKey = null;
@@ -140,9 +136,9 @@ public class RootServiceImpl implements RootService {
                 this.keyRepository.save(key);
                 crlKey = key;
             }
-            X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(provider, rootPrivateKey, rootCertificate, crlKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(1).toDate(), root.getSerial() + 1);
+            X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), crlKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 1);
             Certificate crl = new Certificate();
-            crl.setIssuerCertificate(root);
+            crl.setIssuerCertificate(_rootCertificate);
             crl.setCountryCode(request.getCountry());
             crl.setOrganization(request.getOrganization());
             crl.setOrganizationalUnit(request.getOrganizationalUnit());
@@ -184,9 +180,9 @@ public class RootServiceImpl implements RootService {
                     request.getProvince(),
                     request.getEmailAddress()
             );
-            X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(provider, rootPrivateKey, rootCertificate, ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), root.getSerial() + 2);
+            X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 2);
             Certificate ocsp = new Certificate();
-            ocsp.setIssuerCertificate(root);
+            ocsp.setIssuerCertificate(_rootCertificate);
             ocsp.setCountryCode(request.getCountry());
             ocsp.setOrganization(request.getOrganization());
             ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
@@ -204,23 +200,27 @@ public class RootServiceImpl implements RootService {
             ocsp.setType(CertificateTypeEnum.OCSP);
             this.certificateRepository.save(ocsp);
 
-            root.setCrlCertificate(crl);
-            root.setOcspCertificate(ocsp);
-            this.certificateRepository.save(root);
+            _rootCertificate.setCrlCertificate(crl);
+            _rootCertificate.setOcspCertificate(_rootCertificate);
+            this.certificateRepository.save(_rootCertificate);
 
             RootGenerateResponse response = new RootGenerateResponse();
-            response.setCertificateId(root.getId());
+            response.setCertificateId(_rootCertificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(rootCertificate);
 
+            PivSession session = sessions.get(serials.get(rootKey.getId()));
             if (session != null) {
+                Slot slot = slots.get(serials.get(rootKey.getId()));
                 session.putCertificate(slot, rootCertificate);
             }
 
             return response;
         } finally {
-            if (connection != null) {
-                connection.close();
+            for (SmartCardConnection connection : connections.values()) {
+                if (connection != null) {
+                    connection.close();
+                }
             }
         }
     }

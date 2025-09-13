@@ -1,7 +1,9 @@
 package com.senior.cyber.pki.api.issuer.controller;
 
-import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.dto.MtlsClientGenerateRequest;
+import com.senior.cyber.pki.common.dto.MtlsClientGenerateResponse;
+import com.senior.cyber.pki.common.dto.ServerGenerateRequest;
+import com.senior.cyber.pki.common.dto.ServerGenerateResponse;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
@@ -10,7 +12,7 @@ import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.LeafService;
-import com.senior.cyber.pki.service.UserService;
+import com.senior.cyber.pki.service.MtlsService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -59,7 +61,7 @@ public class LeafController {
     protected KeyRepository keyRepository;
 
     @Autowired
-    protected UserService userService;
+    protected MtlsService mtlsService;
 
     @RequestMapping(path = "/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ServerGenerateResponse> serverGenerate(RequestEntity<ServerGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
@@ -130,29 +132,8 @@ public class LeafController {
 
         String serial = String.format("%012X", issuerCertificate.getSerial());
 
-        MtlsClientGenerateResponse response = this.leafService.mtlsClientGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
+        MtlsClientGenerateResponse response = this.mtlsService.mtlsClientGenerate(request, this.crlApi + "/" + serial + ".crl", this.ocspApi + "/" + serial, this.x509Api + "/" + serial + ".der");
         return ResponseEntity.ok(response);
-    }
-
-    @RequestMapping(path = "/ssh/client/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SshClientGenerateResponse> sshClientGenerate(RequestEntity<SshClientGenerateRequest> httpRequest) throws Exception {
-        SshClientGenerateRequest request = httpRequest.getBody();
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key is not found"));
-        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key have been revoked");
-        }
-
-        if (issuerKey.getKeyFormat() == KeyFormat.RSA) {
-            SshClientGenerateResponse response = this.leafService.sshClientGenerate(request);
-            return ResponseEntity.ok(response);
-        } else {
-            LOGGER.info("issuer key format type is {}", issuerKey.getType());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormat.RSA.name() + "]");
-        }
     }
 
 }
