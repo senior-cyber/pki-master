@@ -25,6 +25,9 @@ public class SshClientGenerateRequest implements Serializable {
     @JsonProperty("server")
     private String server;
 
+    @JsonProperty("alias")
+    private String alias;
+
     @JsonProperty("validityPeriod")
     private long validityPeriod;
 

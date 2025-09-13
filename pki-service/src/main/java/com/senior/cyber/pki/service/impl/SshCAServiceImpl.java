@@ -136,11 +136,10 @@ public class SshCAServiceImpl implements SshCAService {
                             "    CertificateFile id_rsa-cert.pub");
                 }
                 case ServerKeyYubico -> {
-                    response.setConfig("Host " + request.getServer() + "\n" +
+                    response.setConfig("Host " + request.getAlias() + "\n" +
                             "    HostName " + request.getServer() + "\n" +
                             "    User " + request.getPrincipal() + "\n" +
                             "    PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so\n" +
-                            "    IdentityFile id_rsa\n" +
                             "    CertificateFile id_rsa-cert.pub");
 
                 }
