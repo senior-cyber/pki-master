@@ -49,15 +49,15 @@ public class ClientProgram implements CommandLineRunner {
         System.exit(0);
     }
 
-    public SshGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
-        KeyGenerateResponse rootCaKey = registerYubicoKey();
-        SshGenerateResponse sshCaKey = generateSshKey(rootCaKey);
+    public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
+        // KeyGenerateResponse rootCaKey = registerYubicoKey();
+        KeyGenerateResponse sshCaKey = registerYubicoKey();
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         KeyGenerateResponse sshClientKey = generateJcaKey();
 
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(sshCaKey, sshClientKey, "socheat", "192.168.1.1", 1000);
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getSshCa()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
@@ -114,7 +114,7 @@ public class ClientProgram implements CommandLineRunner {
         FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), PrivateKeyUtils.convert(server.getPrivkey()));
     }
 
-    protected static SshClientGenerateResponse generateSshClient(SshGenerateResponse issuer, KeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
+    protected static SshClientGenerateResponse generateSshClient(KeyGenerateResponse issuer, KeyGenerateResponse key, String principal, String server, long validityPeriod) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             SshClientGenerateRequest request = new SshClientGenerateRequest();
             request.setIssuer(new Issuer(null, issuer.getKeyId(), issuer.getKeyPassword()));
@@ -132,23 +132,6 @@ public class ClientProgram implements CommandLineRunner {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), SshClientGenerateResponse.class);
-        }
-    }
-
-    protected static SshGenerateResponse generateSshKey(KeyGenerateResponse key) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            SshGenerateRequest request = new SshGenerateRequest();
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/ssh/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), SshGenerateResponse.class);
         }
     }
 

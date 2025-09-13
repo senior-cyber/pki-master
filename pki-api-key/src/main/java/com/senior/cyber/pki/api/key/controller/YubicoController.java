@@ -33,8 +33,10 @@ public class YubicoController {
             DeviceInfo info = p.getValue();
             _info.put("transport", device.getTransport().name());
             _info.put("version", String.valueOf(info.getVersion()));
-            _info.put("serialNumber", String.valueOf(info.getSerialNumber()));
-            _info.put("partNumber", String.valueOf(info.getPartNumber()));
+            if (info.getSerialNumber() != null) {
+                _info.put("serialNumber", String.valueOf(info.getSerialNumber()));
+            }
+            _info.put("partNumber", info.getPartNumber());
             _info.put("formFactor", info.getFormFactor().name());
             _info.put("versionName", info.getVersionName());
         }
