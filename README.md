@@ -177,7 +177,7 @@ scp pki-api-ssh/build/libs/pki-api-ssh.jar       lenovo:/opt/apps/pki-master/pki
 scp pki-api-root/build/libs/pki-api-root.jar     lenovo:/opt/apps/pki-master/pki-api-root
 scp pki-api-issuer/build/libs/pki-api-issuer.jar lenovo:/opt/apps/pki-master/pki-api-issuer
 scp pki-api-key/build/libs/pki-api-key.jar       lenovo:/opt/apps/pki-master/pki-api-key
-scp pki-api-revoke/build/libs/pki-api-revoke.jar       lenovo:/opt/apps/pki-master/pki-api-revoke
+scp pki-api-revoke/build/libs/pki-api-revoke.jar lenovo:/opt/apps/pki-master/pki-api-revoke
 
 cp pki-api-crl/build/libs/pki-api-crl.jar       /opt/apps/pki-master/pki-api-crl
 cp pki-api-ocsp/build/libs/pki-api-ocsp.jar     /opt/apps/pki-master/pki-api-ocsp
@@ -186,7 +186,7 @@ cp pki-api-ssh/build/libs/pki-api-ssh.jar       /opt/apps/pki-master/pki-api-ssh
 cp pki-api-root/build/libs/pki-api-root.jar     /opt/apps/pki-master/pki-api-root
 cp pki-api-issuer/build/libs/pki-api-issuer.jar /opt/apps/pki-master/pki-api-issuer
 cp pki-api-key/build/libs/pki-api-key.jar       /opt/apps/pki-master/pki-api-key
-cp pki-api-revoke/build/libs/pki-api-revoke.jar       /opt/apps/pki-master/pki-api-revoke
+cp pki-api-revoke/build/libs/pki-api-revoke.jar /opt/apps/pki-master/pki-api-revoke
 
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
