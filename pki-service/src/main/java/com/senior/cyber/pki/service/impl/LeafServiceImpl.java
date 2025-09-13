@@ -89,7 +89,7 @@ public class LeafServiceImpl implements LeafService {
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
-                issuer = new Crypto(providers.get(yubico.getSerial()), _issuerCertificate.getCertificate(), privateKey);
+                issuer = new Crypto(providers.get(serials.get(issuerKey.getId())), _issuerCertificate.getCertificate(), privateKey);
             }
         }
 

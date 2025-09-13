@@ -81,7 +81,7 @@ public class SubordinateServiceImpl implements SubordinateService {
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
-                issuer = new Crypto(providers.get(yubico.getSerial()), issuerCertificate.getCertificate(), privateKey);
+                issuer = new Crypto(providers.get(serials.get(issuerKey.getId())), issuerCertificate.getCertificate(), privateKey);
             }
         }
 

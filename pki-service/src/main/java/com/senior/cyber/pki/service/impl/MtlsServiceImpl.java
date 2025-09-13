@@ -35,7 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -250,20 +253,30 @@ public class MtlsServiceImpl implements MtlsService {
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, issuerKey.getId(), yubico);
-                issuer = new Crypto(providers.get(yubico.getSerial()), _issuerCertificate.getCertificate(), privateKey);
+                issuer = new Crypto(providers.get(serials.get(issuerKey.getId())), _issuerCertificate.getCertificate(), privateKey);
             }
         }
 
         try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-            if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
+            Key leafKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+            Crypto left = null;
+            switch (leafKey.getType()) {
+                case ServerKeyJCE -> {
+                    PrivateKey privateKey = PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getIssuer().getKeyPassword());
+                    left = new Crypto(Utils.BC, _issuerCertificate.getCertificate(), privateKey);
+                }
+                case ServerKeyYubico -> {
+                    AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                    encryptor.setPassword(request.getIssuer().getKeyPassword());
+                    YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
+                    PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, leafKey.getId(), yubico);
+                    left = new Crypto(providers.get(serials.get(leafKey.getId())), _issuerCertificate.getCertificate(), privateKey);
+                }
             }
-            PublicKey publicKey = certificateKey.getPublicKey();
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, left.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -273,7 +286,7 @@ public class MtlsServiceImpl implements MtlsService {
             certificate.setLocalityName(request.getLocality());
             certificate.setStateOrProvinceName(request.getProvince());
             certificate.setEmailAddress(request.getEmailAddress());
-            certificate.setKey(certificateKey);
+            certificate.setKey(leafKey);
             certificate.setCertificate(leafCertificate);
             certificate.setSerial(leafCertificate.getSerialNumber().longValueExact());
             certificate.setCreatedDatetime(new Date());
@@ -287,7 +300,7 @@ public class MtlsServiceImpl implements MtlsService {
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
+            response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             return response;
         } finally {
             for (SmartCardConnection connection : connections.values()) {
