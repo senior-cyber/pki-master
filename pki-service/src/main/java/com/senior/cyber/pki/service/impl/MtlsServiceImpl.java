@@ -267,7 +267,7 @@ public class MtlsServiceImpl implements MtlsService {
                 }
                 case ServerKeyYubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                    encryptor.setPassword(request.getIssuer().getKeyPassword());
+                    encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
                     PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, leafKey.getId(), yubico);
                     left = new Crypto(providers.get(serials.get(leafKey.getId())), _issuerCertificate.getCertificate(), privateKey);
