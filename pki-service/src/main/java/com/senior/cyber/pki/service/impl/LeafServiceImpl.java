@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -94,17 +93,27 @@ public class LeafServiceImpl implements LeafService {
         }
 
         try {
-            Key certificateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-            if (certificateKey.getType() == KeyTypeEnum.ServerKeyYubico) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getKeyId() + " is not support");
+            Key leafKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+            Crypto leaf = null;
+            switch (leafKey.getType()) {
+                case ServerKeyJCE -> {
+                    PrivateKey privateKey = PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword());
+                    leaf = new Crypto(Utils.BC, leafKey.getPublicKey(), privateKey);
+                }
+                case ServerKeyYubico -> {
+                    AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                    encryptor.setPassword(request.getKeyPassword());
+                    YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
+                    PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, leafKey.getId(), yubico);
+                    leaf = new Crypto(providers.get(serials.get(leafKey.getId())), leafKey.getPublicKey(), privateKey);
+                }
             }
-            PublicKey publicKey = certificateKey.getPublicKey();
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
             List<Integer> keyUsages = new ArrayList<>();
             keyUsages.add(KeyUsage.digitalSignature);
-            switch (certificateKey.getKeyFormat()) {
+            switch (leafKey.getKeyFormat()) {
                 case RSA -> {
                     keyUsages.add(KeyUsage.keyEncipherment);
                 }
@@ -116,7 +125,7 @@ public class LeafServiceImpl implements LeafService {
             List<KeyPurposeId> extendedKeyUsages = new ArrayList<>();
             extendedKeyUsages.add(KeyPurposeId.id_kp_serverAuth);
             List<String> sans = request.getSans();
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, publicKey, subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), keyUsages, extendedKeyUsages, sans);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, leaf.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), keyUsages, extendedKeyUsages, sans);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -126,7 +135,7 @@ public class LeafServiceImpl implements LeafService {
             certificate.setLocalityName(request.getLocality());
             certificate.setStateOrProvinceName(request.getProvince());
             certificate.setEmailAddress(request.getEmailAddress());
-            certificate.setKey(certificateKey);
+            certificate.setKey(leafKey);
             certificate.setCertificate(leafCertificate);
             certificate.setSerial(leafCertificate.getSerialNumber().longValueExact());
             certificate.setCreatedDatetime(new Date());
@@ -140,7 +149,9 @@ public class LeafServiceImpl implements LeafService {
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(certificateKey.getPrivateKey(), request.getKeyPassword()));
+            if (leafKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+                response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
+            }
 
             List<X509Certificate> chain = new ArrayList<>();
             chain.add(issuer.getCertificate());

@@ -259,24 +259,24 @@ public class MtlsServiceImpl implements MtlsService {
 
         try {
             Key leafKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-            Crypto left = null;
+            Crypto leaf = null;
             switch (leafKey.getType()) {
                 case ServerKeyJCE -> {
                     PrivateKey privateKey = PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword());
-                    left = new Crypto(Utils.BC, leafKey.getPublicKey(), privateKey);
+                    leaf = new Crypto(Utils.BC, leafKey.getPublicKey(), privateKey);
                 }
                 case ServerKeyYubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
                     encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
                     PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, leafKey.getId(), yubico);
-                    left = new Crypto(providers.get(serials.get(leafKey.getId())), leafKey.getPublicKey(), privateKey);
+                    leaf = new Crypto(providers.get(serials.get(leafKey.getId())), leafKey.getPublicKey(), privateKey);
                 }
             }
 
             LocalDate now = LocalDate.now();
             X500Name subject = SubjectUtils.generate(request.getCountry(), request.getOrganization(), request.getOrganizationalUnit(), request.getCommonName(), request.getLocality(), request.getProvince(), request.getEmailAddress());
-            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, left.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
+            X509Certificate leafCertificate = PkiUtils.issueLeafCertificate(issuer.getProvider(), issuer.getPrivateKey(), issuer.getCertificate(), crlApi, ocspApi, x509Api, null, leaf.getPublicKey(), subject, now.toDate(), now.plusYears(1).toDate(), System.currentTimeMillis(), null, null, null);
             Certificate certificate = new Certificate();
             certificate.setIssuerCertificate(_issuerCertificate);
             certificate.setCountryCode(request.getCountry());
@@ -300,7 +300,9 @@ public class MtlsServiceImpl implements MtlsService {
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
-            response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
+            if (leafKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+                response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
+            }
             return response;
         } finally {
             for (SmartCardConnection connection : connections.values()) {
