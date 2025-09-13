@@ -48,7 +48,7 @@ public class PivUtils {
                 break;
             }
         }
-        slots.put(yubico.getPivSlot(), slot);
+        slots.put(yubico.getSerial(), slot);
         return YubicoProviderUtils.lookupPrivateKey(ks, slot, yubico.getPin());
     }
 
