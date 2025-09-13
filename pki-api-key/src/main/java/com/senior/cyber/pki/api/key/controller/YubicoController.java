@@ -36,7 +36,9 @@ public class YubicoController {
             if (info.getSerialNumber() != null) {
                 _info.put("serialNumber", String.valueOf(info.getSerialNumber()));
             }
-            _info.put("partNumber", info.getPartNumber());
+            if (info.getPartNumber() != null && !"null".equals(info.getPartNumber())) {
+                _info.put("partNumber", info.getPartNumber());
+            }
             _info.put("formFactor", info.getFormFactor().name());
             _info.put("versionName", info.getVersionName());
         }
