@@ -38,6 +38,7 @@ public class PivUtils {
             PivProvider provider = new PivProvider(session);
             providers.put(yubico.getSerial(), provider);
             ks = YubicoProviderUtils.lookupKeyStore(provider);
+            keys.put(yubico.getSerial(), ks);
         } else {
             ks = keys.get(yubico.getSerial());
         }
