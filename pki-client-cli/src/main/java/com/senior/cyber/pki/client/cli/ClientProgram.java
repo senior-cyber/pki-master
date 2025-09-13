@@ -42,10 +42,10 @@ public class ClientProgram implements CommandLineRunner {
     public void run(String... args) throws IOException, InterruptedException {
 //        x509(args);
 //        System.out.println("Done x509");
-        mtls(args);
-        System.out.println("Done mtls");
-//        sshCa(args);
-//        System.out.println("Done ssh-ca");
+//        mtls(args);
+//        System.out.println("Done mtls");
+        sshCa(args);
+        System.out.println("Done ssh-ca");
         System.exit(0);
     }
 
