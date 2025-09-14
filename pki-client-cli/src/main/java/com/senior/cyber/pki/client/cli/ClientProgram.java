@@ -8,9 +8,6 @@ import com.senior.cyber.pki.client.cli.utils.RevokeUtils;
 import com.senior.cyber.pki.client.cli.utils.RootUtils;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
-import com.yubico.yubikit.core.YubiKeyDevice;
-import com.yubico.yubikit.desktop.YubiKitManager;
-import com.yubico.yubikit.management.DeviceInfo;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +18,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @SpringBootApplication
 public class ClientProgram implements CommandLineRunner {
