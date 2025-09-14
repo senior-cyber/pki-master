@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class MtlsClientGenerateRequest {
+public class MtlsClientGenerateRequest implements Serializable {
 
     @JsonProperty("issuer")
     private Issuer issuer;
@@ -38,4 +40,19 @@ public class MtlsClientGenerateRequest {
     @JsonProperty("emailAddress")
     private String emailAddress;
 
+    public MtlsClientGenerateRequest() {
+    }
+
+    public MtlsClientGenerateRequest(Issuer issuer, String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
+        this.issuer = issuer;
+        this.keyId = keyId;
+        this.keyPassword = keyPassword;
+        this.locality = locality;
+        this.province = province;
+        this.country = country;
+        this.commonName = commonName;
+        this.organization = organization;
+        this.organizationalUnit = organizationalUnit;
+        this.emailAddress = emailAddress;
+    }
 }

@@ -15,7 +15,7 @@ import java.security.cert.X509Certificate;
 
 @Getter
 @Setter
-public class MtlsClientGenerateResponse extends BaseResponse{
+public class MtlsClientGenerateResponse extends BaseResponse {
 
     @JsonProperty("certificateId")
     private String certificateId;
@@ -25,12 +25,12 @@ public class MtlsClientGenerateResponse extends BaseResponse{
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
-    @JsonProperty("cert")
-    private X509Certificate cert;
+    @JsonProperty("certificate")
+    private X509Certificate certificate;
 
     @JsonSerialize(using = PrivateKeySerializer.class)
     @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privkey")
-    private PrivateKey privkey;
+    @JsonProperty("privateKey")
+    private PrivateKey privateKey;
 
 }

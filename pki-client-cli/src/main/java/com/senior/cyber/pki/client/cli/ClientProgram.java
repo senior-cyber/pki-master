@@ -1,6 +1,10 @@
 package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senior.cyber.pki.client.cli.utils.IssuerUtils;
+import com.senior.cyber.pki.client.cli.utils.KeyUtils;
+import com.senior.cyber.pki.client.cli.utils.RevokeUtils;
+import com.senior.cyber.pki.client.cli.utils.RootUtils;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.*;
 import org.apache.commons.io.FileUtils;
@@ -10,29 +14,23 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
 public class ClientProgram implements CommandLineRunner {
 
-    private static final String KEY = "https://pki-api-key.khmer.name";
-    private static final String ROOT = "https://pki-api-root.khmer.name";
-    private static final String ISSUER = "https://pki-api-issuer.khmer.name";
-    private static final String SSH = "https://pki-api-ssh.khmer.name";
-    private static final String X509 = "https://pki-api-x509.khmer.name";
-
-//    private static final String KEY = "http://127.0.0.1:3103";
-//    private static final String ROOT = "http://127.0.0.1:3102";
-//    private static final String ISSUER = "http://127.0.0.1:3101";
-//    private static final String SSH = "http://127.0.0.1:3004";
-//    private static final String X509 = "http://127.0.0.1:3003";
+    private static final String MANAGEMENT_KEY = "010203040506070801020304050607080102030405060708";
+    private static final String PIN = "123456";
+    private static final String PUK = "12345678"; // PIN_UNLOCK_KEY
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final String SSH = "https://pki-api-ssh.khmer.name";
+    private static final String X509 = "https://pki-api-x509.khmer.name";
+//    private static final String SSH = "http://127.0.0.1:3004";
+//    private static final String X509 = "http://127.0.0.1:3003";
 
     public static void main(String[] args) {
         SpringApplication.run(ClientProgram.class, args);
@@ -44,314 +42,267 @@ public class ClientProgram implements CommandLineRunner {
         String api = System.getProperty("api");
         if ("key".equals(api)) {
             String function = System.getProperty("function");
-            if ("/jca/generate".equalsIgnoreCase(function)) {
+            if ("/jca/generate".equals(function)) {
                 Integer size = Integer.parseInt(System.getProperty("size"));
                 KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
-                KeyGenerateResponse response = generateJcaKey(new JcaKeyGenerateRequest(size, format));
+                KeyGenerateResponse response = KeyUtils.jcaGenerate(new JcaKeyGenerateRequest(size, format));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-            } else if ("/yubico/info".equalsIgnoreCase(function)) {
-                YubicoInfoResponse response = yubicoInfo();
+            } else if ("/yubico/info".equals(function)) {
+                YubicoInfoResponse response = KeyUtils.yubicoInfo();
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-            } else if ("/info".equalsIgnoreCase(function)) {
+            } else if ("/info".equals(function)) {
                 String keyId = System.getProperty("keyId");
                 String keyPassword = System.getProperty("keyPassword");
-                KeyInfoResponse response = info(new KeyInfoRequest(keyId, keyPassword));
-                FileUtils.write(new File(keyId + "-public-key.pem"), PublicKeyUtils.convert(response.getPublicKey()), StandardCharsets.UTF_8);
-                FileUtils.write(new File(keyId + "-private-key.pem"), response.getPrivateKey(), StandardCharsets.UTF_8);
+                KeyInfoResponse response = KeyUtils.info(new KeyInfoRequest(keyId, keyPassword));
+                if (response.getStatus() == 200) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(keyId + "-public-key.pem"), PublicKeyUtils.convert(response.getPublicKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + keyId + "-public-key.pem");
+                    FileUtils.write(new File(keyId + "-openssh-public-key.pub"), OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + keyId + "-openssh-public-key.pub");
+                    if ("ServerKeyYubico".equals(response.getType())) {
+                        if (response.getPrivateKey() != null) {
+                            FileUtils.write(new File(keyId + "-private-key.json"), response.getPrivateKey(), StandardCharsets.UTF_8);
+                            System.out.println("  " + keyId + "-private-key.json");
+                        }
+                    } else if ("ServerKeyJCE".equals(response.getType())) {
+                        if (response.getPrivateKey() != null) {
+                            FileUtils.write(new File(keyId + "-private-key.pem"), response.getPrivateKey(), StandardCharsets.UTF_8);
+                            System.out.println("  " + keyId + "-private-key.pem");
+                        }
+                        if (response.getOpenSshPrivateKey() != null) {
+                            FileUtils.write(new File(keyId + "-openssh-private-key.pem"), response.getOpenSshPrivateKey(), StandardCharsets.UTF_8);
+                            System.out.println("  " + keyId + "-openssh-private-key.pem");
+                        }
+                    }
+                } else {
+                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                }
+            } else if ("/yubico/generate".equals(function)) {
+                Integer size = Integer.parseInt(System.getProperty("size"));
+                String serialNumber = System.getProperty("serialNumber");
+                String slot = System.getProperty("slot");
+                String managementKey = System.getProperty("managementKey");
+                KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
+                KeyGenerateResponse response = KeyUtils.yubicoGenerate(new YubicoKeyGenerateRequest(size, format, serialNumber, slot, managementKey));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else if ("/yubico/register".equals(function)) {
+                String serialNumber = System.getProperty("serialNumber");
+                String slot = System.getProperty("slot");
+                String pin = System.getProperty("pin");
+                String managementKey = System.getProperty("managementKey");
+                KeyGenerateResponse response = KeyUtils.yubicoRegister(new YubicoKeyRegisterRequest(slot, serialNumber, managementKey, pin));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
             } else {
                 throw new RuntimeException("invalid function");
             }
+        } else if ("revoke".equals(api)) {
+            String function = System.getProperty("function");
+            if ("/revoke/certificate".equals(function)) {
+                String certificateId = System.getProperty("certificateId");
+                String keyPassword = System.getProperty("keyPassword");
+                RevokeCertificateResponse response = RevokeUtils.revokeCertificate(new RevokeCertificateRequest(certificateId, keyPassword));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else if ("/revoke/key".equals(function)) {
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                RevokeKeyResponse response = RevokeUtils.revokeKey(new RevokeKeyRequest(keyId, keyPassword));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else {
+                throw new RuntimeException("invalid function");
+            }
+        } else if ("root".equals(api)) {
+            String function = System.getProperty("function");
+            if ("/root/generate".equals(function)) {
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                RootGenerateResponse response = RootUtils.rootGenerate(new RootGenerateRequest(keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else if ("/subordinate/generate".equals(function)) {
+                String issuerCertificateId = System.getProperty("issuerCertificateId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                SubordinateGenerateResponse response = RootUtils.subordinateGenerate(new SubordinateGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else if ("/issuer/generate".equals(function)) {
+                String issuerCertificateId = System.getProperty("issuerCertificateId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                IssuerGenerateResponse response = RootUtils.issuerGenerate(new IssuerGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else {
+                throw new RuntimeException("invalid function");
+            }
+        } else if ("issuer".equals(api)) {
+            String function = System.getProperty("function");
+            if ("/ssh/client/generate".equals(function)) {
+                String issuerKeyId = System.getProperty("issuerKeyId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String principal = System.getProperty("principal");
+                String server = System.getProperty("server");
+                String alias = System.getProperty("alias");
+                String period = System.getProperty("period");
+
+                SshClientGenerateRequest request = new SshClientGenerateRequest(new Issuer(null, issuerKeyId, issuerKeyPassword), keyId, keyPassword, principal, server, alias, period);
+                SshClientGenerateResponse response = IssuerUtils.sshClientGenerate(request);
+                if (response.getStatus() == 200) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(keyId + "-openssh-certificate.pub"), OpenSshCertificateUtils.convert(response.getOpenSshCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + keyId + "-openssh-certificate.pub");
+                    FileUtils.write(new File(keyId + "-openssh-public-key.pub"), OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + keyId + "-openssh-public-key.pub");
+                    List<String> config = new ArrayList<>();
+                    if (response.getOpenSshPrivateKey() != null) {
+                        FileUtils.write(new File(keyId + "-openssh-private-key"), OpenSshPrivateKeyUtils.convert(response.getOpenSshPrivateKey()), StandardCharsets.UTF_8);
+                        System.out.println("  " + keyId + "-openssh-private-key");
+                        config.add("Host " + request.getAlias());
+                        config.add("    HostName " + request.getServer());
+                        config.add("    User " + request.getPrincipal());
+                        config.add("    IdentityFile " + keyId + "-openssh-private-key");
+                        config.add("    CertificateFile " + keyId + "-openssh-certificate.pub");
+                    } else {
+                        config.add("Host " + request.getAlias());
+                        config.add("    HostName " + request.getServer());
+                        config.add("    User " + request.getPrincipal());
+                        config.add("    PKCS11Provider /usr/local/lib/libykcs11.so");
+                        config.add("    IdentityFile " + keyId + "-openssh-public-key.pub");
+                        config.add("    CertificateFile " + keyId + "-openssh-certificate.pub");
+                    }
+                    FileUtils.writeLines(new File(keyId + "-config"), StandardCharsets.UTF_8.name(), config);
+                    System.out.println("  " + keyId + "-config");
+                }
+            } else if ("/issuer/generate".equals(function)) {
+                String issuerCertificateId = System.getProperty("issuerCertificateId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                IssuerGenerateResponse response = IssuerUtils.issuerGenerate(new IssuerGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else if ("/mtls/generate".equals(function)) {
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                MtlsGenerateRequest request = new MtlsGenerateRequest(keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress);
+                MtlsGenerateResponse response = IssuerUtils.mtlsGenerate(request);
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else if ("/mtls/client/generate".equals(function)) {
+                String issuerCertificateId = System.getProperty("issuerCertificateId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                MtlsClientGenerateRequest request = new MtlsClientGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress);
+                MtlsClientGenerateResponse response = IssuerUtils.mtlsClientGenerate(request);
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getStatus() == 200) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+
+                    FileUtils.write(new File(response.getCertificateId() + "-private-key.pem"), PrivateKeyUtils.convert(response.getPrivateKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-private-key.pem");
+                }
+            } else if ("/server/generate".equals(function)) {
+                String issuerCertificateId = System.getProperty("issuerCertificateId");
+                String issuerKeyPassword = System.getProperty("issuerKeyPassword");
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String locality = System.getProperty("l");
+                String province = System.getProperty("st");
+                String country = System.getProperty("c");
+                String commonName = System.getProperty("cn");
+                String organization = System.getProperty("o");
+                String organizationalUnit = System.getProperty("ou");
+                String emailAddress = System.getProperty("emailAddress");
+                List<String> sans = null;
+                ServerGenerateRequest request = new ServerGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress, sans);
+                ServerGenerateResponse response = IssuerUtils.serverGenerate(request);
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getStatus() == 200) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-cert.pem"), CertificateUtils.convert(response.getCert()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-cert.pem");
+                    FileUtils.write(new File(response.getCertificateId() + "-chain.pem"), CertificateUtils.convert(response.getChain()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-chain.pem");
+                    FileUtils.write(new File(response.getCertificateId() + "-fullchain.pem"), CertificateUtils.convert(response.getFullchain()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-fullchain.pem");
+                    FileUtils.write(new File(response.getCertificateId() + "-privkey.pem"), PrivateKeyUtils.convert(response.getPrivkey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-privkey.pem");
+                }
+            } else {
+                throw new RuntimeException("invalid api");
+            }
         } else {
             throw new RuntimeException("invalid api");
-        }
-
-//        x509(args);
-//        System.out.println("Done x509");
-//        mtls(args);
-//        System.out.println("Done mtls");
-//        var key = sshCa(args);
-//        // sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
-//        sshClient(key.getKeyId(), key.getKeyPassword());
-//        System.out.println("Done ssh-ca");
-        System.exit(0);
-    }
-
-    public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
-        // KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
-        KeyGenerateResponse sshCaKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
-        System.out.println(sshCaKey.getKeyId());
-        System.out.println(sshCaKey.getKeyPassword());
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpenSshPublicKey()));
-        return sshCaKey;
-    }
-
-    public void sshClient(String keyId, String keyPassword) throws IOException, InterruptedException {
-        Issuer issuer = new Issuer(null, keyId, keyPassword);
-        // KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
-        KeyGenerateResponse sshClientKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
-        SshClientGenerateResponse sshClient = generateSshClient(issuer, sshClientKey, "socheat", "192.168.1.53", 1);
-        System.out.println(sshClient.getConfig());
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa"), OpenSshPrivateKeyUtils.convert(sshClient.getPrivateKey()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa.pub"), OpenSshPublicKeyUtils.convert(sshClient.getPublicKey()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-id_rsa-cert.pub"), OpenSshCertificateUtils.convert(sshClient.getCertificate()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-client-config"), sshClient.getConfig());
-    }
-
-    public void mtls(String... args) throws IOException, InterruptedException {
-        // KeyGenerateResponse mtlsServerKey = generateYubicoKey("9a");
-        KeyGenerateResponse mtlsServerKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
-        MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
-
-        // KeyGenerateResponse mtlsClientKey = generateYubicoKey("9c");
-        KeyGenerateResponse mtlsClientKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
-        MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
-
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-server.pem"), CertificateUtils.convert(mtlsServer.getCertificate()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-client-cert.pem"), CertificateUtils.convert(mtlsClient.getCert()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/pki-mtls-client-privkey.pem"), PrivateKeyUtils.convert(mtlsClient.getPrivkey()));
-    }
-
-    public void x509(String... args) throws IOException, InterruptedException {
-        // KeyGenerateResponse rootCaKey = generateYubicoKey("9a");
-        KeyGenerateResponse rootCaKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
-        RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
-
-        // KeyGenerateResponse subordinateCaKey = generateYubicoKey("9c");
-        KeyGenerateResponse subordinateCaKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
-        SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
-
-        // KeyGenerateResponse issuingCaKey1 = generateYubicoKey("9d");
-        KeyGenerateResponse issuingCaKey1 = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
-        IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
-
-        KeyGenerateResponse issuingCaKey2 = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
-        IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
-
-        // KeyGenerateResponse serverKey = generateYubicoKey("9a");
-        KeyGenerateResponse serverKey = generateJcaKey(null);
-        System.out.println(SSH + "/api/openssh/" + serverKey.getKeyId() + ".pub");
-        ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
-        System.out.println(X509 + "/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
-
-        FileUtils.write(new File("/opt/apps/tls/root-ca.pem"), CertificateUtils.convert(rootCa.getCertificate()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/fullchain.pem"), CertificateUtils.convert(server.getFullchain()));
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/privkey.pem"), PrivateKeyUtils.convert(server.getPrivkey()));
-    }
-
-    protected static SshClientGenerateResponse generateSshClient(Issuer issuer, KeyGenerateResponse key, String principal, String server, long validityMinutes) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            SshClientGenerateRequest request = new SshClientGenerateRequest();
-            request.setIssuer(issuer);
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setPrincipal(principal);
-            request.setServer(server);
-            request.setAlias("test");
-            request.setValidityPeriod(validityMinutes);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/ssh/client/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), SshClientGenerateResponse.class);
-        }
-    }
-
-    protected static KeyInfoResponse info(KeyInfoRequest request) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/info")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), KeyInfoResponse.class);
-        }
-    }
-
-    protected static YubicoInfoResponse yubicoInfo() throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/info")).GET().header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
-        }
-    }
-
-    protected static KeyGenerateResponse generateJcaKey(JcaKeyGenerateRequest request) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/jca/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
-        }
-    }
-
-    protected static KeyGenerateResponse registerYubicoKey(String slot) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            YubicoKeyRegisterRequest request = new YubicoKeyRegisterRequest();
-            request.setSerialNumber("23275988");
-            request.setSlot(slot);
-            request.setManagementKey("010203040506070801020304050607080102030405060708");
-            request.setPin("123456");
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/register")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
-        }
-    }
-
-    protected static KeyGenerateResponse generateYubicoKey(String slot) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            YubicoKeyGenerateRequest request = new YubicoKeyGenerateRequest();
-            request.setSerialNumber("23275988");
-            request.setSlot(slot);
-            request.setManagementKey("010203040506070801020304050607080102030405060708");
-            request.setSize(2048);
-            request.setFormat(KeyFormat.RSA);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
-        }
-    }
-
-    protected static MtlsClientGenerateResponse generateMtlsClient(MtlsGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            MtlsClientGenerateRequest request = new MtlsClientGenerateRequest();
-            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/mtls/client/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), MtlsClientGenerateResponse.class);
-        }
-    }
-
-    protected static MtlsGenerateResponse generateMtlsServer(KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            MtlsGenerateRequest request = new MtlsGenerateRequest();
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/mtls/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), MtlsGenerateResponse.class);
-        }
-    }
-
-    protected static ServerGenerateResponse generateServer(IssuerGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou, List<String> sans) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            ServerGenerateRequest request = new ServerGenerateRequest();
-            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-            request.setSans(sans);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/server/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), ServerGenerateResponse.class);
-        }
-    }
-
-    protected static IssuerGenerateResponse generateIssuingCA(RootGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            IssuerGenerateRequest request = new IssuerGenerateRequest();
-            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/issuer/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
-        }
-    }
-
-    protected static IssuerGenerateResponse generateIssuingCA(SubordinateGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            IssuerGenerateRequest request = new IssuerGenerateRequest();
-            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/issuer/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
-        }
-    }
-
-    protected static SubordinateGenerateResponse generateSubordinateCA(RootGenerateResponse issuer, KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            SubordinateGenerateRequest request = new SubordinateGenerateRequest();
-            request.setIssuer(new Issuer(issuer.getCertificateId(), null, issuer.getKeyPassword()));
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/subordinate/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), SubordinateGenerateResponse.class);
-        }
-    }
-
-    protected static RootGenerateResponse generateRootCA(KeyGenerateResponse key, String locality, String province, String country, String cn, String o, String ou) throws IOException, InterruptedException {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            RootGenerateRequest request = new RootGenerateRequest();
-            request.setKeyId(key.getKeyId());
-            request.setKeyPassword(key.getKeyPassword());
-            request.setLocality(locality);
-            request.setProvince(province);
-            request.setCountry(country);
-            request.setOrganization(o);
-            request.setOrganizationalUnit(ou);
-            request.setCommonName(cn);
-
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/root/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), RootGenerateResponse.class);
         }
     }
 

@@ -26,4 +26,15 @@ public class YubicoKeyGenerateRequest implements Serializable {
     @JsonProperty("managementKey")
     private String managementKey;
 
+    public YubicoKeyGenerateRequest() {
+    }
+
+    public YubicoKeyGenerateRequest(int size, KeyFormat format, String serialNumber, String slot, String managementKey) {
+        this.size = size;
+        this.format = format;
+        this.serialNumber = serialNumber;
+        this.slot = slot;
+        this.managementKey = managementKey;
+    }
+
 }

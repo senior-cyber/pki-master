@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -115,21 +117,25 @@ public class SshCAServiceImpl implements SshCAService {
             openSshCertificateBuilder.principals(List.of(request.getPrincipal()));
             openSshCertificateBuilder.publicKey(ssh.getPublicKey());
             openSshCertificateBuilder.validAfter(Instant.now());
-            if (request.getValidityPeriod() <= 0) {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(10, ChronoUnit.MINUTES));
-            } else if (request.getValidityPeriod() > 480) {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(480, ChronoUnit.MINUTES));
-            } else {
-                openSshCertificateBuilder.validBefore(Instant.now().plus(request.getValidityPeriod(), ChronoUnit.MINUTES));
-            }
+
+            Duration duration = DatatypeFactory.newInstance().newDuration(request.getPeriod());
+            openSshCertificateBuilder.validBefore(Instant.now()
+                    .plus(duration.getYears(), ChronoUnit.YEARS)
+                    .plus(duration.getMonths(), ChronoUnit.MONTHS)
+                    .plus(duration.getDays(), ChronoUnit.DAYS)
+                    .plus(duration.getHours(), ChronoUnit.HOURS)
+                    .plus(duration.getMinutes(), ChronoUnit.MINUTES)
+                    .plus(duration.getSeconds(), ChronoUnit.SECONDS)
+            );
+
             OpenSshCertificate certificate = openSshCertificateBuilder.sign(new KeyPair(issuer.getPublicKey(), issuer.getPrivateKey()), org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
             SshClientGenerateResponse response = new SshClientGenerateResponse();
-            response.setPublicKey(ssh.getPublicKey());
-            response.setCertificate(certificate);
+            response.setOpenSshPublicKey(ssh.getPublicKey());
+            response.setOpenSshCertificate(certificate);
             switch (sshKey.getType()) {
                 case ServerKeyJCE -> {
-                    response.setPrivateKey(ssh.getPrivateKey());
-                    response.setConfig("Host " + request.getServer() + "\n" +
+                    response.setOpenSshPrivateKey(ssh.getPrivateKey());
+                    response.setConfig("Host " + request.getAlias() + "\n" +
                             "    HostName " + request.getServer() + "\n" +
                             "    User " + request.getPrincipal() + "\n" +
                             "    IdentityFile id_rsa\n" +

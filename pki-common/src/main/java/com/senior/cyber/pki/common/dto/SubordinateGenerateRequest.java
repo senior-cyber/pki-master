@@ -40,4 +40,20 @@ public class SubordinateGenerateRequest implements Serializable {
     @JsonProperty("emailAddress")
     private String emailAddress;
 
+    public SubordinateGenerateRequest() {
+    }
+
+    public SubordinateGenerateRequest(Issuer issuer, String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
+        this.issuer = issuer;
+        this.keyId = keyId;
+        this.keyPassword = keyPassword;
+        this.locality = locality;
+        this.province = province;
+        this.country = country;
+        this.commonName = commonName;
+        this.organization = organization;
+        this.organizationalUnit = organizationalUnit;
+        this.emailAddress = emailAddress;
+    }
+
 }

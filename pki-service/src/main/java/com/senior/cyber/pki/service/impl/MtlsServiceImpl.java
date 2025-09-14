@@ -96,7 +96,7 @@ public class MtlsServiceImpl implements MtlsService {
                     request.getCommonName(),
                     request.getLocality(),
                     request.getProvince(),
-                    null
+                    request.getEmailAddress()
             );
 
             X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
@@ -299,9 +299,9 @@ public class MtlsServiceImpl implements MtlsService {
             MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
-            response.setCert(leafCertificate);
+            response.setCertificate(leafCertificate);
             if (leafKey.getType() == KeyTypeEnum.ServerKeyJCE) {
-                response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
+                response.setPrivateKey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             }
             return response;
         } finally {

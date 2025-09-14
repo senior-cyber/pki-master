@@ -28,7 +28,23 @@ public class SshClientGenerateRequest implements Serializable {
     @JsonProperty("alias")
     private String alias;
 
-    @JsonProperty("validityPeriod")
-    private long validityPeriod;
+    /**
+     * PnYnMnDTnHnMnS
+     */
+    @JsonProperty("period")
+    private String period;
+
+    public SshClientGenerateRequest() {
+    }
+
+    public SshClientGenerateRequest(Issuer issuer, String keyId, String keyPassword, String principal, String server, String alias, String period) {
+        this.issuer = issuer;
+        this.keyId = keyId;
+        this.keyPassword = keyPassword;
+        this.principal = principal;
+        this.server = server;
+        this.alias = alias;
+        this.period = period;
+    }
 
 }

@@ -15,20 +15,20 @@ import java.security.PublicKey;
 @Getter
 public class SshClientGenerateResponse extends BaseResponse {
 
-    @JsonProperty("id_rsa-cert.pub")
+    @JsonProperty("openSshCertificate")
     @JsonSerialize(using = OpenSshCertificateSerializer.class)
     @JsonDeserialize(using = OpenSshCertificateDeserializer.class)
-    private OpenSshCertificate certificate;
+    private OpenSshCertificate openSshCertificate;
 
-    @JsonProperty("id_rsa.pub")
+    @JsonProperty("openSshPublicKey")
     @JsonSerialize(using = OpenSshPublicKeySerializer.class)
     @JsonDeserialize(using = OpenSshPublicKeyDeserializer.class)
-    private PublicKey publicKey;
+    private PublicKey openSshPublicKey;
 
     @JsonSerialize(using = OpenSshPrivateKeySerializer.class)
     @JsonDeserialize(using = OpenSshPrivateKeyDeserializer.class)
-    @JsonProperty("id_rsa")
-    private PrivateKey privateKey;
+    @JsonProperty("openSshPrivateKey")
+    private PrivateKey openSshPrivateKey;
 
     @JsonProperty("config")
     private String config;

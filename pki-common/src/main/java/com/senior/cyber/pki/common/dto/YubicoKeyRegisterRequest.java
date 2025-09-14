@@ -22,4 +22,14 @@ public class YubicoKeyRegisterRequest implements Serializable {
     @JsonProperty("pin")
     private String pin;
 
+    public YubicoKeyRegisterRequest() {
+    }
+
+    public YubicoKeyRegisterRequest(String slot, String serialNumber, String managementKey, String pin) {
+        this.slot = slot;
+        this.serialNumber = serialNumber;
+        this.managementKey = managementKey;
+        this.pin = pin;
+    }
+
 }
