@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.senior.cyber.pki.common.x509.KeyFormat;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,21 +19,25 @@ public class RootClientRegisterRequest implements Serializable {
     @JsonProperty("keyPassword")
     private String keyPassword;
 
+    private String certificateId;
     private X509Certificate certificate;
 
     private X509Certificate crlCertificate;
     private PrivateKey crlPrivateKey;
+    private Integer crlKeySize;
+    private KeyFormat crlKeyFormat;
 
     private X509Certificate ocspCertificate;
     private PrivateKey ocspPrivateKey;
+    private Integer ocspKeySize;
+    private KeyFormat ocspKeyFormat;
 
     public RootClientRegisterRequest() {
     }
 
-    public RootClientRegisterRequest(String keyId, String keyPassword, String emailAddress) {
+    public RootClientRegisterRequest(String keyId, String keyPassword) {
         this.keyId = keyId;
         this.keyPassword = keyPassword;
-        this.emailAddress = emailAddress;
     }
 
 }

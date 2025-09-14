@@ -1,10 +1,27 @@
 package com.senior.cyber.pki.common.x509;
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.cert.X509CertificateHolder;
+
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 
 public class SubjectUtils {
+
+    public static String lookupValue(X509Certificate certificate, ASN1ObjectIdentifier identifier) throws CertificateEncodingException, IOException {
+        X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+        X500Name subject = holder.getSubject();
+        RDN[] rdns = subject.getRDNs(identifier);
+        for (RDN rdn : rdns) {
+            return rdn.getFirst().getValue().toString();
+        }
+        return null;
+    }
 
     public static X500Name generate(String countryCode,
                                     String organization,

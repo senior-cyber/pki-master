@@ -233,173 +233,121 @@ public class RootServiceImpl implements RootService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootClientRegister(RootClientRegisterRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
-        Map<String, SmartCardConnection> connections = new HashMap<>();
-        Map<String, KeyStore> keys = new HashMap<>();
-        Map<String, PivProvider> providers = new HashMap<>();
-        Map<String, PivSession> sessions = new HashMap<>();
-        Map<String, Slot> slots = new HashMap<>();
-        Map<String, String> serials = new HashMap<>();
 
-        // root
-        Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-        Crypto root = null;
-        switch (rootKey.getType()) {
-            case Yubico -> {
-                AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(request.getKeyPassword());
-                YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
-                PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, rootKey.getId(), yubico);
-                root = new Crypto(providers.get(serials.get(rootKey.getId())), rootKey.getPublicKey(), privateKey);
-            }
-            case BC -> {
-                PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
-                root = new Crypto(Utils.BC, rootKey.getPublicKey(), privateKey);
-            }
+        Key rootKey = null; // request.getKeyId();
+        Certificate _rootCertificate = new Certificate();
+        _rootCertificate.setCountryCode(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.C));
+        _rootCertificate.setOrganization(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.O));
+        _rootCertificate.setOrganizationalUnit(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.OU));
+        _rootCertificate.setCommonName(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.CN));
+        _rootCertificate.setLocalityName(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.L));
+        _rootCertificate.setStateOrProvinceName(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.ST));
+        _rootCertificate.setEmailAddress(SubjectUtils.lookupValue(request.getCertificate(), BCStyle.EmailAddress));
+        _rootCertificate.setKey(rootKey);
+        _rootCertificate.setCertificate(request.getCertificate());
+        _rootCertificate.setSerial(request.getCertificate().getSerialNumber().longValueExact());
+        _rootCertificate.setCreatedDatetime(new Date());
+        _rootCertificate.setValidFrom(request.getCertificate().getNotBefore());
+        _rootCertificate.setValidUntil(request.getCertificate().getNotAfter());
+        _rootCertificate.setStatus(CertificateStatusEnum.Good);
+        _rootCertificate.setType(CertificateTypeEnum.ROOT_CA);
+        this.certificateRepository.save(_rootCertificate);
+
+        // crl
+        Key crlKey = null;
+        {
+            Key key = new Key();
+            key.setStatus(KeyStatusEnum.Good);
+            key.setType(KeyTypeEnum.BC);
+            key.setKeySize(request.getCrlKeySize());
+            key.setKeyFormat(request.getCrlKeyFormat());
+            key.setPrivateKey(PrivateKeyUtils.convert(request.getCrlPrivateKey()));
+            key.setPublicKey(request.getCrlCertificate().getPublicKey());
+            key.setCreatedDatetime(new Date());
+            this.keyRepository.save(key);
+            crlKey = key;
         }
 
-        LocalDate now = LocalDate.now();
+        Certificate crl = new Certificate();
+        crl.setIssuerCertificate(_rootCertificate);
+        crl.setCountryCode(request.getCountry());
+        crl.setOrganization(request.getOrganization());
+        crl.setOrganizationalUnit(request.getOrganizationalUnit());
+        crl.setCommonName(request.getCommonName());
+        crl.setLocalityName(request.getLocality());
+        crl.setStateOrProvinceName(request.getProvince());
+        crl.setEmailAddress(request.getEmailAddress());
+        crl.setKey(crlKey);
+        crl.setCertificate(crlCertificate);
+        crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
+        crl.setCreatedDatetime(new Date());
+        crl.setValidFrom(crlCertificate.getNotBefore());
+        crl.setValidUntil(crlCertificate.getNotAfter());
+        crl.setStatus(CertificateStatusEnum.Good);
+        crl.setType(CertificateTypeEnum.CRL);
+        this.certificateRepository.save(crl);
 
-        try {
-
-            X509CertificateHolder holder = new X509CertificateHolder(request.getCertificate().getEncoded());
-            X500Name subject = holder.getSubject();
-            RDN[] rdns = subject.getRDNs(BCStyle.EmailAddress);
-            for (RDN rdn : rdns) {
-                emails.add(rdn.getFirst().getValue().toString());
-            }
-
-            X500Name rootSubject = SubjectUtils.generate(
-                    request.getCountry(),
-                    request.getOrganization(),
-                    request.getOrganizationalUnit(),
-                    request.getCommonName(),
-                    request.getLocality(),
-                    request.getProvince(),
-                    request.getEmailAddress()
-            );
-
-            X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
-            root.setCertificate(rootCertificate);
-            Certificate _rootCertificate = new Certificate();
-            _rootCertificate.setCountryCode(request.getCountry());
-            _rootCertificate.setOrganization(request.getOrganization());
-            _rootCertificate.setOrganizationalUnit(request.getOrganizationalUnit());
-            _rootCertificate.setCommonName(request.getCommonName());
-            _rootCertificate.setLocalityName(request.getLocality());
-            _rootCertificate.setStateOrProvinceName(request.getProvince());
-            _rootCertificate.setEmailAddress(request.getEmailAddress());
-            _rootCertificate.setKey(rootKey);
-            _rootCertificate.setCertificate(rootCertificate);
-            _rootCertificate.setSerial(rootCertificate.getSerialNumber().longValueExact());
-            _rootCertificate.setCreatedDatetime(new Date());
-            _rootCertificate.setValidFrom(rootCertificate.getNotBefore());
-            _rootCertificate.setValidUntil(rootCertificate.getNotAfter());
-            _rootCertificate.setStatus(CertificateStatusEnum.Good);
-            _rootCertificate.setType(CertificateTypeEnum.ROOT_CA);
-            this.certificateRepository.save(_rootCertificate);
-
-            // crl
-            Key crlKey = null;
-            {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                Key key = new Key();
-                key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.BC);
-                key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
-                key.setPublicKey(x509.getPublic());
-                key.setCreatedDatetime(new Date());
-                this.keyRepository.save(key);
-                crlKey = key;
-            }
-            X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), crlKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 1);
-            Certificate crl = new Certificate();
-            crl.setIssuerCertificate(_rootCertificate);
-            crl.setCountryCode(request.getCountry());
-            crl.setOrganization(request.getOrganization());
-            crl.setOrganizationalUnit(request.getOrganizationalUnit());
-            crl.setCommonName(request.getCommonName());
-            crl.setLocalityName(request.getLocality());
-            crl.setStateOrProvinceName(request.getProvince());
-            crl.setEmailAddress(request.getEmailAddress());
-            crl.setKey(crlKey);
-            crl.setCertificate(crlCertificate);
-            crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
-            crl.setCreatedDatetime(new Date());
-            crl.setValidFrom(crlCertificate.getNotBefore());
-            crl.setValidUntil(crlCertificate.getNotAfter());
-            crl.setStatus(CertificateStatusEnum.Good);
-            crl.setType(CertificateTypeEnum.CRL);
-            this.certificateRepository.save(crl);
-
-            // ocsp
-            Key ocspKey = null;
-            {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
-                Key key = new Key();
-                key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.BC);
-                key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
-                key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
-                key.setPublicKey(x509.getPublic());
-                key.setCreatedDatetime(new Date());
-                this.keyRepository.save(key);
-                ocspKey = key;
-            }
-            X500Name ocspSubject = SubjectUtils.generate(
-                    request.getCountry(),
-                    request.getOrganization(),
-                    request.getOrganizationalUnit(),
-                    request.getCommonName() + " OCSP",
-                    request.getLocality(),
-                    request.getProvince(),
-                    request.getEmailAddress()
-            );
-            X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 2);
-            Certificate ocsp = new Certificate();
-            ocsp.setIssuerCertificate(_rootCertificate);
-            ocsp.setCountryCode(request.getCountry());
-            ocsp.setOrganization(request.getOrganization());
-            ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
-            ocsp.setCommonName(request.getCommonName() + " OCSP");
-            ocsp.setLocalityName(request.getLocality());
-            ocsp.setStateOrProvinceName(request.getProvince());
-            ocsp.setEmailAddress(request.getEmailAddress());
-            ocsp.setKey(ocspKey);
-            ocsp.setCertificate(ocspCertificate);
-            ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
-            ocsp.setCreatedDatetime(new Date());
-            ocsp.setValidFrom(ocspCertificate.getNotBefore());
-            ocsp.setValidUntil(ocspCertificate.getNotAfter());
-            ocsp.setStatus(CertificateStatusEnum.Good);
-            ocsp.setType(CertificateTypeEnum.OCSP);
-            this.certificateRepository.save(ocsp);
-
-            _rootCertificate.setCrlCertificate(crl);
-            _rootCertificate.setOcspCertificate(_rootCertificate);
-            this.certificateRepository.save(_rootCertificate);
-
-            RootGenerateResponse response = new RootGenerateResponse();
-            response.setCertificateId(_rootCertificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCertificate(rootCertificate);
-
-            PivSession session = sessions.get(serials.get(rootKey.getId()));
-            if (session != null) {
-                Slot slot = slots.get(serials.get(rootKey.getId()));
-                session.putCertificate(slot, rootCertificate);
-            }
-
-            return response;
-        } finally {
-            for (SmartCardConnection connection : connections.values()) {
-                if (connection != null) {
-                    connection.close();
-                }
-            }
+        // ocsp
+        Key ocspKey = null;
+        {
+            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+            Key key = new Key();
+            key.setStatus(KeyStatusEnum.Good);
+            key.setType(KeyTypeEnum.BC);
+            key.setKeySize(2048);
+            key.setKeyFormat(KeyFormat.RSA);
+            key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
+            key.setPublicKey(x509.getPublic());
+            key.setCreatedDatetime(new Date());
+            this.keyRepository.save(key);
+            ocspKey = key;
         }
+        X500Name ocspSubject = SubjectUtils.generate(
+                request.getCountry(),
+                request.getOrganization(),
+                request.getOrganizationalUnit(),
+                request.getCommonName() + " OCSP",
+                request.getLocality(),
+                request.getProvince(),
+                request.getEmailAddress()
+        );
+        X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 2);
+        Certificate ocsp = new Certificate();
+        ocsp.setIssuerCertificate(_rootCertificate);
+        ocsp.setCountryCode(request.getCountry());
+        ocsp.setOrganization(request.getOrganization());
+        ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
+        ocsp.setCommonName(request.getCommonName() + " OCSP");
+        ocsp.setLocalityName(request.getLocality());
+        ocsp.setStateOrProvinceName(request.getProvince());
+        ocsp.setEmailAddress(request.getEmailAddress());
+        ocsp.setKey(ocspKey);
+        ocsp.setCertificate(ocspCertificate);
+        ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
+        ocsp.setCreatedDatetime(new Date());
+        ocsp.setValidFrom(ocspCertificate.getNotBefore());
+        ocsp.setValidUntil(ocspCertificate.getNotAfter());
+        ocsp.setStatus(CertificateStatusEnum.Good);
+        ocsp.setType(CertificateTypeEnum.OCSP);
+        this.certificateRepository.save(ocsp);
+
+        _rootCertificate.setCrlCertificate(crl);
+        _rootCertificate.setOcspCertificate(_rootCertificate);
+        this.certificateRepository.save(_rootCertificate);
+
+        RootGenerateResponse response = new RootGenerateResponse();
+        response.setCertificateId(_rootCertificate.getId());
+        response.setKeyPassword(request.getKeyPassword());
+        response.setCertificate(rootCertificate);
+
+        PivSession session = sessions.get(serials.get(rootKey.getId()));
+        if (session != null) {
+            Slot slot = slots.get(serials.get(rootKey.getId()));
+            session.putCertificate(slot, rootCertificate);
+        }
+
+        return response;
+
     }
 
 }
