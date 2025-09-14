@@ -63,13 +63,13 @@ public class KeyController {
         if (key.getKeyFormat() != null) {
             response.setKeyFormat(key.getKeyFormat().name());
         }
-        if (key.getType() == KeyTypeEnum.ServerKeyJCE) {
+        if (key.getType() == KeyTypeEnum.BC) {
             if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
                 PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
                 response.setPrivateKey(PrivateKeyUtils.convert(privateKey));
                 response.setOpenSshPrivateKey(OpenSshPrivateKeyUtils.convert(privateKey));
             }
-        } else if (key.getType() == KeyTypeEnum.ServerKeyYubico) {
+        } else if (key.getType() == KeyTypeEnum.Yubico) {
             if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());

@@ -71,7 +71,7 @@ public class RevokeController {
                 return ResponseEntity.ok(new RevokeCertificateResponse());
             } else {
                 LOGGER.info("key type is {}", key.getType());
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.ServerKeyJCE.name() + "]");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.BC.name() + "]");
             }
         } else {
             return ResponseEntity.ok(new RevokeCertificateResponse());
@@ -87,7 +87,7 @@ public class RevokeController {
         Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
         if (key.getPrivateKey() == null || key.getPrivateKey().isEmpty()) {
             LOGGER.info("key type is {}", key.getType());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.ServerKeyJCE.name() + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.BC.name() + "]");
         }
         if (PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()) == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key password is invalid");

@@ -72,11 +72,11 @@ public class SubordinateServiceImpl implements SubordinateService {
         Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto issuer = null;
         switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
                 issuer = new Crypto(Utils.BC, issuerCertificate.getCertificate(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
@@ -88,11 +88,11 @@ public class SubordinateServiceImpl implements SubordinateService {
         Key subordinateKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto subordinate = null;
         switch (subordinateKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(subordinateKey.getPrivateKey(), request.getKeyPassword());
                 subordinate = new Crypto(Utils.BC, subordinateKey.getPublicKey(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(subordinateKey.getPrivateKey()), YubicoPassword.class);
@@ -142,7 +142,7 @@ public class SubordinateServiceImpl implements SubordinateService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
@@ -177,7 +177,7 @@ public class SubordinateServiceImpl implements SubordinateService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));

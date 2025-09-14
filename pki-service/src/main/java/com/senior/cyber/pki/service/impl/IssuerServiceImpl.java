@@ -72,11 +72,11 @@ public class IssuerServiceImpl implements IssuerService {
         Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto issuer = null;
         switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
                 issuer = new Crypto(Utils.BC, issuerCertificate.getCertificate(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
@@ -88,11 +88,11 @@ public class IssuerServiceImpl implements IssuerService {
         Key issuingKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto issuing = null;
         switch (issuingKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuingKey.getPrivateKey(), request.getKeyPassword());
                 issuing = new Crypto(Utils.BC, issuingKey.getPublicKey(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuingKey.getPrivateKey()), YubicoPassword.class);
@@ -141,7 +141,7 @@ public class IssuerServiceImpl implements IssuerService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
@@ -176,7 +176,7 @@ public class IssuerServiceImpl implements IssuerService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));

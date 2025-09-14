@@ -65,11 +65,11 @@ public class SshCAServiceImpl implements SshCAService {
 
         Crypto issuer = null;
         switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
                 issuer = new Crypto(Utils.BC, issuerKey.getPublicKey(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
@@ -91,11 +91,11 @@ public class SshCAServiceImpl implements SshCAService {
             }
 
             switch (sshKey.getType()) {
-                case ServerKeyJCE -> {
+                case BC -> {
                     PrivateKey privateKey = PrivateKeyUtils.convert(sshKey.getPrivateKey(), request.getKeyPassword());
                     ssh = new Crypto(Utils.BC, issuerKey.getPublicKey(), privateKey);
                 }
-                case ServerKeyYubico -> {
+                case Yubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
                     encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(sshKey.getPrivateKey()), YubicoPassword.class);
@@ -133,7 +133,7 @@ public class SshCAServiceImpl implements SshCAService {
             response.setOpenSshPublicKey(ssh.getPublicKey());
             response.setOpenSshCertificate(certificate);
             switch (sshKey.getType()) {
-                case ServerKeyJCE -> {
+                case BC -> {
                     response.setOpenSshPrivateKey(ssh.getPrivateKey());
                     response.setConfig("Host " + request.getAlias() + "\n" +
                             "    HostName " + request.getServer() + "\n" +
@@ -141,7 +141,7 @@ public class SshCAServiceImpl implements SshCAService {
                             "    IdentityFile id_rsa\n" +
                             "    CertificateFile id_rsa-cert.pub");
                 }
-                case ServerKeyYubico -> {
+                case Yubico -> {
                     response.setConfig("Host " + request.getAlias() + "\n" +
                             "    HostName " + request.getServer() + "\n" +
                             "    User " + request.getPrincipal() + "\n" +

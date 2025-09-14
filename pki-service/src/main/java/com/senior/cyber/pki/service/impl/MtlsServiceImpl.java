@@ -73,14 +73,14 @@ public class MtlsServiceImpl implements MtlsService {
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto root = null;
         switch (rootKey.getType()) {
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, rootKey.getId(), yubico);
                 root = new Crypto(providers.get(serials.get(rootKey.getId())), rootKey.getPublicKey(), privateKey);
             }
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
                 root = new Crypto(Utils.BC, rootKey.getPublicKey(), privateKey);
             }
@@ -124,7 +124,7 @@ public class MtlsServiceImpl implements MtlsService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
@@ -158,7 +158,7 @@ public class MtlsServiceImpl implements MtlsService {
                 KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
-                key.setType(KeyTypeEnum.ServerKeyJCE);
+                key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
                 key.setKeyFormat(KeyFormat.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
@@ -244,11 +244,11 @@ public class MtlsServiceImpl implements MtlsService {
         Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto issuer = null;
         switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
                 issuer = new Crypto(Utils.BC, _issuerCertificate.getCertificate(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
@@ -261,11 +261,11 @@ public class MtlsServiceImpl implements MtlsService {
             Key leafKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
             Crypto leaf = null;
             switch (leafKey.getType()) {
-                case ServerKeyJCE -> {
+                case BC -> {
                     PrivateKey privateKey = PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword());
                     leaf = new Crypto(Utils.BC, leafKey.getPublicKey(), privateKey);
                 }
-                case ServerKeyYubico -> {
+                case Yubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
                     encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
@@ -300,7 +300,7 @@ public class MtlsServiceImpl implements MtlsService {
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(leafCertificate);
-            if (leafKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            if (leafKey.getType() == KeyTypeEnum.BC) {
                 response.setPrivateKey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             }
             return response;

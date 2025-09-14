@@ -79,11 +79,11 @@ public class LeafServiceImpl implements LeafService {
         Key issuerKey = this.keyRepository.findById(_issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto issuer = null;
         switch (issuerKey.getType()) {
-            case ServerKeyJCE -> {
+            case BC -> {
                 PrivateKey privateKey = PrivateKeyUtils.convert(issuerKey.getPrivateKey(), request.getIssuer().getKeyPassword());
                 issuer = new Crypto(Utils.BC, _issuerCertificate.getCertificate(), privateKey);
             }
-            case ServerKeyYubico -> {
+            case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
                 encryptor.setPassword(request.getIssuer().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(issuerKey.getPrivateKey()), YubicoPassword.class);
@@ -96,11 +96,11 @@ public class LeafServiceImpl implements LeafService {
             Key leafKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
             Crypto leaf = null;
             switch (leafKey.getType()) {
-                case ServerKeyJCE -> {
+                case BC -> {
                     PrivateKey privateKey = PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword());
                     leaf = new Crypto(Utils.BC, leafKey.getPublicKey(), privateKey);
                 }
-                case ServerKeyYubico -> {
+                case Yubico -> {
                     AES256TextEncryptor encryptor = new AES256TextEncryptor();
                     encryptor.setPassword(request.getKeyPassword());
                     YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(leafKey.getPrivateKey()), YubicoPassword.class);
@@ -149,7 +149,7 @@ public class LeafServiceImpl implements LeafService {
             response.setCertificateId(certificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCert(leafCertificate);
-            if (leafKey.getType() == KeyTypeEnum.ServerKeyJCE) {
+            if (leafKey.getType() == KeyTypeEnum.BC) {
                 response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             }
 

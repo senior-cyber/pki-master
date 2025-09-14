@@ -52,7 +52,7 @@ public class KeyServiceImpl implements KeyService {
         key.setStatus(KeyStatusEnum.Good);
         key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
         key.setPublicKey(_key.getPublic());
-        key.setType(KeyTypeEnum.ServerKeyJCE);
+        key.setType(KeyTypeEnum.BC);
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setCreatedDatetime(new Date());
@@ -120,7 +120,7 @@ public class KeyServiceImpl implements KeyService {
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
-            key.setType(KeyTypeEnum.ServerKeyYubico);
+            key.setType(KeyTypeEnum.Yubico);
             key.setKeySize(request.getSize());
             key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
             key.setKeyFormat(request.getFormat());
@@ -168,7 +168,7 @@ public class KeyServiceImpl implements KeyService {
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
-            key.setType(KeyTypeEnum.ServerKeyYubico);
+            key.setType(KeyTypeEnum.Yubico);
             if (publicKey instanceof RSAKey) {
                 key.setKeyFormat(KeyFormat.RSA);
             } else if (publicKey instanceof ECKey) {
