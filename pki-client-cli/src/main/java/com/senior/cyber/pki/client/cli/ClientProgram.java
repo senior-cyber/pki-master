@@ -40,20 +40,40 @@ public class ClientProgram implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
-        x509(args);
-        System.out.println("Done x509");
-        mtls(args);
-        System.out.println("Done mtls");
-        var key = sshCa(args);
-        // sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
-        sshClient(key.getKeyId(), key.getKeyPassword());
-        System.out.println("Done ssh-ca");
+
+        String api = System.getProperty("api");
+        if ("key".equals(api)) {
+            String function = System.getProperty("function");
+            if ("/jca/generate".equalsIgnoreCase(function)) {
+                Integer size = Integer.parseInt(System.getProperty("size"));
+                KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
+                JcaKeyGenerateRequest request = new JcaKeyGenerateRequest(size, format);
+                KeyGenerateResponse response = generateJcaKey(request);
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else if ("/yubico/info".equalsIgnoreCase(function)) {
+                YubicoInfoResponse response = yubicoInfo();
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else {
+                throw new RuntimeException("invalid function");
+            }
+        } else {
+            throw new RuntimeException("invalid api");
+        }
+
+//        x509(args);
+//        System.out.println("Done x509");
+//        mtls(args);
+//        System.out.println("Done mtls");
+//        var key = sshCa(args);
+//        // sshClient("60455daf-d120-4665-b258-aa1a5891509b", "H2lDFsmr273kue4cAtU5");
+//        sshClient(key.getKeyId(), key.getKeyPassword());
+//        System.out.println("Done ssh-ca");
         System.exit(0);
     }
 
     public KeyGenerateResponse sshCa(String... args) throws IOException, InterruptedException {
         // KeyGenerateResponse sshCaKey = generateYubicoKey("9a");
-        KeyGenerateResponse sshCaKey = generateJcaKey();
+        KeyGenerateResponse sshCaKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         System.out.println(sshCaKey.getKeyId());
         System.out.println(sshCaKey.getKeyPassword());
@@ -64,7 +84,7 @@ public class ClientProgram implements CommandLineRunner {
     public void sshClient(String keyId, String keyPassword) throws IOException, InterruptedException {
         Issuer issuer = new Issuer(null, keyId, keyPassword);
         // KeyGenerateResponse sshClientKey = generateYubicoKey("9c");
-        KeyGenerateResponse sshClientKey = generateJcaKey();
+        KeyGenerateResponse sshClientKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + sshClientKey.getKeyId() + ".pub");
         SshClientGenerateResponse sshClient = generateSshClient(issuer, sshClientKey, "socheat", "192.168.1.53", 1);
         System.out.println(sshClient.getConfig());
@@ -76,13 +96,13 @@ public class ClientProgram implements CommandLineRunner {
 
     public void mtls(String... args) throws IOException, InterruptedException {
         // KeyGenerateResponse mtlsServerKey = generateYubicoKey("9a");
-        KeyGenerateResponse mtlsServerKey = generateJcaKey();
+        KeyGenerateResponse mtlsServerKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + mtlsServerKey.getKeyId() + ".pub");
         MtlsGenerateResponse mtlsServer = generateMtlsServer(mtlsServerKey, "Phnom Penh", "Kandal", "KH", "mTLS Server", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsServer.getCertificate().getSerialNumber()) + ".crt");
 
         // KeyGenerateResponse mtlsClientKey = generateYubicoKey("9c");
-        KeyGenerateResponse mtlsClientKey = generateJcaKey();
+        KeyGenerateResponse mtlsClientKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + mtlsClientKey.getKeyId() + ".pub");
         MtlsClientGenerateResponse mtlsClient = generateMtlsClient(mtlsServer, mtlsClientKey, "Phnom Penh", "Kandal", "KH", "mTLS Client", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", mtlsClient.getCert().getSerialNumber()) + ".crt");
@@ -94,30 +114,30 @@ public class ClientProgram implements CommandLineRunner {
 
     public void x509(String... args) throws IOException, InterruptedException {
         // KeyGenerateResponse rootCaKey = generateYubicoKey("9a");
-        KeyGenerateResponse rootCaKey = generateJcaKey();
+        KeyGenerateResponse rootCaKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + rootCaKey.getKeyId() + ".pub");
         RootGenerateResponse rootCa = generateRootCA(rootCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National RootCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", rootCa.getCertificate().getSerialNumber()) + ".crt");
 
         // KeyGenerateResponse subordinateCaKey = generateYubicoKey("9c");
-        KeyGenerateResponse subordinateCaKey = generateJcaKey();
+        KeyGenerateResponse subordinateCaKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + subordinateCaKey.getKeyId() + ".pub");
         SubordinateGenerateResponse subordinateCa = generateSubordinateCA(rootCa, subordinateCaKey, "Phnom Penh", "Kandal", "KH", "Cambodia National SubordinateCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", subordinateCa.getCertificate().getSerialNumber()) + ".crt");
 
         // KeyGenerateResponse issuingCaKey1 = generateYubicoKey("9d");
-        KeyGenerateResponse issuingCaKey1 = generateJcaKey();
+        KeyGenerateResponse issuingCaKey1 = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + issuingCaKey1.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa1 = generateIssuingCA(rootCa, issuingCaKey1, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa1.getCertificate().getSerialNumber()) + ".crt");
 
-        KeyGenerateResponse issuingCaKey2 = generateJcaKey();
+        KeyGenerateResponse issuingCaKey2 = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + issuingCaKey2.getKeyId() + ".pub");
         IssuerGenerateResponse issuingCa2 = generateIssuingCA(subordinateCa, issuingCaKey2, "Phnom Penh", "Kandal", "KH", "Cambodia National IssuingCA", "Ministry of Post and Telecommunications", "Digital Government Committee");
         System.out.println(X509 + "/api/x509/" + String.format("%012X", issuingCa2.getCertificate().getSerialNumber()) + ".crt");
 
         // KeyGenerateResponse serverKey = generateYubicoKey("9a");
-        KeyGenerateResponse serverKey = generateJcaKey();
+        KeyGenerateResponse serverKey = generateJcaKey(null);
         System.out.println(SSH + "/api/openssh/" + serverKey.getKeyId() + ".pub");
         ServerGenerateResponse server = generateServer(issuingCa2, serverKey, "Phnom Penh", "Kandal", "KH", "127.0.0.1", "Ministry of Post and Telecommunications", "Digital Government Committee", List.of("127.0.0.1", "localhost"));
         System.out.println(X509 + "/api/x509/" + String.format("%012X", server.getCert().getSerialNumber()) + ".crt");
@@ -149,12 +169,20 @@ public class ClientProgram implements CommandLineRunner {
         }
     }
 
-    protected static KeyGenerateResponse generateJcaKey() throws IOException, InterruptedException {
+    protected static YubicoInfoResponse yubicoInfo() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            JcaKeyGenerateRequest request = new JcaKeyGenerateRequest();
-            request.setSize(2048);
-            request.setFormat(KeyFormat.RSA);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(KEY + "/api/yubico/info"))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
+        }
+    }
 
+    protected static KeyGenerateResponse generateJcaKey(JcaKeyGenerateRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/jca/generate"))
                     .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))

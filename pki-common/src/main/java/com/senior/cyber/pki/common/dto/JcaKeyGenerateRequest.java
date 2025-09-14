@@ -17,4 +17,12 @@ public class JcaKeyGenerateRequest implements Serializable {
     @JsonProperty("format")
     private KeyFormat format;
 
+    public JcaKeyGenerateRequest() {
+    }
+
+    public JcaKeyGenerateRequest(int size, KeyFormat format) {
+        this.size = size;
+        this.format = format;
+    }
+
 }
