@@ -2,9 +2,11 @@ package com.senior.cyber.pki.api.key.controller;
 
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.OpenSshPrivateKeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.senior.cyber.pki.service.util.YubicoProviderUtils;
@@ -14,6 +16,7 @@ import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.util.text.AES256TextEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +45,7 @@ public class KeyController {
     protected KeyRepository keyRepository;
 
     @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws OperatorCreationException, IOException {
         KeyInfoRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -60,10 +63,19 @@ public class KeyController {
         if (key.getKeyFormat() != null) {
             response.setKeyFormat(key.getKeyFormat().name());
         }
-        if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
-            PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
-            response.setPrivateKey(privateKey);
-            response.setOpenSshPrivateKey(privateKey);
+        if (key.getType() == KeyTypeEnum.ServerKeyJCE) {
+            if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
+                PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
+                response.setPrivateKey(PrivateKeyUtils.convert(privateKey));
+                response.setOpenSshPrivateKey(OpenSshPrivateKeyUtils.convert(privateKey));
+            }
+        } else if (key.getType() == KeyTypeEnum.ServerKeyYubico) {
+            if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getKeyPassword());
+                String privateKey = encryptor.decrypt(key.getPrivateKey());
+                response.setPrivateKey(privateKey);
+            }
         }
         PublicKey publicKey = key.getPublicKey();
         response.setPublicKey(publicKey);

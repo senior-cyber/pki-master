@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.senior.cyber.pki.common.converter.*;
+import com.senior.cyber.pki.common.converter.OpenSshPublicKeyDeserializer;
+import com.senior.cyber.pki.common.converter.OpenSshPublicKeySerializer;
+import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
+import com.senior.cyber.pki.common.converter.PublicKeySerializer;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
 
@@ -16,10 +18,8 @@ import java.util.Date;
 @Getter
 public class KeyInfoResponse extends BaseResponse {
 
-    @JsonSerialize(using = PrivateKeySerializer.class)
-    @JsonDeserialize(using = PrivateKeyDeserializer.class)
     @JsonProperty("privateKey")
-    private PrivateKey privateKey;
+    private String privateKey;
 
     @JsonSerialize(using = PublicKeySerializer.class)
     @JsonDeserialize(using = PublicKeyDeserializer.class)
@@ -31,10 +31,8 @@ public class KeyInfoResponse extends BaseResponse {
     @JsonProperty("openSshPublicKey")
     private PublicKey openSshPublicKey;
 
-    @JsonSerialize(using = OpenSshPrivateKeySerializer.class)
-    @JsonDeserialize(using = OpenSshPrivateKeyDeserializer.class)
     @JsonProperty("openSshPrivateKey")
-    private PrivateKey openSshPrivateKey;
+    private String openSshPrivateKey;
 
     @JsonProperty("type")
     private String type;

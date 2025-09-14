@@ -56,7 +56,8 @@ public class ClientProgram implements CommandLineRunner {
                 String keyId = System.getProperty("keyId");
                 String keyPassword = System.getProperty("keyPassword");
                 KeyInfoResponse response = info(new KeyInfoRequest(keyId, keyPassword));
-                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                FileUtils.write(new File(keyId + "-public-key.pem"), PublicKeyUtils.convert(response.getPublicKey()), StandardCharsets.UTF_8);
+                FileUtils.write(new File(keyId + "-private-key.pem"), response.getPrivateKey(), StandardCharsets.UTF_8);
             } else {
                 throw new RuntimeException("invalid function");
             }
@@ -162,12 +163,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setAlias("test");
             request.setValidityPeriod(validityMinutes);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/ssh/client/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/ssh/client/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), SshClientGenerateResponse.class);
         }
@@ -175,12 +171,7 @@ public class ClientProgram implements CommandLineRunner {
 
     protected static KeyInfoResponse info(KeyInfoRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/info"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/info")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), KeyInfoResponse.class);
         }
@@ -188,11 +179,7 @@ public class ClientProgram implements CommandLineRunner {
 
     protected static YubicoInfoResponse yubicoInfo() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/yubico/info"))
-                    .GET()
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/info")).GET().header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
         }
@@ -200,12 +187,7 @@ public class ClientProgram implements CommandLineRunner {
 
     protected static KeyGenerateResponse generateJcaKey(JcaKeyGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/jca/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/jca/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
         }
@@ -219,12 +201,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setManagementKey("010203040506070801020304050607080102030405060708");
             request.setPin("123456");
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/yubico/register"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/register")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
         }
@@ -239,12 +216,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setSize(2048);
             request.setFormat(KeyFormat.RSA);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/yubico/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(KEY + "/api/yubico/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
         }
@@ -264,12 +236,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/mtls/client/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/mtls/client/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), MtlsClientGenerateResponse.class);
         }
@@ -287,12 +254,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/mtls/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/mtls/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), MtlsGenerateResponse.class);
         }
@@ -312,12 +274,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setCommonName(cn);
             request.setSans(sans);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/server/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/server/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), ServerGenerateResponse.class);
         }
@@ -336,12 +293,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ROOT + "/api/issuer/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/issuer/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
         }
@@ -360,12 +312,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ISSUER + "/api/issuer/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ISSUER + "/api/issuer/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), IssuerGenerateResponse.class);
         }
@@ -384,12 +331,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ROOT + "/api/subordinate/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/subordinate/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), SubordinateGenerateResponse.class);
         }
@@ -407,12 +349,7 @@ public class ClientProgram implements CommandLineRunner {
             request.setOrganizationalUnit(ou);
             request.setCommonName(cn);
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(ROOT + "/api/root/generate"))
-                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .build();
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(ROOT + "/api/root/generate")).POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request))).header("Content-Type", "application/json").header("Accept", "application/json").build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), RootGenerateResponse.class);
         }
