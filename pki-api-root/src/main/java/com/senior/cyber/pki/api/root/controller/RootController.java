@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.root.controller;
 
+import com.senior.cyber.pki.common.dto.RootClientRegisterRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -50,8 +51,8 @@ public class RootController {
      * @throws ApplicationNotAvailableException
      * @throws BadResponseException
      */
-    @RequestMapping(path = "/root/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RootGenerateResponse> rootGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    @RequestMapping(path = "/root/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RootGenerateResponse> rootServerGenerate(RequestEntity<RootGenerateRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         RootGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -62,7 +63,36 @@ public class RootController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        RootGenerateResponse response = this.rootService.rootGenerate(request);
+        RootGenerateResponse response = this.rootService.rootServerGenerate(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * for issue self sign root ca
+     *
+     * @param httpRequest
+     * @return
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws OperatorCreationException
+     * @throws IOException
+     * @throws ApduException
+     * @throws ApplicationNotAvailableException
+     * @throws BadResponseException
+     */
+    @RequestMapping(path = "/root/client/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RootGenerateResponse> rootClientRegister(RequestEntity<RootClientRegisterRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+        RootClientRegisterRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
+        }
+
+        RootGenerateResponse response = this.rootService.rootClientRegister(request);
         return ResponseEntity.ok(response);
     }
 

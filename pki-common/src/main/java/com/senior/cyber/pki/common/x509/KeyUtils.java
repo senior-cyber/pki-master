@@ -17,10 +17,13 @@ public class KeyUtils {
 
     public static KeyPair generate(KeyFormat format) {
         int keySize = 0;
-        if (format == KeyFormat.EC) {
-            keySize = 256;
-        } else if (format == KeyFormat.RSA) {
-            keySize = 2048;
+        switch (format) {
+            case EC -> {
+                keySize = 384;
+            }
+            case RSA -> {
+                keySize = 2048;
+            }
         }
         return generate(format, keySize);
     }

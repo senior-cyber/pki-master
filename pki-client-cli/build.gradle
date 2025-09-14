@@ -24,6 +24,8 @@ dependencies {
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"
 
+    implementation "org.jasypt:jasypt:${jasypt}"
+
     implementation "commons-io:commons-io:${commons_io}"
     implementation "org.apache.commons:commons-lang3:${commons_lang3}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot}"

@@ -10,6 +10,9 @@ import java.io.Serializable;
 @Getter
 public class YubicoKeyRegisterRequest implements Serializable {
 
+    @JsonProperty("size")
+    private int size;
+
     @JsonProperty("slot")
     private String slot;
 
@@ -25,7 +28,8 @@ public class YubicoKeyRegisterRequest implements Serializable {
     public YubicoKeyRegisterRequest() {
     }
 
-    public YubicoKeyRegisterRequest(String slot, String serialNumber, String managementKey, String pin) {
+    public YubicoKeyRegisterRequest(int size, String slot, String serialNumber, String managementKey, String pin) {
+        this.size = size;
         this.slot = slot;
         this.serialNumber = serialNumber;
         this.managementKey = managementKey;

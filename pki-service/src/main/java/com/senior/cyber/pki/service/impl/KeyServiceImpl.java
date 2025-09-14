@@ -2,6 +2,7 @@ package com.senior.cyber.pki.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.KeyFormat;
 import com.senior.cyber.pki.common.x509.KeyUtils;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
@@ -11,7 +12,6 @@ import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -60,6 +60,26 @@ public class KeyServiceImpl implements KeyService {
 
         KeyGenerateResponse response = new KeyGenerateResponse();
         response.setKeyPassword(password);
+        response.setKeyId(key.getId());
+        if (key.getKeyFormat() == KeyFormat.RSA) {
+            response.setOpenSshPublicKey(key.getPublicKey());
+        }
+        return response;
+    }
+
+    @Override
+    public KeyGenerateResponse register(BcKeyRegisterRequest request) {
+        Key key = new Key();
+        key.setStatus(KeyStatusEnum.Good);
+        key.setPrivateKey(null);
+        key.setPublicKey(request.getPublicKey());
+        key.setType(KeyTypeEnum.BC);
+        key.setKeySize(request.getSize());
+        key.setKeyFormat(request.getFormat());
+        key.setCreatedDatetime(new Date());
+        this.keyRepository.save(key);
+
+        KeyGenerateResponse response = new KeyGenerateResponse();
         response.setKeyId(key.getId());
         if (key.getKeyFormat() == KeyFormat.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
@@ -169,6 +189,7 @@ public class KeyServiceImpl implements KeyService {
             key.setStatus(KeyStatusEnum.Good);
             key.setPublicKey(publicKey);
             key.setType(KeyTypeEnum.Yubico);
+            key.setKeySize(request.getSize());
             if (publicKey instanceof RSAKey) {
                 key.setKeyFormat(KeyFormat.RSA);
             } else if (publicKey instanceof ECKey) {

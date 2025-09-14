@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.service;
 
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
+import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.CommandException;
 import com.yubico.yubikit.core.fido.FidoConnection;

@@ -1,4 +1,4 @@
-package com.senior.cyber.pki.service.util;
+package com.senior.cyber.pki.common.util;
 
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.BadResponseException;

@@ -9,7 +9,7 @@ import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
-import com.senior.cyber.pki.service.util.YubicoProviderUtils;
+import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
@@ -87,8 +87,8 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<BcKeyGenerateRequest> httpRequest) throws OperatorCreationException {
+    @RequestMapping(path = "/bc/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> bcServerGenerate(RequestEntity<BcKeyGenerateRequest> httpRequest) throws OperatorCreationException {
         BcKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -110,7 +110,33 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/bc/client/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcKeyRegisterRequest> httpRequest) throws OperatorCreationException {
+        BcKeyRegisterRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        if (request.getFormat() == KeyFormat.EC) {
+            if (request.getSize() != 256 && request.getSize() != 384) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
+            }
+        } else if (request.getFormat() == KeyFormat.RSA) {
+            if (request.getSize() != 1024 && request.getSize() != 2048) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
+        }
+
+        if (request.getPublicKey() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public key is null");
+        }
+        KeyGenerateResponse response = this.keyService.register(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(path = "/yubico/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoKeyGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         YubicoKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
@@ -161,8 +187,8 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/yubico/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> yubicoRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+    @RequestMapping(path = "/yubico/client/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> yubicoClientRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
         YubicoKeyRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

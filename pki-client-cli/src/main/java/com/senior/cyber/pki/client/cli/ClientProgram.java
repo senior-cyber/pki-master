@@ -1,13 +1,24 @@
 package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senior.cyber.pki.client.cli.dto.BcClientGenerate;
 import com.senior.cyber.pki.client.cli.dto.Subject;
+import com.senior.cyber.pki.client.cli.dto.YubicoClientGenerate;
 import com.senior.cyber.pki.client.cli.utils.IssuerUtils;
 import com.senior.cyber.pki.client.cli.utils.KeyUtils;
 import com.senior.cyber.pki.client.cli.utils.RevokeUtils;
 import com.senior.cyber.pki.client.cli.utils.RootUtils;
 import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.*;
+import com.yubico.yubikit.core.YubiKeyDevice;
+import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
+import com.yubico.yubikit.core.application.BadResponseException;
+import com.yubico.yubikit.core.smartcard.ApduException;
+import com.yubico.yubikit.core.smartcard.SmartCardConnection;
+import com.yubico.yubikit.piv.KeyType;
+import com.yubico.yubikit.piv.PivSession;
+import com.yubico.yubikit.piv.Slot;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +27,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +51,35 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws IOException, InterruptedException {
+    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException {
         String api = System.getProperty("api");
         if ("key".equals(api)) {
             String function = System.getProperty("function");
-            if ("bc-generate".equals(function)) {
+            if ("bc-client-generate".equals(function)) {
+                KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
+                int keySize = 0;
+                switch (format) {
+                    case EC -> {
+                        keySize = 384;
+                    }
+                    case RSA -> {
+                        keySize = 2048;
+                    }
+                }
+                KeyPair keyPair = com.senior.cyber.pki.common.x509.KeyUtils.generate(format, keySize);
+                BcClientGenerate bcClientGenerate = new BcClientGenerate(keyPair.getPublic(), keyPair.getPrivate());
+                System.out.println("wrote files");
+                FileUtils.write(new File("key-info.json"), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(bcClientGenerate), StandardCharsets.UTF_8);
+                System.out.println("  " + "key-info.json");
+                FileUtils.write(new File("public-key.pem"), PublicKeyUtils.convert(bcClientGenerate.getPublicKey()), StandardCharsets.UTF_8);
+                System.out.println("  " + "public-key.pem");
+                FileUtils.write(new File("private-key.pem"), PrivateKeyUtils.convert(bcClientGenerate.getPrivateKey()), StandardCharsets.UTF_8);
+                System.out.println("  " + "private-key.pem");
+                FileUtils.write(new File("openssh-public-key.pub"), OpenSshPublicKeyUtils.convert(bcClientGenerate.getPublicKey()), StandardCharsets.UTF_8);
+                System.out.println("  " + "openssh-public-key.pub");
+                FileUtils.write(new File("openssh-private-key"), OpenSshPrivateKeyUtils.convert(bcClientGenerate.getPrivateKey()), StandardCharsets.UTF_8);
+                System.out.println("  " + "openssh-private-key");
+            } else if ("bc-server-generate".equals(function)) {
                 Integer size = Integer.parseInt(System.getProperty("size"));
                 KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
                 KeyGenerateResponse response = KeyUtils.bcGenerate(new BcKeyGenerateRequest(size, format));
@@ -78,7 +115,7 @@ public class ClientProgram implements CommandLineRunner {
                 } else {
                     System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                 }
-            } else if ("yubico-generate".equals(function)) {
+            } else if ("yubico-server-generate".equals(function)) {
                 Integer size = Integer.parseInt(System.getProperty("size"));
                 String serialNumber = System.getProperty("serialNumber");
                 String slot = System.getProperty("slot");
@@ -86,12 +123,50 @@ public class ClientProgram implements CommandLineRunner {
                 KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
                 KeyGenerateResponse response = KeyUtils.yubicoGenerate(new YubicoKeyGenerateRequest(size, format, serialNumber, slot, managementKey));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else if ("yubico-client-generate".equals(function)) {
+                Integer size = Integer.parseInt(System.getProperty("size"));
+                String serialNumber = System.getProperty("serialNumber");
+                String _slot = System.getProperty("slot");
+                String managementKey = System.getProperty("managementKey");
+                if (managementKey == null || managementKey.isEmpty()) {
+                    managementKey = MANAGEMENT_KEY;
+                }
+                Slot pivSlot = null;
+                for (Slot slot : Slot.values()) {
+                    if (slot.getStringAlias().equalsIgnoreCase(_slot)) {
+                        pivSlot = slot;
+                        break;
+                    }
+                }
+                YubiKeyDevice device = YubicoProviderUtils.lookupDevice(serialNumber);
+                try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
+                    PivSession session = new PivSession(connection);
+                    session.authenticate(YubicoProviderUtils.hexStringToByteArray(managementKey));
+                    PublicKey publicKey = null;
+                    switch (size) {
+                        case 1024 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA1024);
+                        }
+                        case 2048 -> {
+                            publicKey = YubicoProviderUtils.generateKey(session, pivSlot, KeyType.RSA2048);
+                        }
+                    }
+                    YubicoClientGenerate yubicoClientGenerate = new YubicoClientGenerate(publicKey);
+                    System.out.println("wrote files");
+                    FileUtils.write(new File("key-info.json"), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(yubicoClientGenerate), StandardCharsets.UTF_8);
+                    System.out.println("  " + "key-info.json");
+                    FileUtils.write(new File("public-key.pem"), PublicKeyUtils.convert(yubicoClientGenerate.getPublicKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + "public-key.pem");
+                    FileUtils.write(new File("openssh-public-key.pub"), OpenSshPublicKeyUtils.convert(yubicoClientGenerate.getPublicKey()), StandardCharsets.UTF_8);
+                    System.out.println("  " + "openssh-public-key.pub");
+                }
             } else if ("yubico-register".equals(function)) {
+                Integer size = Integer.parseInt(System.getProperty("size"));
                 String serialNumber = System.getProperty("serialNumber");
                 String slot = System.getProperty("slot");
                 String pin = System.getProperty("pin");
                 String managementKey = System.getProperty("managementKey");
-                KeyGenerateResponse response = KeyUtils.yubicoRegister(new YubicoKeyRegisterRequest(slot, serialNumber, managementKey, pin));
+                KeyGenerateResponse response = KeyUtils.yubicoRegister(new YubicoKeyRegisterRequest(size, slot, serialNumber, managementKey, pin));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
             } else {
                 throw new RuntimeException("invalid function");

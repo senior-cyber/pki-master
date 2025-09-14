@@ -17,6 +17,14 @@
 | 13 | Swift            |
 | 14 | Objective-C      |
 
+# Client CLI
+
+```text
+./gradlew bootJar && java -Dapi=key -Dfunction=yubico-info -jar pki-client-cli/build/libs/pki-client-cli.jar
+./gradlew bootJar && java -Dapi=key -Dfunction=bc-client-generate -Dsize=2048 -Dformat=RSA -jar pki-client-cli/build/libs/pki-client-cli.jar
+./gradlew bootJar && java -Dapi=key -Dfunction=yubico-client-generate -Dsize=2048 -Dslot=9a -DserialNumber=23275988 -jar pki-client-cli/build/libs/pki-client-cli.jar
+```
+
 ## Prerequisite
 
 ```shell

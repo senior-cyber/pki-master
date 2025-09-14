@@ -12,6 +12,8 @@ public interface KeyService {
 
     KeyGenerateResponse generate(BcKeyGenerateRequest request) throws OperatorCreationException;
 
+    KeyGenerateResponse register(BcKeyRegisterRequest request);
+
     KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
 
     KeyGenerateResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;

@@ -10,6 +10,17 @@ server:
 spring:
   application:
     name: RootCA
+  mail:
+    host: mail.khmer.name
+    port: 465
+    username: no-reply@khmer.name
+    password: your-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
   jackson:
     serialization:
       indent_output: true
