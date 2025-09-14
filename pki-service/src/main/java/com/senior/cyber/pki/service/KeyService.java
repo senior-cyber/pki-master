@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public interface KeyService {
 
-    KeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException;
+    KeyGenerateResponse generate(BcKeyGenerateRequest request) throws OperatorCreationException;
 
     KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
 

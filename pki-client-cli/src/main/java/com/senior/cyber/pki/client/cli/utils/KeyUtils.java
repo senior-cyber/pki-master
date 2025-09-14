@@ -66,10 +66,10 @@ public class KeyUtils {
         }
     }
 
-    public static KeyGenerateResponse jcaGenerate(JcaKeyGenerateRequest request) throws IOException, InterruptedException {
+    public static KeyGenerateResponse bcGenerate(BcKeyGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(KEY + "/api/jca/generate"))
+                    .uri(URI.create(KEY + "/api/bc/generate"))
                     .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")

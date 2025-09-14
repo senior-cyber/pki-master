@@ -45,7 +45,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse generate(JcaKeyGenerateRequest request) throws OperatorCreationException {
+    public KeyGenerateResponse generate(BcKeyGenerateRequest request) throws OperatorCreationException {
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();

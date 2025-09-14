@@ -87,9 +87,9 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/jca/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> jcaGenerate(RequestEntity<JcaKeyGenerateRequest> httpRequest) throws OperatorCreationException {
-        JcaKeyGenerateRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<BcKeyGenerateRequest> httpRequest) throws OperatorCreationException {
+        BcKeyGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }

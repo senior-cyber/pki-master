@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class JcaKeyGenerateRequest implements Serializable {
+public class BcKeyGenerateRequest implements Serializable {
 
     @JsonProperty("size")
     private int size;
@@ -17,10 +17,10 @@ public class JcaKeyGenerateRequest implements Serializable {
     @JsonProperty("format")
     private KeyFormat format;
 
-    public JcaKeyGenerateRequest() {
+    public BcKeyGenerateRequest() {
     }
 
-    public JcaKeyGenerateRequest(int size, KeyFormat format) {
+    public BcKeyGenerateRequest(int size, KeyFormat format) {
         this.size = size;
         this.format = format;
     }

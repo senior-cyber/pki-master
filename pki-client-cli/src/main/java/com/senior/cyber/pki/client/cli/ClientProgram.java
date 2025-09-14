@@ -42,10 +42,10 @@ public class ClientProgram implements CommandLineRunner {
         String api = System.getProperty("api");
         if ("key".equals(api)) {
             String function = System.getProperty("function");
-            if ("jca-generate".equals(function)) {
+            if ("bc-generate".equals(function)) {
                 Integer size = Integer.parseInt(System.getProperty("size"));
                 KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
-                KeyGenerateResponse response = KeyUtils.jcaGenerate(new JcaKeyGenerateRequest(size, format));
+                KeyGenerateResponse response = KeyUtils.bcGenerate(new BcKeyGenerateRequest(size, format));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
             } else if ("yubico-info".equals(function)) {
                 YubicoInfoResponse response = KeyUtils.yubicoInfo();
