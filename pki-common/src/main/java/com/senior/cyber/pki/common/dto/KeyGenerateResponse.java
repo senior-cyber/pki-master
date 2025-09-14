@@ -20,9 +20,9 @@ public class KeyGenerateResponse extends BaseResponse {
     @JsonProperty("keyPassword")
     private String keyPassword;
 
-    @JsonProperty("opensshPublicKey")
+    @JsonProperty("openSshPublicKey")
     @JsonSerialize(using = OpenSshPublicKeySerializer.class)
     @JsonDeserialize(using = OpenSshPublicKeyDeserializer.class)
-    private PublicKey opensshPublicKey;
+    private PublicKey openSshPublicKey;
 
 }

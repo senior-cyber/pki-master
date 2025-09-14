@@ -63,7 +63,7 @@ public class KeyController {
         if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
             PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
             response.setPrivateKey(privateKey);
-            response.setOpenSshprivateKey(privateKey);
+            response.setOpenSshPrivateKey(privateKey);
         }
         PublicKey publicKey = key.getPublicKey();
         response.setPublicKey(publicKey);

@@ -47,11 +47,15 @@ public class ClientProgram implements CommandLineRunner {
             if ("/jca/generate".equalsIgnoreCase(function)) {
                 Integer size = Integer.parseInt(System.getProperty("size"));
                 KeyFormat format = KeyFormat.valueOf(System.getProperty("format"));
-                JcaKeyGenerateRequest request = new JcaKeyGenerateRequest(size, format);
-                KeyGenerateResponse response = generateJcaKey(request);
+                KeyGenerateResponse response = generateJcaKey(new JcaKeyGenerateRequest(size, format));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
             } else if ("/yubico/info".equalsIgnoreCase(function)) {
                 YubicoInfoResponse response = yubicoInfo();
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            } else if ("/info".equalsIgnoreCase(function)) {
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                KeyInfoResponse response = info(new KeyInfoRequest(keyId, keyPassword));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
             } else {
                 throw new RuntimeException("invalid function");
@@ -77,7 +81,7 @@ public class ClientProgram implements CommandLineRunner {
         System.out.println(SSH + "/api/openssh/" + sshCaKey.getKeyId() + ".pub");
         System.out.println(sshCaKey.getKeyId());
         System.out.println(sshCaKey.getKeyPassword());
-        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpensshPublicKey()));
+        FileUtils.write(new File("/opt/apps/tls/127.0.0.1/ssh-ca.pem"), OpenSshPublicKeyUtils.convert(sshCaKey.getOpenSshPublicKey()));
         return sshCaKey;
     }
 
@@ -166,6 +170,19 @@ public class ClientProgram implements CommandLineRunner {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), SshClientGenerateResponse.class);
+        }
+    }
+
+    protected static KeyInfoResponse info(KeyInfoRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(KEY + "/api/info"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), KeyInfoResponse.class);
         }
     }
 

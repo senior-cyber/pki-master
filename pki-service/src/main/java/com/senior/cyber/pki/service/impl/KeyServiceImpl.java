@@ -62,7 +62,7 @@ public class KeyServiceImpl implements KeyService {
         response.setKeyPassword(password);
         response.setKeyId(key.getId());
         if (key.getKeyFormat() == KeyFormat.RSA) {
-            response.setOpensshPublicKey(key.getPublicKey());
+            response.setOpenSshPublicKey(key.getPublicKey());
         }
         return response;
     }
@@ -131,7 +131,7 @@ public class KeyServiceImpl implements KeyService {
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
             if (key.getKeyFormat() == KeyFormat.RSA) {
-                response.setOpensshPublicKey(key.getPublicKey());
+                response.setOpenSshPublicKey(key.getPublicKey());
             }
             return response;
         }
@@ -182,7 +182,7 @@ public class KeyServiceImpl implements KeyService {
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
             if (key.getKeyFormat() == KeyFormat.RSA) {
-                response.setOpensshPublicKey(key.getPublicKey());
+                response.setOpenSshPublicKey(key.getPublicKey());
             }
             return response;
         }

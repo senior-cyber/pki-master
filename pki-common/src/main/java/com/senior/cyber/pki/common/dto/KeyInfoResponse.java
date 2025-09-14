@@ -34,7 +34,7 @@ public class KeyInfoResponse extends BaseResponse {
     @JsonSerialize(using = OpenSshPrivateKeySerializer.class)
     @JsonDeserialize(using = OpenSshPrivateKeyDeserializer.class)
     @JsonProperty("openSshPrivateKey")
-    private PrivateKey openSshprivateKey;
+    private PrivateKey openSshPrivateKey;
 
     @JsonProperty("type")
     private String type;
