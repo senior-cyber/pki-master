@@ -2,6 +2,9 @@ package com.senior.cyber.pki.client.cli.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
+import com.yubico.yubikit.core.YubiKeyDevice;
+import com.yubico.yubikit.desktop.YubiKitManager;
+import com.yubico.yubikit.management.DeviceInfo;
 
 import java.io.IOException;
 import java.net.URI;
@@ -9,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class KeyUtils {
 
@@ -38,7 +42,27 @@ public class KeyUtils {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
+            YubicoInfoResponse response = MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
+
+            YubiKitManager manager = new YubiKitManager();
+            for (Map.Entry<YubiKeyDevice, DeviceInfo> p : manager.listAllDevices().entrySet()) {
+                YubicoInfo _info = new YubicoInfo();
+                response.getItems().add(_info);
+                YubiKeyDevice device = p.getKey();
+                DeviceInfo info = p.getValue();
+                _info.setTransport(device.getTransport().name());
+                _info.setVersion(String.valueOf(info.getVersion()));
+                if (info.getSerialNumber() != null) {
+                    _info.setSerialNumber(String.valueOf(info.getSerialNumber()));
+                }
+                if (info.getPartNumber() != null && !"null".equals(info.getPartNumber())) {
+                    _info.setPartNumber(String.valueOf(info.getPartNumber()));
+                }
+                _info.setFormFactor(info.getFormFactor().name());
+                _info.setVersionName(info.getVersionName());
+                _info.setType("client");
+            }
+            return response;
         }
     }
 

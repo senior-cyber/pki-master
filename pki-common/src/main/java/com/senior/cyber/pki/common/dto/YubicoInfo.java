@@ -26,4 +26,7 @@ public class YubicoInfo {
     @JsonProperty("versionName")
     private String versionName;
 
+    @JsonProperty("type")
+    private String type;
+
 }
