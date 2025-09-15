@@ -74,15 +74,17 @@ public class ClientProgram implements CommandLineRunner {
         String _privateKey = System.getProperty("private-key");
 
 
-        api = "key";
-//        function = "bc-server-generate";
-        function = "yubico-generate";
+//        api = "key";
+//        function = "bc-client-generate";
+//        function = "yubico-generate";
 //        function = "download";
 
         api = "root";
         function = "root-generate";
 
+        _privateKey = "private-key.pem";
         _key = "key.json";
+        _subject = "subject.json";
         _format = "RSA";
         _size = "2048";
         serialNumber = "23275988";
@@ -106,6 +108,7 @@ public class ClientProgram implements CommandLineRunner {
                 BcRegisterRequest request = new BcRegisterRequest();
                 request.setSize(keySize);
                 request.setFormat(format);
+                request.setPublicKey(keyPair.getPublic());
                 KeyGenerateResponse response = KeyUtils.bcClientRegister(request);
                 if (response.getStatus() == 200) {
                     Signature signer = Signature.getInstance("SHA256withRSA", PROVIDER);
@@ -285,14 +288,12 @@ public class ClientProgram implements CommandLineRunner {
 
                         KeyDownloadResponse keyDownload = KeyUtils.download(new KeyDownloadRequest(key.getKeyId(), key.getKeyPassword()));
                         PublicKey rootPublicKey = keyDownload.getPublicKey();
-                        PrivateKey rootPrivateKey = PrivateKeyUtils.convert(_privateKey);
+                        PrivateKey rootPrivateKey = PrivateKeyUtils.convert(FileUtils.readFileToString(new File(_privateKey), StandardCharsets.UTF_8));
 
                         LocalDate now = LocalDate.now();
-                        Date notBefore = now.toDate();
-                        Date notAfter = now.plusYears(10).toDate();
 
                         long rootSerial = System.currentTimeMillis();
-                        X509Certificate rootCertificate = PkiUtils.issueRootCa(PROVIDER, rootPrivateKey, rootPublicKey, rootSubject, notBefore, notAfter, rootSerial);
+                        X509Certificate rootCertificate = PkiUtils.issueRootCa(PROVIDER, rootPrivateKey, rootPublicKey, rootSubject, now.toDate(), now.plusYears(10).toDate(), rootSerial);
 
                         KeyPair crlKey = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormatEnum.RSA, 2048);
                         PublicKey crlPublicKey = crlKey.getPublic();

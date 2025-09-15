@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 public class RevokeUtils {
 
     private static final String REVOKE = "https://pki-api-revoke.khmer.name";
-    //    private static final String REVOKE = "http://127.0.0.1:3005";
+//        private static final String REVOKE = "http://127.0.0.1:3005";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 

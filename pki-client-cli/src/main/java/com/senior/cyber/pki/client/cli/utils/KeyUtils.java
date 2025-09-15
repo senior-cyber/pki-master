@@ -16,8 +16,8 @@ import java.util.Map;
 
 public class KeyUtils {
 
-//    private static final String KEY = "https://pki-api-key.khmer.name";
-        private static final String KEY = "http://127.0.0.1:3103";
+    private static final String KEY = "https://pki-api-key.khmer.name";
+//        private static final String KEY = "http://127.0.0.1:3103";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 

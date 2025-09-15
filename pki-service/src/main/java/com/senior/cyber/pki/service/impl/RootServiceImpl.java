@@ -228,7 +228,7 @@ public class RootServiceImpl implements RootService {
     public RootResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
-        if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), rootKey.getId() + "." + request.getKeyPassword())) {
+        if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKeyPassword() + "." + rootKey.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 

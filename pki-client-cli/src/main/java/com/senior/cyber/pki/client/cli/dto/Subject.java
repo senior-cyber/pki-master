@@ -20,7 +20,7 @@ public class Subject implements Serializable {
     @JsonProperty("c")
     private String country;
 
-    @JsonProperty("cm")
+    @JsonProperty("cn")
     private String commonName;
 
     @JsonProperty("o")
