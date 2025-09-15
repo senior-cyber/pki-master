@@ -11,10 +11,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
-@SpringBootApplication(
-        exclude = {LiquibaseAutoConfiguration.class},
-        scanBasePackages = {"com.senior.cyber.pki.service", "com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.api.key"}
-)
+@SpringBootApplication(exclude = {LiquibaseAutoConfiguration.class}, scanBasePackages = {"com.senior.cyber.pki.service", "com.senior.cyber.pki.dao.repository", "com.senior.cyber.pki.api.key"})
 @EnableJpaRepositories(basePackages = {"com.senior.cyber.pki.dao.repository"})
 @EntityScan("com.senior.cyber.pki.dao.entity")
 public class ApiKeyApplication implements CommandLineRunner {
@@ -39,7 +36,7 @@ public class ApiKeyApplication implements CommandLineRunner {
         message.setTo(this.system);
         message.setSubject("pki-api-key");
         message.setText("pki-api-key is ready to serve the request");
-        mailSender.send(message);
+        this.mailSender.send(message);
     }
 
 }
