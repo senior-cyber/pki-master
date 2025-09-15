@@ -16,6 +16,6 @@ public interface RootService {
 
     RootGenerateResponse rootServerGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
-    RootGenerateResponse rootClientRegister(RootClientRegisterRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    RootGenerateResponse rootClientRegister(String crlUrl, String ocspUrl, String x509Url, RootClientRegisterRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

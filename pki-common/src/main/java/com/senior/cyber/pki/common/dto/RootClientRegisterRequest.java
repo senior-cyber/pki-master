@@ -19,8 +19,7 @@ public class RootClientRegisterRequest implements Serializable {
     @JsonProperty("keyPassword")
     private String keyPassword;
 
-    private String certificateId;
-    private X509Certificate certificate;
+    private X509Certificate rootCertificate;
 
     private X509Certificate crlCertificate;
     private PrivateKey crlPrivateKey;

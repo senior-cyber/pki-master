@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface CertificateRepository extends JpaRepository<Certificate, String> {
 
-    Certificate findBySerial(long serial);
+    Optional<Certificate> findBySerial(long serial);
 
     Optional<Certificate> findBySerialAndUser(long serial, User user);
 
@@ -38,6 +38,8 @@ public interface CertificateRepository extends JpaRepository<Certificate, String
     List<Certificate> findByType(CertificateTypeEnum type);
 
     boolean existsByIssuerCertificateAndType(Certificate issuerCertificate, CertificateTypeEnum type);
+
+    boolean existsBySerial(Long serial);
 
     List<Certificate> findByIssuerCertificateAndType(Certificate issuerCertificate, CertificateTypeEnum type);
 

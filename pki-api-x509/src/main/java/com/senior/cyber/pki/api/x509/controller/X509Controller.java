@@ -51,10 +51,7 @@ public class X509Controller {
                 } catch (NumberFormatException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial is invalid");
                 }
-                Certificate certificate = this.certificateRepository.findBySerial(serial);
-                if (certificate == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found");
-                }
+                Certificate certificate = this.certificateRepository.findBySerial(serial).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));;
                 if (certificate.getStatus() == CertificateStatusEnum.Revoked) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate have been revoked");
                 }
@@ -78,10 +75,7 @@ public class X509Controller {
                 } catch (NumberFormatException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial is invalid");
                 }
-                Certificate certificate = this.certificateRepository.findBySerial(serial);
-                if (certificate == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found");
-                }
+                Certificate certificate = this.certificateRepository.findBySerial(serial).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
                 if (certificate.getStatus() == CertificateStatusEnum.Revoked) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate have been revoked");
                 }

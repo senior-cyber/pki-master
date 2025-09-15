@@ -78,10 +78,7 @@ public class CrlController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial is invalid");
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findBySerial(serial);
-        if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found");
-        }
+        Certificate issuerCertificate = this.certificateRepository.findBySerial(serial).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
 
         switch (issuerCertificate.getType()) {
             case ROOT_CA, SUBORDINATE_CA, ISSUING_CA -> {

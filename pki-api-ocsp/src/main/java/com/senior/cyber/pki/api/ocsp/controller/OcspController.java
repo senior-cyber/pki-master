@@ -78,10 +78,7 @@ public class OcspController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serial is invalid");
         }
 
-        Certificate issuerCertificate = certificateRepository.findBySerial(serial);
-        if (issuerCertificate == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found");
-        }
+        Certificate issuerCertificate = certificateRepository.findBySerial(serial).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
 
         switch (issuerCertificate.getType()) {
             case ROOT_CA, SUBORDINATE_CA, ISSUING_CA -> {
@@ -117,7 +114,7 @@ public class OcspController {
                     X509CertificateHolder issuerCert = new JcaX509CertificateHolder(issuerCertificate.getCertificate());
                     CertificateID respCertId = new CertificateID(digestCalculator, issuerCert, certId.getSerialNumber());
 
-                    Certificate certificate = this.certificateRepository.findBySerial(certId.getSerialNumber().longValueExact());
+                    Certificate certificate = this.certificateRepository.findBySerial(certId.getSerialNumber().longValueExact()).orElse(null);
                     if (certificate == null) {
                         ocspRespBuilder.addResponse(respCertId, new RevokedStatus(now, CRLReason.certificateHold));
                     } else {

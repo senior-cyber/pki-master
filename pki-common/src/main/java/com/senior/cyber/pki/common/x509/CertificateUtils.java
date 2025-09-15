@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.common.x509;
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -21,6 +21,7 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -32,6 +33,65 @@ public class CertificateUtils {
 
     public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
         return generateCommon(provider, issuerCertificate, issuerKey, publicKey, subject, crlApi, ocspApi, x509Api, System.currentTimeMillis());
+    }
+
+    public static String lookupCaIssuerUrl(X509Certificate certificate) throws CertificateException, IOException {
+        X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+        Extension aiaExt = holder.getExtension(Extension.authorityInfoAccess);
+        if (aiaExt != null) {
+            AuthorityInformationAccess aia = AuthorityInformationAccess.getInstance(aiaExt.getParsedValue());
+            for (AccessDescription ad : aia.getAccessDescriptions()) {
+                ASN1ObjectIdentifier method = ad.getAccessMethod();
+                GeneralName loc = ad.getAccessLocation();
+                if (loc != null && loc.getTagNo() == GeneralName.uniformResourceIdentifier) {
+                    String uri = loc.getName().toString();
+                    if (AccessDescription.id_ad_caIssuers.equals(method)) {
+                        return uri;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String lookupCrlUrl(X509Certificate certificate) throws CertificateEncodingException, IOException {
+        X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+        Extension cdpExt = holder.getExtension(Extension.cRLDistributionPoints);
+        if (cdpExt != null) {
+            CRLDistPoint cdp = CRLDistPoint.getInstance(cdpExt.getParsedValue());
+            for (DistributionPoint dp : cdp.getDistributionPoints()) {
+                DistributionPointName name = dp.getDistributionPoint();
+                if (name != null && name.getType() == DistributionPointName.FULL_NAME) {
+                    GeneralNames gns = GeneralNames.getInstance(name.getName());
+                    for (GeneralName gn : gns.getNames()) {
+                        if (gn.getTagNo() == GeneralName.uniformResourceIdentifier) {
+                            return gn.getName().toString();
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String lookupOcspUrl(X509Certificate certificate) throws CertificateEncodingException, IOException {
+        X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+        Extension aiaExt = holder.getExtension(Extension.authorityInfoAccess);
+        if (aiaExt != null) {
+            AuthorityInformationAccess aia = AuthorityInformationAccess.getInstance(aiaExt.getParsedValue());
+            for (AccessDescription ad : aia.getAccessDescriptions()) {
+                ASN1ObjectIdentifier method = ad.getAccessMethod();
+                GeneralName loc = ad.getAccessLocation();
+                if (loc != null && loc.getTagNo() == GeneralName.uniformResourceIdentifier) {
+                    String uri = loc.getName().toString();
+                    if (AccessDescription.id_ad_ocsp.equals(method)) {
+                        return uri;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public static X509Certificate generateCommon(Provider provider, X509Certificate issuerCertificate, PrivateKey issuerKey, PublicKey publicKey, X500Name subject, String crlApi, String ocspApi, String x509Api, long serial) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, CertIOException {
