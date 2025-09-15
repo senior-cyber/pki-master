@@ -74,7 +74,7 @@ public class ClientProgram implements CommandLineRunner {
         String _subject = System.getProperty("subject");
         String _privateKey = System.getProperty("private-key");
         String output = System.getProperty("output");
-
+        String emailAddress = System.getProperty("emailAddress");
 
 //        api = "key";
 //        function = "bc-client-generate";
@@ -94,6 +94,7 @@ public class ClientProgram implements CommandLineRunner {
         _slot = "9a";
         managementKey = MANAGEMENT_KEY;
         pin = PIN;
+        emailAddress = "";
 
         if ("key".equals(api)) {
             if ("bc-client-generate".equals(function)) { // DONE
@@ -129,7 +130,7 @@ public class ClientProgram implements CommandLineRunner {
             } else if ("bc-server-generate".equals(function)) { // DONE
                 int size = Integer.parseInt(_size);
                 KeyFormatEnum format = KeyFormatEnum.valueOf(_format);
-                KeyGenerateResponse response = KeyUtils.bcServerGenerate(new BcGenerateRequest(size, format));
+                KeyGenerateResponse response = KeyUtils.bcServerGenerate(new BcGenerateRequest(size, format,emailAddress));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                 Key key = new Key();
                 key.setKeyId(response.getKeyId());
@@ -468,7 +469,6 @@ public class ClientProgram implements CommandLineRunner {
                 String commonName = System.getProperty("cn");
                 String organization = System.getProperty("o");
                 String organizationalUnit = System.getProperty("ou");
-                String emailAddress = System.getProperty("emailAddress");
                 IssuerGenerateResponse response = RootUtils.issuerGenerate(new IssuerGenerateRequest(new Issuer(issuerCertificateId, null, issuerKeyPassword), keyId, keyPassword, locality, province, country, commonName, organization, organizationalUnit, emailAddress));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                 if (response.getCertificate() != null) {

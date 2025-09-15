@@ -49,6 +49,9 @@ public class Key implements Serializable {
     @Column(name = "key_size")
     private int keySize = -1;
 
+    @Column(name = "email_address")
+    private String emailAddress;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_datetime")
     private Date createdDatetime;

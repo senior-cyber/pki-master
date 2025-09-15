@@ -17,12 +17,16 @@ public class BcGenerateRequest implements Serializable {
     @JsonProperty("format")
     private KeyFormatEnum format;
 
+    @JsonProperty("emailAddress")
+    private String emailAddress;
+
     public BcGenerateRequest() {
     }
 
-    public BcGenerateRequest(int size, KeyFormatEnum format) {
+    public BcGenerateRequest(int size, KeyFormatEnum format, String emailAddress) {
         this.size = size;
         this.format = format;
+        this.emailAddress = emailAddress;
     }
 
 }

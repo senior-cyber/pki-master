@@ -10,20 +10,20 @@ server:
 spring:
   application:
     name: RootCA
+  jackson:
+    serialization:
+      indent_output: true
   mail:
     host: mail.khmer.name
     port: 465
-    username: no-reply@khmer.name
-    password: your-password
+    username:
+    password:
     properties:
       mail:
         smtp:
           auth: true
           ssl:
             enable: true
-  jackson:
-    serialization:
-      indent_output: true
   jpa:
     show-sql: true
     hibernate:

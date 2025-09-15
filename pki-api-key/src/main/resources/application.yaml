@@ -13,6 +13,17 @@ spring:
   jackson:
     serialization:
       indent_output: true
+  mail:
+    host: mail.khmer.name
+    port: 465
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
   jpa:
     show-sql: true
     hibernate:
