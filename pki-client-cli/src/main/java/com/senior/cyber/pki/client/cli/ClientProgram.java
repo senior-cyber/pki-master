@@ -20,6 +20,9 @@ import com.yubico.yubikit.piv.KeyType;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import org.apache.commons.io.FileUtils;
+import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,8 +31,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 @SpringBootApplication
@@ -51,7 +58,7 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException, NoSuchAlgorithmException {
         String api = System.getProperty("api");
         if ("key".equals(api)) {
             String function = System.getProperty("function");
@@ -188,20 +195,234 @@ public class ClientProgram implements CommandLineRunner {
             }
         } else if ("root".equals(api)) {
             String function = System.getProperty("function");
-            if ("root-generate".equals(function)) {
+            if ("root-server-generate".equals(function)) {
                 String keyId = System.getProperty("keyId");
                 String keyPassword = System.getProperty("keyPassword");
                 String subjectFile = System.getProperty("subject");
                 String subjectText = FileUtils.readFileToString(new File(subjectFile), StandardCharsets.UTF_8);
                 Subject subject = MAPPER.readValue(subjectText, Subject.class);
-                RootGenerateResponse response = RootUtils.rootGenerate(new RootGenerateRequest(keyId, keyPassword, subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
+                RootServerGenerateResponse response = RootUtils.rootGenerate(new RootServerGenerateRequest(keyId, keyPassword, subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                 if (response.getCertificate() != null) {
                     System.out.println("wrote files");
                     FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
                     System.out.println("  " + response.getCertificateId() + "-certificate.pem");
                 }
-            } else if ("-subordinate-generate".equals(function)) {
+            } else if ("root-client-generate".equals(function)) {
+                String subjectFile = System.getProperty("subject");
+                String subjectText = FileUtils.readFileToString(new File(subjectFile), StandardCharsets.UTF_8);
+                Subject subject = MAPPER.readValue(subjectText, Subject.class);
+
+                List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
+                JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
+                JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerSubject, BigInteger.valueOf(serial), notBefore, notAfter, subject, publicKey);
+                //        builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(ca));
+                //        builder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(publicKey));
+                //        builder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(issuerPublicKey));
+                //        if (keyUsages != null && !keyUsages.isEmpty()) {
+                //            int keyUsage = 0;
+                //            for (int ku : keyUsages) {
+                //                keyUsage = keyUsage | ku;
+                //            }
+                //            builder.addExtension(Extension.keyUsage, true, new KeyUsage(keyUsage));
+                //        }
+                //        if (extendedKeyUsages != null && !extendedKeyUsages.isEmpty()) {
+                //            builder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(extendedKeyUsages.toArray(new KeyPurposeId[0])));
+                //        }
+                //
+                //        if (crl != null && !crl.isEmpty()) {
+                //            List<DistributionPoint> distributionPoints = new ArrayList<>();
+                //            if (crlIssuer == null || crlIssuer.isBlank()) {
+                //                distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crl))), null, null));
+                //            } else {
+                //                GeneralNames _crlIssuer = new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crlIssuer));
+                //                int reasonFlags = ReasonFlags.keyCompromise | ReasonFlags.cACompromise | ReasonFlags.affiliationChanged | ReasonFlags.superseded | ReasonFlags.cessationOfOperation | ReasonFlags.certificateHold | ReasonFlags.privilegeWithdrawn | ReasonFlags.aACompromise;
+                //                distributionPoints.add(new DistributionPoint(new DistributionPointName(new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, crl))), new ReasonFlags(reasonFlags), _crlIssuer));
+                //            }
+                //            builder.addExtension(Extension.cRLDistributionPoints, false, new CRLDistPoint(distributionPoints.toArray(new DistributionPoint[0])));
+                //        }
+                //        if ((ocsp != null && !ocsp.isEmpty()) || (caIssuer != null && !caIssuer.isEmpty())) {
+                //            List<AccessDescription> accessDescriptions = new ArrayList<>();
+                //            if (ocsp != null && !ocsp.isEmpty()) {
+                //                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_ocsp, new GeneralName(GeneralName.uniformResourceIdentifier, ocsp)));
+                //            }
+                //            if (caIssuer != null && !caIssuer.isEmpty()) {
+                //                accessDescriptions.add(new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, caIssuer)));
+                //            }
+                //            builder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(accessDescriptions.toArray(new AccessDescription[0])));
+                //        }
+                //
+                //        if (sans != null && !sans.isEmpty()) {
+                //            List<String> included = new ArrayList<>();
+                //            InetAddressValidator ipValidator = InetAddressValidator.getInstance();
+                //            DomainValidator dnsValidator = DomainValidator.getInstance(true);
+                //            List<GeneralName> generalNames = new ArrayList<>();
+                //            for (String san : sans) {
+                //                if (!included.contains(san)) {
+                //                    if (ipValidator.isValid(san)) {
+                //                        generalNames.add(new GeneralName(GeneralName.iPAddress, san));
+                //                        included.add(san);
+                //                    } else if (dnsValidator.isValid(san)) {
+                //                        generalNames.add(new GeneralName(GeneralName.dNSName, san));
+                //                        included.add(san);
+                //                    }
+                //                }
+                //            }
+                //            if (!generalNames.isEmpty()) {
+                //                GeneralNames subjectAlternativeName = new GeneralNames(generalNames.toArray(new GeneralName[0]));
+                //                try {
+                //                    builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeName);
+                //                } catch (CertIOException e) {
+                //                    throw new RuntimeException(e);
+                //                }
+                //            }
+                //        }
+                //
+                //        String format = "";
+                //        if (issuerPrivateKey instanceof RSAKey) {
+                //            format = "RSA";
+                //        } else if (issuerPrivateKey instanceof ECKey || "EC".equals(issuerPrivateKey.getAlgorithm())) {
+                //            format = "ECDSA";
+                //        } else {
+                //            format = issuerPrivateKey.getAlgorithm();
+                //        }
+                //
+                //        int shaSize = 256;
+                //        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA" + shaSize + "WITH" + format);
+                //        contentSignerBuilder.setProvider(issuerProvider);
+                //        ContentSigner contentSigner = contentSignerBuilder.build(issuerPrivateKey);
+                //
+                //        X509CertificateHolder holder = builder.build(contentSigner);
+                //        JcaX509CertificateConverter certificateConverter = new JcaX509CertificateConverter();
+                //        certificateConverter.setProvider(X509_PROVIDER);
+                //        return certificateConverter.getCertificate(holder);
+                X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
+                root.setCertificate(rootCertificate);
+                Certificate _rootCertificate = new Certificate();
+                _rootCertificate.setCountryCode(request.getCountry());
+                _rootCertificate.setOrganization(request.getOrganization());
+                _rootCertificate.setOrganizationalUnit(request.getOrganizationalUnit());
+                _rootCertificate.setCommonName(request.getCommonName());
+                _rootCertificate.setLocalityName(request.getLocality());
+                _rootCertificate.setStateOrProvinceName(request.getProvince());
+                _rootCertificate.setEmailAddress(request.getEmailAddress());
+                _rootCertificate.setKey(rootKey);
+                _rootCertificate.setCertificate(rootCertificate);
+                _rootCertificate.setSerial(rootCertificate.getSerialNumber().longValueExact());
+                _rootCertificate.setCreatedDatetime(new Date());
+                _rootCertificate.setValidFrom(rootCertificate.getNotBefore());
+                _rootCertificate.setValidUntil(rootCertificate.getNotAfter());
+                _rootCertificate.setStatus(CertificateStatusEnum.Good);
+                _rootCertificate.setType(CertificateTypeEnum.ROOT_CA);
+                this.certificateRepository.save(_rootCertificate);
+
+                // crl
+                Key crlKey = null;
+                {
+                    KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormat.RSA);
+                    Key key = new Key();
+                    key.setStatus(KeyStatusEnum.Good);
+                    key.setType(KeyTypeEnum.BC);
+                    key.setKeySize(2048);
+                    key.setKeyFormat(KeyFormat.RSA);
+                    key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
+                    key.setPublicKey(x509.getPublic());
+                    key.setCreatedDatetime(new Date());
+                    this.keyRepository.save(key);
+                    crlKey = key;
+                }
+                X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), crlKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 1);
+                Certificate crl = new Certificate();
+                crl.setIssuerCertificate(_rootCertificate);
+                crl.setCountryCode(request.getCountry());
+                crl.setOrganization(request.getOrganization());
+                crl.setOrganizationalUnit(request.getOrganizationalUnit());
+                crl.setCommonName(request.getCommonName());
+                crl.setLocalityName(request.getLocality());
+                crl.setStateOrProvinceName(request.getProvince());
+                crl.setEmailAddress(request.getEmailAddress());
+                crl.setKey(crlKey);
+                crl.setCertificate(crlCertificate);
+                crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
+                crl.setCreatedDatetime(new Date());
+                crl.setValidFrom(crlCertificate.getNotBefore());
+                crl.setValidUntil(crlCertificate.getNotAfter());
+                crl.setStatus(CertificateStatusEnum.Good);
+                crl.setType(CertificateTypeEnum.CRL);
+                this.certificateRepository.save(crl);
+
+                // ocsp
+                Key ocspKey = null;
+                {
+                    KeyPair x509 = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormat.RSA);
+                    Key key = new Key();
+                    key.setStatus(KeyStatusEnum.Good);
+                    key.setType(KeyTypeEnum.BC);
+                    key.setKeySize(2048);
+                    key.setKeyFormat(KeyFormat.RSA);
+                    key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
+                    key.setPublicKey(x509.getPublic());
+                    key.setCreatedDatetime(new Date());
+                    this.keyRepository.save(key);
+                    ocspKey = key;
+                }
+                X500Name ocspSubject = SubjectUtils.generate(
+                        request.getCountry(),
+                        request.getOrganization(),
+                        request.getOrganizationalUnit(),
+                        request.getCommonName() + " OCSP",
+                        request.getLocality(),
+                        request.getProvince(),
+                        request.getEmailAddress()
+                );
+                X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 2);
+                Certificate ocsp = new Certificate();
+                ocsp.setIssuerCertificate(_rootCertificate);
+                ocsp.setCountryCode(request.getCountry());
+                ocsp.setOrganization(request.getOrganization());
+                ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
+                ocsp.setCommonName(request.getCommonName() + " OCSP");
+                ocsp.setLocalityName(request.getLocality());
+                ocsp.setStateOrProvinceName(request.getProvince());
+                ocsp.setEmailAddress(request.getEmailAddress());
+                ocsp.setKey(ocspKey);
+                ocsp.setCertificate(ocspCertificate);
+                ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
+                ocsp.setCreatedDatetime(new Date());
+                ocsp.setValidFrom(ocspCertificate.getNotBefore());
+                ocsp.setValidUntil(ocspCertificate.getNotAfter());
+                ocsp.setStatus(CertificateStatusEnum.Good);
+                ocsp.setType(CertificateTypeEnum.OCSP);
+                this.certificateRepository.save(ocsp);
+
+                _rootCertificate.setCrlCertificate(crl);
+                _rootCertificate.setOcspCertificate(_rootCertificate);
+                this.certificateRepository.save(_rootCertificate);
+
+                RootServerGenerateResponse response = new RootServerGenerateResponse();
+                response.setCertificateId(_rootCertificate.getId());
+                response.setKeyPassword(request.getKeyPassword());
+                response.setCertificate(rootCertificate);
+
+                PivSession session = sessions.get(serials.get(rootKey.getId()));
+                if (session != null) {
+                    Slot slot = slots.get(serials.get(rootKey.getId()));
+                    session.putCertificate(slot, rootCertificate);
+                }
+            } else if ("root-client-register".equals(function)) {
+                String keyId = System.getProperty("keyId");
+                String keyPassword = System.getProperty("keyPassword");
+                String subjectFile = System.getProperty("subject");
+                String subjectText = FileUtils.readFileToString(new File(subjectFile), StandardCharsets.UTF_8);
+                Subject subject = MAPPER.readValue(subjectText, Subject.class);
+                RootServerGenerateResponse response = RootUtils.rootGenerate(new RootServerGenerateRequest(keyId, keyPassword, subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
+                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                if (response.getCertificate() != null) {
+                    System.out.println("wrote files");
+                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                }
+            } else if ("subordinate-generate".equals(function)) {
                 String issuerCertificateId = System.getProperty("issuerCertificateId");
                 String issuerKeyPassword = System.getProperty("issuerKeyPassword");
                 String keyId = System.getProperty("keyId");

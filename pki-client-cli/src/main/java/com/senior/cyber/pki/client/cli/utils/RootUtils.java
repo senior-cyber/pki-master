@@ -17,7 +17,7 @@ public class RootUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static RootGenerateResponse rootGenerate(RootGenerateRequest request) throws IOException, InterruptedException {
+    public static RootServerGenerateResponse rootGenerate(RootServerGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ROOT + "/api/root/generate"))
@@ -26,7 +26,7 @@ public class RootUtils {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), RootGenerateResponse.class);
+            return MAPPER.readValue(resp.body(), RootServerGenerateResponse.class);
         }
     }
 

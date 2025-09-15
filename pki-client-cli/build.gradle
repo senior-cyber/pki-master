@@ -20,6 +20,8 @@ repositories {
 dependencies {
     implementation project(":pki-common")
 
+    implementation "org.bouncycastle:bcpkix-jdk15to18:${bouncycastle}"
+
     implementation "com.yubico.yubikit:piv:${yubikit}"
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"

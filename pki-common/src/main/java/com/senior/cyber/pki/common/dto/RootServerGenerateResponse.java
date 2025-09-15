@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-public class RootGenerateResponse extends BaseResponse {
+public class RootServerGenerateResponse extends BaseResponse {
 
     @JsonProperty("certificateId")
     private String certificateId;
