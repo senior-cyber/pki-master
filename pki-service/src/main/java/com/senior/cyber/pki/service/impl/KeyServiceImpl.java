@@ -39,7 +39,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse bcGenerate(KeyBcGenerateRequest request) throws OperatorCreationException {
+    public KeyGenerateResponse bcGenerate(BcGenerateRequest request) throws OperatorCreationException {
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
@@ -62,14 +62,11 @@ public class KeyServiceImpl implements KeyService {
     }
 
     @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse yubicoGenerate(KeyBcGenerateRequest request) throws OperatorCreationException {
-        String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
-        KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
+    public KeyGenerateResponse bcRegister(BcRegisterRequest request) {
         Key key = new Key();
         key.setStatus(KeyStatusEnum.Good);
-        key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
-        key.setPublicKey(_key.getPublic());
+        key.setPrivateKey(null);
+        key.setPublicKey(request.getPublicKey());
         key.setType(KeyTypeEnum.BC);
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
@@ -77,47 +74,6 @@ public class KeyServiceImpl implements KeyService {
         this.keyRepository.save(key);
 
         KeyGenerateResponse response = new KeyGenerateResponse();
-        response.setKeyPassword(password);
-        response.setKeyId(key.getId());
-        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
-            response.setOpenSshPublicKey(key.getPublicKey());
-        }
-        return response;
-    }
-
-    @Override
-    public KeyBcClientRegisterResponse yubicoRegister(KeyBcClientRegisterRequest request) {
-        Key key = new Key();
-        key.setStatus(KeyStatusEnum.Good);
-        key.setPrivateKey(null);
-        key.setPublicKey(request.getPublicKey());
-        key.setType(KeyTypeEnum.BC);
-        key.setKeySize(request.getSize());
-        key.setKeyFormat(request.getFormat());
-        key.setCreatedDatetime(new Date());
-        this.keyRepository.save(key);
-
-        KeyBcClientRegisterResponse response = new KeyBcClientRegisterResponse();
-        response.setKeyId(key.getId());
-        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
-            response.setOpenSshPublicKey(key.getPublicKey());
-        }
-        return response;
-    }
-
-    @Override
-    public KeyBcClientRegisterResponse bcRegister(KeyBcClientRegisterRequest request) {
-        Key key = new Key();
-        key.setStatus(KeyStatusEnum.Good);
-        key.setPrivateKey(null);
-        key.setPublicKey(request.getPublicKey());
-        key.setType(KeyTypeEnum.BC);
-        key.setKeySize(request.getSize());
-        key.setKeyFormat(request.getFormat());
-        key.setCreatedDatetime(new Date());
-        this.keyRepository.save(key);
-
-        KeyBcClientRegisterResponse response = new KeyBcClientRegisterResponse();
         response.setKeyId(key.getId());
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());

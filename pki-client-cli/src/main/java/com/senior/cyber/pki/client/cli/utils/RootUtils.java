@@ -30,6 +30,19 @@ public class RootUtils {
         }
     }
 
+    public static RootResponse rootRegister(RootRegisterRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(ROOT + "/api/root/register"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), RootResponse.class);
+        }
+    }
+
     public static SubordinateGenerateResponse subordinateGenerate(SubordinateGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()

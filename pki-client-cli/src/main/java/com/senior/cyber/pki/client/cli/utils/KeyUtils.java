@@ -79,7 +79,7 @@ public class KeyUtils {
         }
     }
 
-    public static KeyGenerateResponse bcServerGenerate(KeyBcGenerateRequest request) throws IOException, InterruptedException {
+    public static KeyGenerateResponse bcServerGenerate(BcGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/bc/generate"))
@@ -92,7 +92,7 @@ public class KeyUtils {
         }
     }
 
-    public static KeyBcClientRegisterResponse bcClientRegister(KeyBcClientRegisterRequest request) throws IOException, InterruptedException {
+    public static KeyBcClientRegisterResponse bcClientRegister(BcRegisterRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/bc/register"))

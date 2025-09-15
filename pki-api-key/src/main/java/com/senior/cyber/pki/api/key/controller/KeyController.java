@@ -131,9 +131,9 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<KeyBcGenerateRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<BcGenerateRequest> httpRequest) throws OperatorCreationException {
 
-        KeyBcGenerateRequest request = httpRequest.getBody();
+        BcGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -155,8 +155,8 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyBcClientRegisterResponse> bcClientRegister(RequestEntity<KeyBcClientRegisterRequest> httpRequest) throws OperatorCreationException {
-        KeyBcClientRegisterRequest request = httpRequest.getBody();
+    public ResponseEntity<KeyBcClientRegisterResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) throws OperatorCreationException {
+        BcRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }

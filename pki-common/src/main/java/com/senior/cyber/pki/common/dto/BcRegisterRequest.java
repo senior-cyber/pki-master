@@ -14,7 +14,7 @@ import java.security.PublicKey;
 
 @Setter
 @Getter
-public class KeyBcClientRegisterRequest implements Serializable {
+public class BcRegisterRequest implements Serializable {
 
     @JsonProperty("size")
     private int size;
@@ -27,10 +27,10 @@ public class KeyBcClientRegisterRequest implements Serializable {
     @JsonProperty("publicKey")
     private PublicKey publicKey;
 
-    public KeyBcClientRegisterRequest() {
+    public BcRegisterRequest() {
     }
 
-    public KeyBcClientRegisterRequest(int size, KeyFormatEnum format, PublicKey publicKey) {
+    public BcRegisterRequest(int size, KeyFormatEnum format, PublicKey publicKey) {
         this.size = size;
         this.format = format;
         this.publicKey = publicKey;
