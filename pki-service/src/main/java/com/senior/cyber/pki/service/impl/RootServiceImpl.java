@@ -5,6 +5,8 @@ import com.senior.cyber.pki.common.dto.RootGenerateRequest;
 import com.senior.cyber.pki.common.dto.RootRegisterRequest;
 import com.senior.cyber.pki.common.dto.RootResponse;
 import com.senior.cyber.pki.common.dto.YubicoPassword;
+import com.senior.cyber.pki.common.util.Crypto;
+import com.senior.cyber.pki.common.util.PivUtils;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
@@ -15,8 +17,6 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.senior.cyber.pki.service.Utils;
-import com.senior.cyber.pki.service.util.Crypto;
-import com.senior.cyber.pki.service.util.PivUtils;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -27,6 +27,8 @@ import com.yubico.yubikit.piv.jca.PivProvider;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.exceptions.EncryptionInitializationException;
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -225,11 +227,27 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+    public RootResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
-        if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKeyPassword() + "." + rootKey.getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (rootKey.getType() == KeyTypeEnum.BC) {
+            if (rootKey.getPrivateKey() == null || rootKey.getPrivateKey().isEmpty()) {
+                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKeyPassword() + "." + rootKey.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                if (PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword()) == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+            }
+        } else if (rootKey.getType() == KeyTypeEnum.Yubico) {
+            AES256TextEncryptor encryptor = new AES256TextEncryptor();
+            encryptor.setPassword(request.getKeyPassword());
+            try {
+                encryptor.decrypt(rootKey.getPrivateKey());
+            } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
         }
 
         long rootSerial = request.getRootCertificate().getSerialNumber().longValueExact();

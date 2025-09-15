@@ -1,7 +1,6 @@
-package com.senior.cyber.pki.service.util;
+package com.senior.cyber.pki.common.util;
 
 import com.senior.cyber.pki.common.dto.YubicoPassword;
-import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;

@@ -8,6 +8,8 @@ import com.senior.cyber.pki.client.cli.utils.KeyUtils;
 import com.senior.cyber.pki.client.cli.utils.RevokeUtils;
 import com.senior.cyber.pki.client.cli.utils.RootUtils;
 import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.util.Crypto;
+import com.senior.cyber.pki.common.util.PivUtils;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.*;
 import com.yubico.yubikit.core.YubiKeyDevice;
@@ -18,6 +20,7 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.KeyType;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
+import com.yubico.yubikit.piv.jca.PivProvider;
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -33,10 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @SpringBootApplication
 public class ClientProgram implements CommandLineRunner {
@@ -146,7 +146,7 @@ public class ClientProgram implements CommandLineRunner {
                 YubicoInfoResponse infoResponse = KeyUtils.yubicoInfo();
                 for (YubicoInfo info : infoResponse.getItems()) {
                     if (info.getSerialNumber().equals(serialNumber)) {
-                        if ("client1".equals(info.getType())) {
+                        if ("client".equals(info.getType())) {
                             int size = Integer.parseInt(_size);
                             if (managementKey == null || managementKey.isEmpty()) {
                                 managementKey = MANAGEMENT_KEY;
@@ -271,12 +271,11 @@ public class ClientProgram implements CommandLineRunner {
                 throw new RuntimeException("invalid function");
             }
         } else if ("root".equals(api)) {
-            if ("root-generate".equals(function)) {
+            if ("root-generate".equals(function)) { // DONE
                 Key key = MAPPER.readValue(FileUtils.readFileToString(new File(_key), StandardCharsets.UTF_8), Key.class);
                 KeyInfoResponse keyInfo = KeyUtils.info(new KeyInfoRequest(key.getKeyId(), key.getKeyPassword()));
                 if (keyInfo.getType() == KeyTypeEnum.BC) {
-                    if (keyInfo.isDecentralized()) {
-
+                    if (keyInfo.isDecentralized()) { // Client Sign
                         Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
                         X500Name rootSubject = SubjectUtils.generate(subject.getCountry(),
                                 subject.getOrganization(),
@@ -337,7 +336,7 @@ public class ClientProgram implements CommandLineRunner {
                             FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
                             System.out.println("  " + response.getCertificateId() + "-certificate.pem");
                         }
-                    } else {
+                    } else { // Server Sign
                         Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
                         RootResponse response = RootUtils.rootGenerate(new RootGenerateRequest(key.getKeyId(), key.getKeyPassword(), subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
                         System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
@@ -349,11 +348,109 @@ public class ClientProgram implements CommandLineRunner {
                     }
                 } else if (keyInfo.getType() == KeyTypeEnum.Yubico) {
                     KeyDownloadResponse keyDownload = KeyUtils.download(new KeyDownloadRequest(key.getKeyId(), key.getKeyPassword()));
-                    YubicoPassword yubicoPassword = MAPPER.readValue(keyDownload.getPrivateKey(), YubicoPassword.class);
+                    YubicoPassword yubico = MAPPER.readValue(keyDownload.getPrivateKey(), YubicoPassword.class);
                     YubicoInfoResponse yubicoInfoResponse = KeyUtils.yubicoInfo();
+                    for (YubicoInfo item : yubicoInfoResponse.getItems()) {
+                        if (item.getSerialNumber().equals(yubico.getSerial())) {
+                            if ("client".equals(item.getType())) { // Client Sign
+                                Map<String, SmartCardConnection> connections = new HashMap<>();
+                                Map<String, KeyStore> keys = new HashMap<>();
+                                Map<String, PivProvider> providers = new HashMap<>();
+                                Map<String, PivSession> sessions = new HashMap<>();
+                                Map<String, Slot> slots = new HashMap<>();
+                                Map<String, String> serials = new HashMap<>();
+
+                                try {
+                                    Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
+                                    X500Name rootSubject = SubjectUtils.generate(subject.getCountry(),
+                                            subject.getOrganization(),
+                                            subject.getOrganizationalUnit(),
+                                            subject.getCommonName(),
+                                            subject.getLocality(),
+                                            subject.getProvince(),
+                                            subject.getEmailAddress());
+
+                                    PrivateKey rootPrivateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, key.getKeyId(), yubico);
+                                    Crypto root = new Crypto(providers.get(serials.get(key.getKeyId())), keyDownload.getPublicKey(), rootPrivateKey);
+
+                                    LocalDate now = LocalDate.now();
+
+                                    long rootSerial = System.currentTimeMillis();
+                                    X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), rootSerial);
+
+                                    KeyPair crlKey = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormatEnum.RSA, 2048);
+                                    PublicKey crlPublicKey = crlKey.getPublic();
+                                    PrivateKey crlPrivateKey = crlKey.getPrivate();
+                                    X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), rootCertificate, crlPublicKey, rootSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 1);
+
+                                    X500Name ocspSubject = SubjectUtils.generate(
+                                            subject.getCountry(),
+                                            subject.getOrganization(),
+                                            subject.getOrganizationalUnit(),
+                                            subject.getCommonName() + " OCSP",
+                                            subject.getLocality(),
+                                            subject.getProvince(),
+                                            subject.getEmailAddress()
+                                    );
+                                    KeyPair ocspKey = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormatEnum.RSA, 2048);
+                                    PublicKey ocspPublicKey = ocspKey.getPublic();
+                                    PrivateKey ocspPrivateKey = ocspKey.getPrivate();
+                                    X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), rootCertificate, ocspPublicKey, ocspSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 2);
+
+                                    RootRegisterRequest request = new RootRegisterRequest();
+                                    request.setKeyId(key.getKeyId());
+                                    request.setKeyPassword(key.getKeyPassword());
+
+                                    request.setRootCertificate(rootCertificate);
+
+                                    request.setCrlCertificate(crlCertificate);
+                                    request.setCrlKeySize(2048);
+                                    request.setCrlKeyFormat(KeyFormatEnum.RSA);
+                                    request.setCrlPrivateKey(crlPrivateKey);
+
+                                    request.setOcspCertificate(ocspCertificate);
+                                    request.setOcspKeySize(2048);
+                                    request.setOcspKeyFormat(KeyFormatEnum.RSA);
+                                    request.setOcspPrivateKey(ocspPrivateKey);
+
+                                    RootResponse response = RootUtils.rootRegister(request);
+                                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                                    if (response.getCertificate() != null) {
+                                        System.out.println("wrote files");
+                                        FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                                        System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                                    }
+
+                                    PivSession session = sessions.get(serials.get(key.getKeyId()));
+                                    if (session != null) {
+                                        Slot slot = slots.get(serials.get(key.getKeyId()));
+                                        session.putCertificate(slot, rootCertificate);
+                                    }
+                                } finally {
+                                    for (SmartCardConnection connection : connections.values()) {
+                                        if (connection != null) {
+                                            connection.close();
+                                        }
+                                    }
+                                }
+                            } else if ("server".equals(item.getType())) { // Server Sign
+                                Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
+                                RootResponse response = RootUtils.rootGenerate(new RootGenerateRequest(key.getKeyId(), key.getKeyPassword(), subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
+                                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                                if (response.getCertificate() != null) {
+                                    System.out.println("wrote files");
+                                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
+                                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                                }
+                            }
+                        }
+                    }
                     // if it is local key
                     // if it is server key
 
+                    // show document to aditi.
+                    //
+                    //
                 }
 //                String keyId = System.getProperty("keyId");
 //                KeyInfoResponse info = KeyUtils.info(new KeyInfoRequest(keyId));

@@ -1,4 +1,4 @@
-package com.senior.cyber.pki.service.util;
+package com.senior.cyber.pki.common.util;
 
 import java.security.PrivateKey;
 import java.security.Provider;
