@@ -303,14 +303,13 @@ public class RootServiceImpl implements RootService {
         // ocsp
         Key ocspKey = null;
         {
-            KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
             Key key = new Key();
             key.setStatus(KeyStatusEnum.Good);
             key.setType(KeyTypeEnum.BC);
-            key.setKeySize(2048);
-            key.setKeyFormat(KeyFormat.RSA);
-            key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
-            key.setPublicKey(x509.getPublic());
+            key.setKeySize(request.getOcspKeySize());
+            key.setKeyFormat(request.getOcspKeyFormat());
+            key.setPrivateKey(PrivateKeyUtils.convert(request.getOcspPrivateKey()));
+            key.setPublicKey(request.getOcspCertificate().getPublicKey());
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
             ocspKey = key;
@@ -318,19 +317,19 @@ public class RootServiceImpl implements RootService {
 
         Certificate ocsp = new Certificate();
         ocsp.setIssuerCertificate(_rootCertificate);
-        ocsp.setCountryCode(request.getCountry());
-        ocsp.setOrganization(request.getOrganization());
-        ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
-        ocsp.setCommonName(request.getCommonName() + " OCSP");
-        ocsp.setLocalityName(request.getLocality());
-        ocsp.setStateOrProvinceName(request.getProvince());
-        ocsp.setEmailAddress(request.getEmailAddress());
+        ocsp.setCountryCode(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.C));
+        ocsp.setOrganization(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.O));
+        ocsp.setOrganizationalUnit(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.OU));
+        ocsp.setCommonName(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.CN));
+        ocsp.setLocalityName(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.L));
+        ocsp.setStateOrProvinceName(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.ST));
+        ocsp.setEmailAddress(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.EmailAddress));
         ocsp.setKey(ocspKey);
-        ocsp.setCertificate(ocspCertificate);
-        ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
+        ocsp.setCertificate(request.getOcspCertificate());
+        ocsp.setSerial(request.getOcspCertificate().getSerialNumber().longValueExact());
         ocsp.setCreatedDatetime(new Date());
-        ocsp.setValidFrom(ocspCertificate.getNotBefore());
-        ocsp.setValidUntil(ocspCertificate.getNotAfter());
+        ocsp.setValidFrom(request.getOcspCertificate().getNotBefore());
+        ocsp.setValidUntil(request.getOcspCertificate().getNotAfter());
         ocsp.setStatus(CertificateStatusEnum.Good);
         ocsp.setType(CertificateTypeEnum.OCSP);
         this.certificateRepository.save(ocsp);
@@ -342,13 +341,7 @@ public class RootServiceImpl implements RootService {
         RootGenerateResponse response = new RootGenerateResponse();
         response.setCertificateId(_rootCertificate.getId());
         response.setKeyPassword(request.getKeyPassword());
-        response.setCertificate(rootCertificate);
-
-        PivSession session = sessions.get(serials.get(rootKey.getId()));
-        if (session != null) {
-            Slot slot = slots.get(serials.get(rootKey.getId()));
-            session.putCertificate(slot, rootCertificate);
-        }
+        response.setCertificate(request.getRootCertificate());
 
         return response;
 

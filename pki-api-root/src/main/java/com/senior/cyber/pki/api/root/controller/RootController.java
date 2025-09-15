@@ -92,7 +92,7 @@ public class RootController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        RootGenerateResponse response = this.rootService.rootClientRegister(request);
+        RootGenerateResponse response = this.rootService.rootClientRegister(null, null, null, request);
         return ResponseEntity.ok(response);
     }
 
