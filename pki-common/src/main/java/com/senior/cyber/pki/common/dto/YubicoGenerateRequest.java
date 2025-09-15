@@ -26,6 +26,9 @@ public class YubicoGenerateRequest implements Serializable {
     @JsonProperty("managementKey")
     private String managementKey;
 
+    @JsonProperty("emailAddress")
+    private String emailAddress;
+
     public YubicoGenerateRequest() {
     }
 

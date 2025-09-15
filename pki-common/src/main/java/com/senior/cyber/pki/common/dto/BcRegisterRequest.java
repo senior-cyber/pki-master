@@ -27,6 +27,9 @@ public class BcRegisterRequest implements Serializable {
     @JsonProperty("publicKey")
     private PublicKey publicKey;
 
+    @JsonProperty("emailAddress")
+    private String emailAddress;
+
     public BcRegisterRequest() {
     }
 

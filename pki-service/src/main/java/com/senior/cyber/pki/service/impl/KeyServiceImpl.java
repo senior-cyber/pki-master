@@ -49,6 +49,7 @@ public class KeyServiceImpl implements KeyService {
         key.setType(KeyTypeEnum.BC);
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
+        key.setEmailAddress(request.getEmailAddress());
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
@@ -71,6 +72,7 @@ public class KeyServiceImpl implements KeyService {
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setCreatedDatetime(new Date());
+        key.setEmailAddress(request.getEmailAddress());
         this.keyRepository.save(key);
 
         KeyGenerateResponse response = new KeyGenerateResponse();
@@ -138,6 +140,7 @@ public class KeyServiceImpl implements KeyService {
             key.setKeySize(request.getSize());
             key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
             key.setKeyFormat(request.getFormat());
+            key.setEmailAddress(request.getEmailAddress());
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 
@@ -181,6 +184,7 @@ public class KeyServiceImpl implements KeyService {
         key.setKeySize(request.getSize());
         key.setKeyFormat(request.getFormat());
         key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
+        key.setEmailAddress(request.getEmailAddress());
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 

@@ -67,6 +67,17 @@ public class SubordinateServiceImpl implements SubordinateService {
         Map<String, Slot> slots = new HashMap<>();
         Map<String, String> serials = new HashMap<>();
 
+        // TODO:
+        //  if BC
+        //     if decentralized key then put into queue, send email to certificate owner
+        //     else server sign
+        //  if Yubico
+        //     if connected
+        //        if server sign
+        //        if client sign
+        //     else
+        //        into queue, send email to certificate owner
+
         // issuer
         Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
         Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));

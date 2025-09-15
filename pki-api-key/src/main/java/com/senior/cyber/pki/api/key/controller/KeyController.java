@@ -12,6 +12,12 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.jasypt.exceptions.EncryptionInitializationException;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
@@ -19,17 +25,25 @@ import org.jasypt.util.text.AES256TextEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.time.Instant;
 
 @RestController
 public class KeyController {
@@ -41,6 +55,12 @@ public class KeyController {
 
     @Autowired
     protected KeyRepository keyRepository;
+
+    @Autowired
+    protected JavaMailSender mailSender;
+
+    @Value("${app.mail.from}")
+    protected String from;
 
     @RequestMapping(path = "/download", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<KeyDownloadResponse> download(RequestEntity<KeyDownloadRequest> httpRequest) throws OperatorCreationException, IOException {
@@ -131,11 +151,23 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<BcGenerateRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<BcGenerateRequest> httpRequest) throws OperatorCreationException, MessagingException, IOException {
 
         BcGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        if (request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is required");
+        } else {
+            if (!EmailValidator.getInstance().isValid(request.getEmailAddress())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is not valid");
+            } else {
+                if (!request.getEmailAddress().endsWith("@khmer.name")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "only khmer.name domain are allow");
+                }
+            }
         }
 
         if (request.getFormat() == KeyFormatEnum.EC) {
@@ -151,6 +183,33 @@ public class KeyController {
         }
 
         KeyGenerateResponse response = this.keyService.bcGenerate(request);
+
+        ByteArrayOutputStream zip = new ByteArrayOutputStream();
+        try (ZipArchiveOutputStream stream = new ZipArchiveOutputStream(zip)) {
+            {
+                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId());
+                entry.setTime(Instant.now().toEpochMilli());
+                stream.putArchiveEntry(entry);
+                stream.closeArchiveEntry();
+            }
+
+            try (ByteArrayInputStream in = new ByteArrayInputStream(OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8))) {
+                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
+                stream.putArchiveEntry(entry);
+                IOUtils.copy(in, stream);
+                stream.closeArchiveEntry();
+            }
+            stream.finish();
+        }
+
+        MimeMessage message = this.mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setFrom(this.from);
+        helper.setSubject("pki-api-key");
+        helper.setTo(request.getEmailAddress());
+        helper.addAttachment(response.getKeyId() + ".zip", new ByteArrayResource(zip.toByteArray()), "application/zip");
+        this.mailSender.send(message);
+
         return ResponseEntity.ok(response);
     }
 
@@ -173,15 +232,28 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.EC.name() + ", " + KeyFormatEnum.RSA.name() + "]");
         }
 
+        if (request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is required");
+        } else {
+            if (!EmailValidator.getInstance().isValid(request.getEmailAddress())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is not valid");
+            } else {
+                if (!request.getEmailAddress().endsWith("@khmer.name")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "only khmer.name domain are allow");
+                }
+            }
+        }
+
         if (request.getPublicKey() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public key is null");
         }
         KeyGenerateResponse response = this.keyService.bcRegister(request);
+
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException, MessagingException {
         YubicoGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -222,12 +294,51 @@ public class KeyController {
             }
         }
 
+        if (request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is required");
+        } else {
+            if (!EmailValidator.getInstance().isValid(request.getEmailAddress())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is not valid");
+            } else {
+                if (!request.getEmailAddress().endsWith("@khmer.name")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "only khmer.name domain are allow");
+                }
+            }
+        }
+
         YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
         if (device == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device is not found");
         }
 
         KeyGenerateResponse response = this.keyService.yubicoGenerate(request);
+
+        ByteArrayOutputStream zip = new ByteArrayOutputStream();
+        try (ZipArchiveOutputStream stream = new ZipArchiveOutputStream(zip)) {
+            {
+                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId());
+                entry.setTime(Instant.now().toEpochMilli());
+                stream.putArchiveEntry(entry);
+                stream.closeArchiveEntry();
+            }
+
+            try (ByteArrayInputStream in = new ByteArrayInputStream(OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8))) {
+                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
+                stream.putArchiveEntry(entry);
+                IOUtils.copy(in, stream);
+                stream.closeArchiveEntry();
+            }
+            stream.finish();
+        }
+
+        MimeMessage message = this.mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setFrom(this.from);
+        helper.setSubject("pki-api-key");
+        helper.setTo(request.getEmailAddress());
+        helper.addAttachment(response.getKeyId() + ".zip", new ByteArrayResource(zip.toByteArray()), "application/zip");
+        this.mailSender.send(message);
+
         return ResponseEntity.ok(response);
     }
 
@@ -262,6 +373,18 @@ public class KeyController {
             }
             if (pivSlot == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "slot is not found");
+            }
+        }
+
+        if (request.getEmailAddress() == null || request.getEmailAddress().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is required");
+        } else {
+            if (!EmailValidator.getInstance().isValid(request.getEmailAddress())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is not valid");
+            } else {
+                if (!request.getEmailAddress().endsWith("@khmer.name")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "only khmer.name domain are allow");
+                }
             }
         }
 
