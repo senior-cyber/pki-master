@@ -24,7 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 
 @RestController
@@ -81,7 +83,7 @@ public class RootController {
      * @throws BadResponseException
      */
     @RequestMapping(path = "/root/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RootResponse> rootClientRegister(RequestEntity<RootRegisterRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public ResponseEntity<RootResponse> rootClientRegister(RequestEntity<RootRegisterRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException, SignatureException, InvalidKeyException {
         RootRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);

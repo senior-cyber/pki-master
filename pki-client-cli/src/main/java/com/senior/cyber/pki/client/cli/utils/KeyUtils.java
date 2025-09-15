@@ -92,7 +92,7 @@ public class KeyUtils {
         }
     }
 
-    public static KeyBcClientRegisterResponse bcClientRegister(BcRegisterRequest request) throws IOException, InterruptedException {
+    public static KeyGenerateResponse bcClientRegister(BcRegisterRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/bc/register"))
@@ -101,7 +101,7 @@ public class KeyUtils {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), KeyBcClientRegisterResponse.class);
+            return MAPPER.readValue(resp.body(), KeyGenerateResponse.class);
         }
     }
 

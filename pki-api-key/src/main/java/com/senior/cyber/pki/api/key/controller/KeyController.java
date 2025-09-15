@@ -155,7 +155,7 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyBcClientRegisterResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) throws OperatorCreationException {
         BcRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -176,7 +176,7 @@ public class KeyController {
         if (request.getPublicKey() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public key is null");
         }
-        KeyBcClientRegisterResponse response = this.keyService.bcRegister(request);
+        KeyGenerateResponse response = this.keyService.bcRegister(request);
         return ResponseEntity.ok(response);
     }
 

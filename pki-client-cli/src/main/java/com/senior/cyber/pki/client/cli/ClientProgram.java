@@ -106,7 +106,7 @@ public class ClientProgram implements CommandLineRunner {
                 BcRegisterRequest request = new BcRegisterRequest();
                 request.setSize(keySize);
                 request.setFormat(format);
-                KeyBcClientRegisterResponse response = KeyUtils.bcClientRegister(request);
+                KeyGenerateResponse response = KeyUtils.bcClientRegister(request);
                 if (response.getStatus() == 200) {
                     Signature signer = Signature.getInstance("SHA256withRSA", PROVIDER);
                     signer.initSign(keyPair.getPrivate());
