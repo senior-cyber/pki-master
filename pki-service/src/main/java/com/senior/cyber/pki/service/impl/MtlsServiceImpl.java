@@ -8,7 +8,7 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.MtlsService;
@@ -121,12 +121,12 @@ public class MtlsServiceImpl implements MtlsService {
             // crl
             Key crlKey = null;
             {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+                KeyPair x509 = KeyUtils.generate(KeyFormatEnum.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
+                key.setKeyFormat(KeyFormatEnum.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
@@ -155,12 +155,12 @@ public class MtlsServiceImpl implements MtlsService {
             // ocsp
             Key ocspKey = null;
             {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+                KeyPair x509 = KeyUtils.generate(KeyFormatEnum.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
+                key.setKeyFormat(KeyFormatEnum.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());

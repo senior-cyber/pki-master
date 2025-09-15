@@ -2,7 +2,7 @@ package com.senior.cyber.pki.api.issuer.controller;
 
 import com.senior.cyber.pki.common.dto.SshClientGenerateRequest;
 import com.senior.cyber.pki.common.dto.SshClientGenerateResponse;
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -42,12 +42,12 @@ public class SshController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key have been revoked");
         }
 
-        if (issuerKey.getKeyFormat() == KeyFormat.RSA) {
+        if (issuerKey.getKeyFormat() == KeyFormatEnum.RSA) {
             SshClientGenerateResponse response = this.sshcaService.sshClientGenerate(request);
             return ResponseEntity.ok(response);
         } else {
             LOGGER.info("issuer key format type is {}", issuerKey.getType());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormat.RSA.name() + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormatEnum.RSA.name() + "]");
         }
     }
 

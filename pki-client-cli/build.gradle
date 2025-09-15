@@ -26,6 +26,7 @@ dependencies {
     implementation "com.yubico.yubikit:desktop:${yubikit}"
     implementation "com.yubico.yubikit:management:${yubikit}"
 
+    implementation "joda-time:joda-time:${joda_time}"
     implementation "org.jasypt:jasypt:${jasypt}"
 
     implementation "commons-io:commons-io:${commons_io}"

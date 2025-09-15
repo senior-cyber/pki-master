@@ -1,9 +1,9 @@
 package com.senior.cyber.pki.dao.entity.pki;
 
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.rbac.User;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -44,7 +44,7 @@ public class Key implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "key_format")
-    private KeyFormat keyFormat;
+    private KeyFormatEnum keyFormat;
 
     @Column(name = "key_size")
     private int keySize = -1;

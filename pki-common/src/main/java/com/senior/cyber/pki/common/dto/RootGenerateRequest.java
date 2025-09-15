@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
-public class RootServerGenerateRequest implements Serializable {
+public class RootGenerateRequest implements Serializable {
 
     @JsonProperty("keyId")
     private String keyId;
@@ -37,10 +37,10 @@ public class RootServerGenerateRequest implements Serializable {
     @JsonProperty("emailAddress")
     private String emailAddress;
 
-    public RootServerGenerateRequest() {
+    public RootGenerateRequest() {
     }
 
-    public RootServerGenerateRequest(String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
+    public RootGenerateRequest(String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
         this.keyId = keyId;
         this.keyPassword = keyPassword;
         this.locality = locality;

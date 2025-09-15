@@ -1,21 +1,20 @@
 package com.senior.cyber.pki.api.key.controller;
 
 import com.senior.cyber.pki.common.dto.*;
-import com.senior.cyber.pki.common.x509.KeyFormat;
-import com.senior.cyber.pki.common.x509.OpenSshPrivateKeyUtils;
-import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
+import com.senior.cyber.pki.common.util.YubicoProviderUtils;
+import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
-import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.yubico.yubikit.core.YubiKeyDevice;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.jasypt.exceptions.EncryptionInitializationException;
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 
 @RestController
 public class KeyController {
@@ -44,9 +42,9 @@ public class KeyController {
     @Autowired
     protected KeyRepository keyRepository;
 
-    @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws OperatorCreationException, IOException {
-        KeyInfoRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/download", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyDownloadResponse> download(RequestEntity<KeyDownloadRequest> httpRequest) throws OperatorCreationException, IOException {
+        KeyDownloadRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -56,13 +54,9 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        KeyInfoResponse response = new KeyInfoResponse();
-        if (key.getType() != null) {
-            response.setType(key.getType().name());
-        }
-        if (key.getKeyFormat() != null) {
-            response.setKeyFormat(key.getKeyFormat().name());
-        }
+        KeyDownloadResponse response = new KeyDownloadResponse();
+        response.setType(key.getType());
+        response.setKeyFormat(key.getKeyFormat());
         if (key.getType() == KeyTypeEnum.BC) {
             if (key.getPrivateKey() != null && !key.getPrivateKey().isEmpty()) {
                 PrivateKey privateKey = PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword());
@@ -87,58 +81,108 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/bc/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcServerGenerate(RequestEntity<BcKeyGenerateRequest> httpRequest) throws OperatorCreationException {
-        BcKeyGenerateRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
+        KeyInfoRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        if (request.getFormat() == KeyFormat.EC) {
-            if (request.getSize() != 256 && request.getSize() != 384) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
-            }
-        } else if (request.getFormat() == KeyFormat.RSA) {
-            if (request.getSize() != 1024 && request.getSize() != 2048) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
+        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+        if (key.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        KeyGenerateResponse response = this.keyService.generate(request);
+        KeyInfoResponse response = new KeyInfoResponse();
+
+        response.setType(key.getType());
+        switch (key.getType()) {
+            case BC -> {
+                if (key.getPrivateKey() == null || key.getPrivateKey().isEmpty()) {
+                    if (!PublicKeyUtils.verifyText(key.getPublicKey(), request.getKeyPassword() + "." + key.getId())) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                    }
+                } else {
+                    if (PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()) == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                    }
+                }
+                response.setDecentralized(key.getPrivateKey() == null || key.getPrivateKey().isEmpty());
+            }
+            case Yubico -> {
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(request.getKeyPassword());
+                try {
+                    encryptor.decrypt(key.getPrivateKey());
+                } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+                response.setDecentralized(true);
+            }
+        }
+
+        if (key.getKeyFormat() != null) {
+            response.setFormat(key.getKeyFormat());
+        }
+        if (key.getKeySize() > 0) {
+            response.setSize(key.getKeySize());
+        }
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/bc/client/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcKeyRegisterRequest> httpRequest) throws OperatorCreationException {
-        BcKeyRegisterRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> bcGenerate(RequestEntity<KeyBcGenerateRequest> httpRequest) throws OperatorCreationException {
+
+        KeyBcGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        if (request.getFormat() == KeyFormat.EC) {
+        if (request.getFormat() == KeyFormatEnum.EC) {
             if (request.getSize() != 256 && request.getSize() != 384) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
             }
-        } else if (request.getFormat() == KeyFormat.RSA) {
+        } else if (request.getFormat() == KeyFormatEnum.RSA) {
             if (request.getSize() != 1024 && request.getSize() != 2048) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.EC.name() + ", " + KeyFormatEnum.RSA.name() + "]");
+        }
+
+        KeyGenerateResponse response = this.keyService.bcGenerate(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(path = "/bc/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyBcClientRegisterResponse> bcClientRegister(RequestEntity<KeyBcClientRegisterRequest> httpRequest) throws OperatorCreationException {
+        KeyBcClientRegisterRequest request = httpRequest.getBody();
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        if (request.getFormat() == KeyFormatEnum.EC) {
+            if (request.getSize() != 256 && request.getSize() != 384) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
+            }
+        } else if (request.getFormat() == KeyFormatEnum.RSA) {
+            if (request.getSize() != 1024 && request.getSize() != 2048) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.EC.name() + ", " + KeyFormatEnum.RSA.name() + "]");
         }
 
         if (request.getPublicKey() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public key is null");
         }
-        KeyGenerateResponse response = this.keyService.register(request);
+        KeyBcClientRegisterResponse response = this.keyService.bcRegister(request);
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/yubico/server/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoKeyGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
-        YubicoKeyGenerateRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/yubico/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> yubicoGenerate(RequestEntity<YubicoGenerateRequest> httpRequest) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+        YubicoGenerateRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -147,16 +191,16 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "management key is required");
         }
 
-        if (request.getFormat() == KeyFormat.EC) {
+        if (request.getFormat() == KeyFormatEnum.EC) {
             if (request.getSize() != 256 && request.getSize() != 384) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [256, 384]");
             }
-        } else if (request.getFormat() == KeyFormat.RSA) {
+        } else if (request.getFormat() == KeyFormatEnum.RSA) {
             if (request.getSize() != 1024 && request.getSize() != 2048) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size is not number of [1024, 2048]");
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.EC.name() + ", " + KeyFormat.RSA.name() + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.EC.name() + ", " + KeyFormatEnum.RSA.name() + "]");
         }
 
         if (request.getSerialNumber() == null || request.getSerialNumber().isBlank()) {
@@ -183,13 +227,13 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device is not found");
         }
 
-        KeyGenerateResponse response = this.keyService.generate(request);
+        KeyGenerateResponse response = this.keyService.yubicoGenerate(request);
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(path = "/yubico/client/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> yubicoClientRegister(RequestEntity<YubicoKeyRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
-        YubicoKeyRegisterRequest request = httpRequest.getBody();
+    @RequestMapping(path = "/yubico/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KeyGenerateResponse> yubicoRegister(RequestEntity<YubicoRegisterRequest> httpRequest) throws IOException, BadResponseException, ApduException, ApplicationNotAvailableException {
+        YubicoRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -221,12 +265,11 @@ public class KeyController {
             }
         }
 
-        YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
-        if (device == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "device is not found");
+        if (request.getPublicKey() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public key is null");
         }
 
-        KeyGenerateResponse response = this.keyService.register(request);
+        KeyGenerateResponse response = this.keyService.yubicoRegister(request);
         return ResponseEntity.ok(response);
     }
 

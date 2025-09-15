@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.api.ssh.controller;
 
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -54,11 +54,11 @@ public class OpenSSHController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found");
         }
 
-        if (key.getKeyFormat() == KeyFormat.RSA) {
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             return ResponseEntity.ok(PublicKeyEntry.toString(key.getPublicKey()));
         } else {
             LOGGER.info("key format is {}", key.getKeyFormat());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.RSA + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.RSA + "]");
         }
     }
 

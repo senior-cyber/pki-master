@@ -10,12 +10,16 @@ import java.io.IOException;
 
 public interface KeyService {
 
-    KeyGenerateResponse generate(BcKeyGenerateRequest request) throws OperatorCreationException;
+    KeyGenerateResponse bcGenerate(KeyBcGenerateRequest request) throws OperatorCreationException;
 
-    KeyGenerateResponse register(BcKeyRegisterRequest request);
+    KeyGenerateResponse yubicoGenerate(KeyBcGenerateRequest request) throws OperatorCreationException;
 
-    KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
+    KeyBcClientRegisterResponse yubicoRegister(KeyBcClientRegisterRequest request);
 
-    KeyGenerateResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
+    KeyBcClientRegisterResponse bcRegister(KeyBcClientRegisterRequest request);
+
+    KeyGenerateResponse yubicoGenerate(YubicoGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException;
+
+    KeyGenerateResponse yubicoRegister(YubicoRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException;
 
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.SshClientGenerateRequest;
 import com.senior.cyber.pki.common.dto.SshClientGenerateResponse;
 import com.senior.cyber.pki.common.dto.YubicoPassword;
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
@@ -58,9 +58,9 @@ public class SshCAServiceImpl implements SshCAService {
         Map<String, String> serials = new HashMap<>();
 
         Key issuerKey = this.keyRepository.findById(request.getIssuer().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
-        if (issuerKey.getKeyFormat() != KeyFormat.RSA) {
+        if (issuerKey.getKeyFormat() != KeyFormatEnum.RSA) {
             LOGGER.info("issuer key format type is {}", issuerKey.getType());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormat.RSA.name() + "]");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer key format is not type of [" + KeyFormatEnum.RSA.name() + "]");
         }
 
         Crypto issuer = null;
@@ -85,9 +85,9 @@ public class SshCAServiceImpl implements SshCAService {
         try {
             Key sshKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
             Crypto ssh = null;
-            if (sshKey.getKeyFormat() != KeyFormat.RSA) {
+            if (sshKey.getKeyFormat() != KeyFormatEnum.RSA) {
                 LOGGER.info("issuer key format type is {}", sshKey.getType());
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormat.RSA.name() + "]");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key format is not type of [" + KeyFormatEnum.RSA.name() + "]");
             }
 
             switch (sshKey.getType()) {

@@ -12,10 +12,10 @@ import java.security.Provider;
 public class KeyUtils {
 
     public static KeyPair generate() {
-        return generate(KeyFormat.EC);
+        return generate(KeyFormatEnum.EC);
     }
 
-    public static KeyPair generate(KeyFormat format) {
+    public static KeyPair generate(KeyFormatEnum format) {
         int keySize = 0;
         switch (format) {
             case EC -> {
@@ -28,7 +28,7 @@ public class KeyUtils {
         return generate(format, keySize);
     }
 
-    public static KeyPair generate(KeyFormat format, int keySize) {
+    public static KeyPair generate(KeyFormatEnum format, int keySize) {
         Provider provider = new BouncyCastleProvider();
         KeyPairGenerator generator = null;
         try {

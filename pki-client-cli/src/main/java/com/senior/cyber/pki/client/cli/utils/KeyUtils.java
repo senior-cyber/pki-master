@@ -16,8 +16,8 @@ import java.util.Map;
 
 public class KeyUtils {
 
-    private static final String KEY = "https://pki-api-key.khmer.name";
-    //    private static final String KEY = "http://127.0.0.1:3103";
+//    private static final String KEY = "https://pki-api-key.khmer.name";
+        private static final String KEY = "http://127.0.0.1:3103";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -31,6 +31,19 @@ public class KeyUtils {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), KeyInfoResponse.class);
+        }
+    }
+
+    public static KeyDownloadResponse download(KeyDownloadRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(KEY + "/api/download"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), KeyDownloadResponse.class);
         }
     }
 
@@ -66,7 +79,7 @@ public class KeyUtils {
         }
     }
 
-    public static KeyGenerateResponse bcGenerate(BcKeyGenerateRequest request) throws IOException, InterruptedException {
+    public static KeyGenerateResponse bcServerGenerate(KeyBcGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/bc/generate"))
@@ -79,7 +92,20 @@ public class KeyUtils {
         }
     }
 
-    public static KeyGenerateResponse yubicoRegister(YubicoKeyRegisterRequest request) throws IOException, InterruptedException {
+    public static KeyBcClientRegisterResponse bcClientRegister(KeyBcClientRegisterRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(KEY + "/api/bc/register"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), KeyBcClientRegisterResponse.class);
+        }
+    }
+
+    public static KeyGenerateResponse yubicoRegister(YubicoRegisterRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/yubico/register"))
@@ -92,7 +118,7 @@ public class KeyUtils {
         }
     }
 
-    public static KeyGenerateResponse yubicoGenerate(YubicoKeyGenerateRequest request) throws IOException, InterruptedException {
+    public static KeyGenerateResponse yubicoGenerate(YubicoGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(KEY + "/api/yubico/generate"))

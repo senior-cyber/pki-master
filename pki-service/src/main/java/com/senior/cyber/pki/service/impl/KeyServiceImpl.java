@@ -3,13 +3,9 @@ package com.senior.cyber.pki.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
-import com.senior.cyber.pki.common.x509.KeyFormat;
-import com.senior.cyber.pki.common.x509.KeyUtils;
-import com.senior.cyber.pki.common.x509.PrivateKeyUtils;
-import com.senior.cyber.pki.common.x509.Yubico;
+import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.yubico.yubikit.core.YubiKeyDevice;
@@ -30,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.security.interfaces.ECKey;
-import java.security.interfaces.RSAKey;
 import java.util.Date;
 
 @Service
@@ -45,7 +39,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse generate(BcKeyGenerateRequest request) throws OperatorCreationException {
+    public KeyGenerateResponse bcGenerate(KeyBcGenerateRequest request) throws OperatorCreationException {
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
@@ -61,14 +55,38 @@ public class KeyServiceImpl implements KeyService {
         KeyGenerateResponse response = new KeyGenerateResponse();
         response.setKeyPassword(password);
         response.setKeyId(key.getId());
-        if (key.getKeyFormat() == KeyFormat.RSA) {
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
         return response;
     }
 
     @Override
-    public KeyGenerateResponse register(BcKeyRegisterRequest request) {
+    @Transactional(rollbackFor = Throwable.class)
+    public KeyGenerateResponse yubicoGenerate(KeyBcGenerateRequest request) throws OperatorCreationException {
+        String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
+        KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
+        Key key = new Key();
+        key.setStatus(KeyStatusEnum.Good);
+        key.setPrivateKey(PrivateKeyUtils.convert(_key.getPrivate(), password));
+        key.setPublicKey(_key.getPublic());
+        key.setType(KeyTypeEnum.BC);
+        key.setKeySize(request.getSize());
+        key.setKeyFormat(request.getFormat());
+        key.setCreatedDatetime(new Date());
+        this.keyRepository.save(key);
+
+        KeyGenerateResponse response = new KeyGenerateResponse();
+        response.setKeyPassword(password);
+        response.setKeyId(key.getId());
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
+            response.setOpenSshPublicKey(key.getPublicKey());
+        }
+        return response;
+    }
+
+    @Override
+    public KeyBcClientRegisterResponse yubicoRegister(KeyBcClientRegisterRequest request) {
         Key key = new Key();
         key.setStatus(KeyStatusEnum.Good);
         key.setPrivateKey(null);
@@ -79,9 +97,29 @@ public class KeyServiceImpl implements KeyService {
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
-        KeyGenerateResponse response = new KeyGenerateResponse();
+        KeyBcClientRegisterResponse response = new KeyBcClientRegisterResponse();
         response.setKeyId(key.getId());
-        if (key.getKeyFormat() == KeyFormat.RSA) {
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
+            response.setOpenSshPublicKey(key.getPublicKey());
+        }
+        return response;
+    }
+
+    @Override
+    public KeyBcClientRegisterResponse bcRegister(KeyBcClientRegisterRequest request) {
+        Key key = new Key();
+        key.setStatus(KeyStatusEnum.Good);
+        key.setPrivateKey(null);
+        key.setPublicKey(request.getPublicKey());
+        key.setType(KeyTypeEnum.BC);
+        key.setKeySize(request.getSize());
+        key.setKeyFormat(request.getFormat());
+        key.setCreatedDatetime(new Date());
+        this.keyRepository.save(key);
+
+        KeyBcClientRegisterResponse response = new KeyBcClientRegisterResponse();
+        response.setKeyId(key.getId());
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
         return response;
@@ -89,7 +127,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse generate(YubicoKeyGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+    public KeyGenerateResponse yubicoGenerate(YubicoGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -150,7 +188,7 @@ public class KeyServiceImpl implements KeyService {
             KeyGenerateResponse response = new KeyGenerateResponse();
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
-            if (key.getKeyFormat() == KeyFormat.RSA) {
+            if (key.getKeyFormat() == KeyFormatEnum.RSA) {
                 response.setOpenSshPublicKey(key.getPublicKey());
             }
             return response;
@@ -159,7 +197,7 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse register(YubicoKeyRegisterRequest request) throws IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public KeyGenerateResponse yubicoRegister(YubicoRegisterRequest request) throws IOException {
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -167,46 +205,36 @@ public class KeyServiceImpl implements KeyService {
                 break;
             }
         }
-        YubiKeyDevice device = YubicoProviderUtils.lookupDevice(request.getSerialNumber());
-        try (SmartCardConnection connection = device.openConnection(SmartCardConnection.class)) {
-            PivSession session = new PivSession(connection);
-            session.authenticate(YubicoProviderUtils.hexStringToByteArray(request.getManagementKey()));
-            PublicKey publicKey = YubicoProviderUtils.lookupPublicKey(session, pivSlot);
 
-            String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
-            AES256TextEncryptor encryptor = new AES256TextEncryptor();
-            encryptor.setPassword(password);
+        String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
+        AES256TextEncryptor encryptor = new AES256TextEncryptor();
+        encryptor.setPassword(password);
 
-            YubicoPassword yubicoPassword = new YubicoPassword();
-            yubicoPassword.setPin(request.getPin());
-            yubicoPassword.setManagementKey(request.getManagementKey());
-            if (pivSlot != null) {
-                yubicoPassword.setPivSlot(pivSlot.getStringAlias());
-            }
-            yubicoPassword.setSerial(request.getSerialNumber());
-
-            Key key = new Key();
-            key.setStatus(KeyStatusEnum.Good);
-            key.setPublicKey(publicKey);
-            key.setType(KeyTypeEnum.Yubico);
-            key.setKeySize(request.getSize());
-            if (publicKey instanceof RSAKey) {
-                key.setKeyFormat(KeyFormat.RSA);
-            } else if (publicKey instanceof ECKey) {
-                key.setKeyFormat(KeyFormat.EC);
-            }
-            key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
-            key.setCreatedDatetime(new Date());
-            this.keyRepository.save(key);
-
-            KeyGenerateResponse response = new KeyGenerateResponse();
-            response.setKeyId(key.getId());
-            response.setKeyPassword(password);
-            if (key.getKeyFormat() == KeyFormat.RSA) {
-                response.setOpenSshPublicKey(key.getPublicKey());
-            }
-            return response;
+        YubicoPassword yubicoPassword = new YubicoPassword();
+        yubicoPassword.setPin(request.getPin());
+        yubicoPassword.setManagementKey(request.getManagementKey());
+        if (pivSlot != null) {
+            yubicoPassword.setPivSlot(pivSlot.getStringAlias());
         }
+        yubicoPassword.setSerial(request.getSerialNumber());
+
+        Key key = new Key();
+        key.setStatus(KeyStatusEnum.Good);
+        key.setPublicKey(request.getPublicKey());
+        key.setType(KeyTypeEnum.Yubico);
+        key.setKeySize(request.getSize());
+        key.setKeyFormat(request.getFormat());
+        key.setPrivateKey(encryptor.encrypt(objectMapper.writeValueAsString(yubicoPassword)));
+        key.setCreatedDatetime(new Date());
+        this.keyRepository.save(key);
+
+        KeyGenerateResponse response = new KeyGenerateResponse();
+        response.setKeyId(key.getId());
+        response.setKeyPassword(password);
+        if (key.getKeyFormat() == KeyFormatEnum.RSA) {
+            response.setOpenSshPublicKey(key.getPublicKey());
+        }
+        return response;
     }
 
 }

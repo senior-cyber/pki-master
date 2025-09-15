@@ -1,9 +1,9 @@
 package com.senior.cyber.pki.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senior.cyber.pki.common.dto.RootClientRegisterRequest;
-import com.senior.cyber.pki.common.dto.RootServerGenerateRequest;
-import com.senior.cyber.pki.common.dto.RootServerGenerateResponse;
+import com.senior.cyber.pki.common.dto.RootRegisterRequest;
+import com.senior.cyber.pki.common.dto.RootGenerateRequest;
+import com.senior.cyber.pki.common.dto.RootResponse;
 import com.senior.cyber.pki.common.dto.YubicoPassword;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
@@ -11,7 +11,7 @@ import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.dao.enums.KeyTypeEnum;
+import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
@@ -65,7 +65,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootServerGenerateResponse rootServerGenerate(RootServerGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public RootResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Map<String, SmartCardConnection> connections = new HashMap<>();
         Map<String, KeyStore> keys = new HashMap<>();
         Map<String, PivProvider> providers = new HashMap<>();
@@ -126,12 +126,12 @@ public class RootServiceImpl implements RootService {
             // crl
             Key crlKey = null;
             {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+                KeyPair x509 = KeyUtils.generate(KeyFormatEnum.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
+                key.setKeyFormat(KeyFormatEnum.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
@@ -161,12 +161,12 @@ public class RootServiceImpl implements RootService {
             // ocsp
             Key ocspKey = null;
             {
-                KeyPair x509 = KeyUtils.generate(KeyFormat.RSA);
+                KeyPair x509 = KeyUtils.generate(KeyFormatEnum.RSA);
                 Key key = new Key();
                 key.setStatus(KeyStatusEnum.Good);
                 key.setType(KeyTypeEnum.BC);
                 key.setKeySize(2048);
-                key.setKeyFormat(KeyFormat.RSA);
+                key.setKeyFormat(KeyFormatEnum.RSA);
                 key.setPrivateKey(PrivateKeyUtils.convert(x509.getPrivate()));
                 key.setPublicKey(x509.getPublic());
                 key.setCreatedDatetime(new Date());
@@ -206,7 +206,7 @@ public class RootServiceImpl implements RootService {
             _rootCertificate.setOcspCertificate(_rootCertificate);
             this.certificateRepository.save(_rootCertificate);
 
-            RootServerGenerateResponse response = new RootServerGenerateResponse();
+            RootResponse response = new RootResponse();
             response.setCertificateId(_rootCertificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(rootCertificate);
@@ -229,7 +229,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootServerGenerateResponse rootClientRegister(String crlUrl, String ocspUrl, String x509Url, RootClientRegisterRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public RootResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         long rootSerial = request.getRootCertificate().getSerialNumber().longValueExact();
@@ -338,7 +338,7 @@ public class RootServiceImpl implements RootService {
         _rootCertificate.setOcspCertificate(_rootCertificate);
         this.certificateRepository.save(_rootCertificate);
 
-        RootServerGenerateResponse response = new RootServerGenerateResponse();
+        RootResponse response = new RootResponse();
         response.setCertificateId(_rootCertificate.getId());
         response.setKeyPassword(request.getKeyPassword());
         response.setCertificate(request.getRootCertificate());

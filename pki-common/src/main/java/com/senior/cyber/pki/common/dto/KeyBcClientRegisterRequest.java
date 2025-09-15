@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
 import com.senior.cyber.pki.common.converter.PublicKeySerializer;
-import com.senior.cyber.pki.common.x509.KeyFormat;
+import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,23 +14,23 @@ import java.security.PublicKey;
 
 @Setter
 @Getter
-public class BcKeyRegisterRequest implements Serializable {
+public class KeyBcClientRegisterRequest implements Serializable {
 
     @JsonProperty("size")
     private int size;
 
     @JsonProperty("format")
-    private KeyFormat format;
+    private KeyFormatEnum format;
 
     @JsonSerialize(using = PublicKeySerializer.class)
     @JsonDeserialize(using = PublicKeyDeserializer.class)
     @JsonProperty("publicKey")
     private PublicKey publicKey;
 
-    public BcKeyRegisterRequest() {
+    public KeyBcClientRegisterRequest() {
     }
 
-    public BcKeyRegisterRequest(int size, KeyFormat format, PublicKey publicKey) {
+    public KeyBcClientRegisterRequest(int size, KeyFormatEnum format, PublicKey publicKey) {
         this.size = size;
         this.format = format;
         this.publicKey = publicKey;

@@ -1,5 +1,5 @@
 package com.senior.cyber.pki.common.x509;
 
-public enum KeyFormat {
+public enum KeyFormatEnum {
     EC, RSA;
 }
