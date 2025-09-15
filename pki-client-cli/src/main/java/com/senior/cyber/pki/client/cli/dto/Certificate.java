@@ -1,31 +1,25 @@
-package com.senior.cyber.pki.common.dto;
+package com.senior.cyber.pki.client.cli.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Setter
 @Getter
-public class Issuer {
+public class Certificate {
 
     @JsonProperty("certificateId")
     private String certificateId;
 
-    @JsonProperty("keyId")
-    private String keyId;
-
     @JsonProperty("keyPassword")
     private String keyPassword;
 
-    public Issuer() {
+    public Certificate() {
     }
 
-    public Issuer(String certificateId, String keyId, String keyPassword) {
+    public Certificate(String certificateId, String keyPassword) {
         this.certificateId = certificateId;
         this.keyPassword = keyPassword;
-        this.keyId = keyId;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senior.cyber.pki.client.cli.dto.Certificate;
 import com.senior.cyber.pki.client.cli.dto.Key;
 import com.senior.cyber.pki.client.cli.dto.Subject;
 import com.senior.cyber.pki.client.cli.utils.IssuerUtils;
@@ -72,6 +73,7 @@ public class ClientProgram implements CommandLineRunner {
         String _key = System.getProperty("key");
         String _subject = System.getProperty("subject");
         String _privateKey = System.getProperty("private-key");
+        String output = System.getProperty("output");
 
 
 //        api = "key";
@@ -81,6 +83,7 @@ public class ClientProgram implements CommandLineRunner {
 
         api = "root";
         function = "root-generate";
+        output = "key.json";
 
         _privateKey = "private-key.pem";
         _key = "key.json";
@@ -119,17 +122,9 @@ public class ClientProgram implements CommandLineRunner {
                     Key key = new Key();
                     key.setKeyId(response.getKeyId());
                     key.setKeyPassword(signatureBase64);
-                    System.out.println("wrote files");
-                    FileUtils.write(new File("key.json"), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
-                    System.out.println("  " + "key.json");
-                    FileUtils.write(new File("public-key.pem"), PublicKeyUtils.convert(keyPair.getPublic()), StandardCharsets.UTF_8);
-                    System.out.println("  " + "public-key.pem");
-                    FileUtils.write(new File("private-key.pem"), PrivateKeyUtils.convert(keyPair.getPrivate()), StandardCharsets.UTF_8);
-                    System.out.println("  " + "private-key.pem");
-                    FileUtils.write(new File("openssh-public-key.pub"), OpenSshPublicKeyUtils.convert(keyPair.getPublic()), StandardCharsets.UTF_8);
-                    System.out.println("  " + "openssh-public-key.pub");
-                    FileUtils.write(new File("openssh-private-key"), OpenSshPrivateKeyUtils.convert(keyPair.getPrivate()), StandardCharsets.UTF_8);
-                    System.out.println("  " + "openssh-private-key");
+                    key.setPrivateKey(keyPair.getPrivate());
+                    System.out.println("output to " + output);
+                    FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
                 }
             } else if ("bc-server-generate".equals(function)) { // DONE
                 int size = Integer.parseInt(_size);
@@ -196,9 +191,8 @@ public class ClientProgram implements CommandLineRunner {
                                 key.setKeyId(response.getKeyId());
                                 key.setKeyPassword(response.getKeyPassword());
 
-                                System.out.println("wrote files");
-                                FileUtils.write(new File("key.json"), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
-                                System.out.println("  " + "key.json");
+                                System.out.println("output to " + output);
+                                FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
                             }
                         } else if ("server".equals(info.getType())) {
                             int size = Integer.parseInt(_size);
@@ -210,9 +204,8 @@ public class ClientProgram implements CommandLineRunner {
                             key.setKeyId(response.getKeyId());
                             key.setKeyPassword(response.getKeyPassword());
 
-                            System.out.println("wrote files");
-                            FileUtils.write(new File("key.json"), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
-                            System.out.println("  " + "key.json");
+                            System.out.println("output to " + output);
+                            FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key), StandardCharsets.UTF_8);
                         }
                     }
                 }
@@ -332,18 +325,18 @@ public class ClientProgram implements CommandLineRunner {
                         RootResponse response = RootUtils.rootRegister(request);
                         System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                         if (response.getCertificate() != null) {
-                            System.out.println("wrote files");
-                            FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
-                            System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                            Certificate certificate = new Certificate(response.getCertificateId(), response.getKeyPassword());
+                            System.out.println("output to " + output);
+                            FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate), StandardCharsets.UTF_8);
                         }
                     } else { // Server Sign
                         Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
                         RootResponse response = RootUtils.rootGenerate(new RootGenerateRequest(key.getKeyId(), key.getKeyPassword(), subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
                         System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                         if (response.getCertificate() != null) {
-                            System.out.println("wrote files");
-                            FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
-                            System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                            Certificate certificate = new Certificate(response.getCertificateId(), response.getKeyPassword());
+                            System.out.println("output to " + output);
+                            FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate), StandardCharsets.UTF_8);
                         }
                     }
                 } else if (keyInfo.getType() == KeyTypeEnum.Yubico) {
@@ -416,9 +409,9 @@ public class ClientProgram implements CommandLineRunner {
                                     RootResponse response = RootUtils.rootRegister(request);
                                     System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                                     if (response.getCertificate() != null) {
-                                        System.out.println("wrote files");
-                                        FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
-                                        System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                                        Certificate certificate = new Certificate(response.getCertificateId(), response.getKeyPassword());
+                                        System.out.println("output to " + output);
+                                        FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate), StandardCharsets.UTF_8);
                                     }
 
                                     PivSession session = sessions.get(serials.get(key.getKeyId()));
@@ -438,36 +431,18 @@ public class ClientProgram implements CommandLineRunner {
                                 RootResponse response = RootUtils.rootGenerate(new RootGenerateRequest(key.getKeyId(), key.getKeyPassword(), subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
                                 System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                                 if (response.getCertificate() != null) {
-                                    System.out.println("wrote files");
-                                    FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
-                                    System.out.println("  " + response.getCertificateId() + "-certificate.pem");
+                                    Certificate certificate = new Certificate(response.getCertificateId(), response.getKeyPassword());
+                                    System.out.println("output to " + output);
+                                    FileUtils.write(new File(output), MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate), StandardCharsets.UTF_8);
                                 }
                             }
                         }
                     }
-                    // if it is local key
-                    // if it is server key
-
-                    // show document to aditi.
-                    //
-                    //
                 }
-//                String keyId = System.getProperty("keyId");
-//                KeyInfoResponse info = KeyUtils.info(new KeyInfoRequest(keyId));
-//                if (!info.isDecentralized()) {
-//                    String keyPassword = System.getProperty("keyPassword");
-//                    Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(System.getProperty("subject")), StandardCharsets.UTF_8), Subject.class);
-//                    RootServerGenerateResponse response = RootUtils.rootGenerate(new RootServerGenerateRequest(keyId, keyPassword, subject.getLocality(), subject.getProvince(), subject.getCountry(), subject.getCommonName(), subject.getOrganization(), subject.getOrganizationalUnit(), subject.getEmailAddress()));
-//                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-//                    if (response.getCertificate() != null) {
-//                        System.out.println("wrote files");
-//                        FileUtils.write(new File(response.getCertificateId() + "-certificate.pem"), CertificateUtils.convert(response.getCertificate()), StandardCharsets.UTF_8);
-//                        System.out.println("  " + response.getCertificateId() + "-certificate.pem");
-//                    }
-//                } else {
-//
-//                }
             } else if ("subordinate-generate".equals(function)) {
+                Key key = MAPPER.readValue(FileUtils.readFileToString(new File(_key), StandardCharsets.UTF_8), Key.class);
+                KeyInfoResponse keyInfo = KeyUtils.info(new KeyInfoRequest(key.getKeyId(), key.getKeyPassword()));
+
                 String issuerCertificateId = System.getProperty("issuerCertificateId");
                 String issuerKeyPassword = System.getProperty("issuerKeyPassword");
                 String keyId = System.getProperty("keyId");
