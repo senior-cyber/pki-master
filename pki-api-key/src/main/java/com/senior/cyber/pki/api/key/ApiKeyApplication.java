@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.api.key;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,17 +22,23 @@ public class ApiKeyApplication implements CommandLineRunner {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Value("${app.mail.from}")
+    private String from;
+
+    @Value("${app.mail.system}")
+    private String system;
+
     public static void main(String[] args) {
         SpringApplication.run(ApiKeyApplication.class, args);
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("");
-        message.setTo("");
-        message.setSubject("Key API Service");
-        message.setText("Key API is ready to serve request");
+        message.setFrom(this.from);
+        message.setTo(this.system);
+        message.setSubject("pki-api-key");
+        message.setText("pki-api-key is ready to serve the request");
         mailSender.send(message);
     }
 

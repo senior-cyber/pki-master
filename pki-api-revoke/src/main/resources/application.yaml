@@ -10,6 +10,21 @@ server:
 spring:
   application:
     name: Revoke Certificate/Key
+  jackson:
+    serialization:
+      indent_output: true
+  mail:
+    host: mail.khmer.name
+    port: 465
+    username:
+    password:
+    default-encoding: utf-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
   jpa:
     show-sql: true
     hibernate:
@@ -46,6 +61,10 @@ spring:
       table-name: tbl_cluster_SPRING_SESSION
       platform: mysql
       schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
+app:
+  mail:
+    from:
+    system:
 api:
   crl: http://127.0.0.1:3001/api/crl
   ocsp: http://127.0.0.1:3002/api/ocsp
@@ -55,9 +74,6 @@ logging:
   file:
     path: ./
     name: info.log
-  pattern:
-    console: "%d %-5level %logger : %msg%n"
-    file: "%d %-5level [%thread] %logger : %msg%n"
   level:
     root: info
     sql: info
