@@ -9,15 +9,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.util.Date;
 
 @Setter
 @Getter
+@NoArgsConstructor                                   // <-- safe for Jackson too
 @JsonIgnoreProperties(ignoreUnknown = true)
-@SuperBuilder
-@NoArgsConstructor
 public abstract class BaseResponse implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,7 +25,7 @@ public abstract class BaseResponse implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "Asia/Phnom_Penh")
     protected Date timestamp;
 
-    @Builder.Default
+//    @Builder.Default
     @JsonProperty("status")
     protected int status = 200;
 

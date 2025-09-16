@@ -62,7 +62,19 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, OperatorCreationException, CertificateException {
+    public void run(String... args) throws Exception {
+        String pp = "{\n" +
+                "  \"timestamp\" : \"2025-09-16T09:53:33.377+00:00\",\n" +
+                "  \"status\" : 400,\n" +
+                "  \"error\" : \"Bad Request\",\n" +
+                "  \"message\" : \"email address is required\",\n" +
+                "  \"path\" : \"/api/bc/register\"\n" +
+                "}";
+        KeyGenerateResponse1 response = MAPPER.readValue(pp, KeyGenerateResponse1.class);
+        System.out.println(response);
+    }
+
+    public void run1(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, OperatorCreationException, CertificateException {
         String api = System.getProperty("api");
         String function = System.getProperty("function");
 
