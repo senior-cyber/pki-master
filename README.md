@@ -94,6 +94,15 @@ cp pki-api-issuer/build/libs/pki-api-issuer.jar /opt/apps/pki-master/pki-api-iss
 cp pki-api-key/build/libs/pki-api-key.jar       /opt/apps/pki-master/pki-api-key
 cp pki-api-revoke/build/libs/pki-api-revoke.jar /opt/apps/pki-master/pki-api-revoke
 
+sudo service pki-api-crl    stop
+sudo service pki-api-ocsp   stop
+sudo service pki-api-x509   stop
+sudo service pki-api-ssh    stop
+sudo service pki-api-root   stop
+sudo service pki-api-issuer stop
+sudo service pki-api-key    stop
+sudo service pki-api-revoke stop
+
 sudo service pki-api-crl    restart
 sudo service pki-api-ocsp   restart
 sudo service pki-api-x509   restart
@@ -324,4 +333,8 @@ Host {alias}
     User {user}
     PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
     CertificateFile id_rsa-cert.pub
+```
+
+```text
+./gradlew bootJar && java -Dapi=key -Dfunction=bc-client-generate -Dsize=2048 -Dformat=RSA -jar pki-client-cli/build/libs/pki-client-cli.jar
 ```

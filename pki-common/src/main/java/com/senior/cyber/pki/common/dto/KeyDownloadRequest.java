@@ -1,13 +1,19 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KeyDownloadRequest implements Serializable {
 
     @JsonProperty("keyId")
@@ -15,13 +21,5 @@ public class KeyDownloadRequest implements Serializable {
 
     @JsonProperty("keyPassword")
     private String keyPassword;
-
-    public KeyDownloadRequest() {
-    }
-
-    public KeyDownloadRequest(String keyId, String keyPassword) {
-        this.keyId = keyId;
-        this.keyPassword = keyPassword;
-    }
 
 }

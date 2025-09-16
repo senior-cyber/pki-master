@@ -24,9 +24,9 @@ public class YubicoController {
     @RequestMapping(path = "/yubico/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<YubicoInfoResponse> yubicoInfo(RequestEntity<Void> httpRequest) {
         YubiKitManager manager = new YubiKitManager();
-        YubicoInfoResponse response = new YubicoInfoResponse();
+        YubicoInfoResponse response = YubicoInfoResponse.builder().build();
         for (Map.Entry<YubiKeyDevice, DeviceInfo> p : manager.listAllDevices().entrySet()) {
-            YubicoInfo _info = new YubicoInfo();
+            YubicoInfo _info = YubicoInfo.builder().build();
             response.getItems().add(_info);
             YubiKeyDevice device = p.getKey();
             DeviceInfo info = p.getValue();

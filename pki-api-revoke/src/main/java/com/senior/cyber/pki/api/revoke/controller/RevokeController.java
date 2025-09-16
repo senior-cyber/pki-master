@@ -68,13 +68,13 @@ public class RevokeController {
                     }
                 }
                 this.certificateRepository.saveAll(revoked);
-                return ResponseEntity.ok(new RevokeCertificateResponse());
+                return ResponseEntity.ok(RevokeCertificateResponse.builder().build());
             } else {
                 LOGGER.info("key type is {}", key.getType());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not type of [" + KeyTypeEnum.BC.name() + "]");
             }
         } else {
-            return ResponseEntity.ok(new RevokeCertificateResponse());
+            return ResponseEntity.ok(RevokeCertificateResponse.builder().build());
         }
     }
 
@@ -111,9 +111,9 @@ public class RevokeController {
                 }
             }
             this.certificateRepository.saveAll(revoked);
-            return ResponseEntity.ok(new RevokeKeyResponse());
+            return ResponseEntity.ok(RevokeKeyResponse.builder().build());
         } else {
-            return ResponseEntity.ok(new RevokeKeyResponse());
+            return ResponseEntity.ok(RevokeKeyResponse.builder().build());
         }
     }
 

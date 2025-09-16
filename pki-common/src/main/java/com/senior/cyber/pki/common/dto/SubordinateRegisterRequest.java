@@ -18,20 +18,23 @@ import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-@Setter
 @Getter
+@Setter
 @Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RootRegisterRequest implements Serializable {
+public class SubordinateRegisterRequest implements Serializable {
+
+    @JsonProperty("issuer")
+    private Issuer issuer;
 
     @JsonProperty("key")
     private Key key;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
-    @JsonProperty("rootCertificate")
-    private X509Certificate rootCertificate;
+    @JsonProperty("subordinateCertificate")
+    private X509Certificate subordinateCertificate;
 
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)

@@ -1,32 +1,38 @@
-package com.senior.cyber.pki.client.cli.dto;
+package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Setter
 @Getter
+@Setter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Subject implements Serializable {
 
-    @JsonProperty("l")
+    @JsonProperty("locality")
     private String locality;
 
-    @JsonProperty("st")
+    @JsonProperty("province")
     private String province;
 
-    @JsonProperty("c")
+    @JsonProperty("country")
     private String country;
 
-    @JsonProperty("cn")
+    @JsonProperty("commonName")
     private String commonName;
 
-    @JsonProperty("o")
+    @JsonProperty("organization")
     private String organization;
 
-    @JsonProperty("ou")
+    @JsonProperty("organizationalUnit")
     private String organizationalUnit;
 
     @JsonProperty("emailAddress")

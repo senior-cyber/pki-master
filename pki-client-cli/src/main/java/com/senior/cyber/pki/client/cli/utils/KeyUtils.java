@@ -59,7 +59,7 @@ public class KeyUtils {
 
             YubiKitManager manager = new YubiKitManager();
             for (Map.Entry<YubiKeyDevice, DeviceInfo> p : manager.listAllDevices().entrySet()) {
-                YubicoInfo _info = new YubicoInfo();
+                YubicoInfo _info = YubicoInfo.builder().build();
                 response.getItems().add(_info);
                 YubiKeyDevice device = p.getKey();
                 DeviceInfo info = p.getValue();

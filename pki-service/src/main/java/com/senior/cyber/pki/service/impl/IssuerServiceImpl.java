@@ -218,7 +218,7 @@ public class IssuerServiceImpl implements IssuerService {
             issuingCertificate.setOcspCertificate(ocsp);
             this.certificateRepository.save(issuingCertificate);
 
-            IssuerGenerateResponse response = new IssuerGenerateResponse();
+            IssuerGenerateResponse response = IssuerGenerateResponse.builder().build();
             response.setCertificateId(issuingCertificate.getId());
             response.setKeyPassword(request.getKeyPassword());
             response.setCertificate(_issuingCertificate);

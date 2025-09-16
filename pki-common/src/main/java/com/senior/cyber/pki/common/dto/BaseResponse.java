@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import java.util.Date;
 
 @Setter
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class BaseResponse implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -19,7 +21,7 @@ public abstract class BaseResponse implements Serializable {
     protected Date timestamp;
 
     @JsonProperty("status")
-    protected Integer status = 200;
+    protected int status = 200;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("error")

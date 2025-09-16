@@ -145,10 +145,10 @@ public class LeafServiceImpl implements LeafService {
             certificate.setType(CertificateTypeEnum.TLS_SERVER);
             this.certificateRepository.save(certificate);
 
-            ServerGenerateResponse response = new ServerGenerateResponse();
-            response.setCertificateId(certificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCert(leafCertificate);
+            ServerGenerateResponse response = ServerGenerateResponse.builder()
+                    .certificateId(certificate.getId())
+                    .keyPassword(request.getKeyPassword())
+                    .cert(leafCertificate).build();
             if (leafKey.getType() == KeyTypeEnum.BC) {
                 response.setPrivkey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             }

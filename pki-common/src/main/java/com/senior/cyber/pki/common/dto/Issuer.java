@@ -2,13 +2,19 @@ package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+import java.io.Serializable;
+
 @Setter
 @Getter
-public class Issuer {
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Issuer implements Serializable {
 
     @JsonProperty("certificateId")
     private String certificateId;
@@ -18,14 +24,5 @@ public class Issuer {
 
     @JsonProperty("keyPassword")
     private String keyPassword;
-
-    public Issuer() {
-    }
-
-    public Issuer(String certificateId, String keyId, String keyPassword) {
-        this.certificateId = certificateId;
-        this.keyPassword = keyPassword;
-        this.keyId = keyId;
-    }
 
 }

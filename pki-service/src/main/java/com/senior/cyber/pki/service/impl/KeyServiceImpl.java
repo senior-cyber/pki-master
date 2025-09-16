@@ -53,9 +53,9 @@ public class KeyServiceImpl implements KeyService {
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
-        KeyGenerateResponse response = new KeyGenerateResponse();
-        response.setKeyPassword(password);
-        response.setKeyId(key.getId());
+        KeyGenerateResponse response = KeyGenerateResponse.builder()
+                .keyPassword(password)
+                .keyId(key.getId()).build();
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
@@ -75,8 +75,8 @@ public class KeyServiceImpl implements KeyService {
         key.setEmailAddress(request.getEmailAddress());
         this.keyRepository.save(key);
 
-        KeyGenerateResponse response = new KeyGenerateResponse();
-        response.setKeyId(key.getId());
+        KeyGenerateResponse response = KeyGenerateResponse.builder()
+                .keyId(key.getId()).build();
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
@@ -125,8 +125,8 @@ public class KeyServiceImpl implements KeyService {
             AES256TextEncryptor encryptor = new AES256TextEncryptor();
             encryptor.setPassword(password);
 
-            YubicoPassword yubicoPassword = new YubicoPassword();
-            yubicoPassword.setPin(Yubico.DEFAULT_PIN);
+            YubicoPassword yubicoPassword = YubicoPassword.builder()
+                    .pin(Yubico.DEFAULT_PIN).build();
             yubicoPassword.setManagementKey(request.getManagementKey());
             if (pivSlot != null) {
                 yubicoPassword.setPivSlot(pivSlot.getStringAlias());
@@ -144,7 +144,7 @@ public class KeyServiceImpl implements KeyService {
             key.setCreatedDatetime(new Date());
             this.keyRepository.save(key);
 
-            KeyGenerateResponse response = new KeyGenerateResponse();
+            KeyGenerateResponse response = KeyGenerateResponse.builder().build();
             response.setKeyId(key.getId());
             response.setKeyPassword(password);
             if (key.getKeyFormat() == KeyFormatEnum.RSA) {
@@ -169,7 +169,7 @@ public class KeyServiceImpl implements KeyService {
         AES256TextEncryptor encryptor = new AES256TextEncryptor();
         encryptor.setPassword(password);
 
-        YubicoPassword yubicoPassword = new YubicoPassword();
+        YubicoPassword yubicoPassword = YubicoPassword.builder().build();
         yubicoPassword.setPin(request.getPin());
         yubicoPassword.setManagementKey(request.getManagementKey());
         if (pivSlot != null) {
@@ -188,7 +188,7 @@ public class KeyServiceImpl implements KeyService {
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
-        KeyGenerateResponse response = new KeyGenerateResponse();
+        KeyGenerateResponse response = KeyGenerateResponse.builder().build();
         response.setKeyId(key.getId());
         response.setKeyPassword(password);
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {

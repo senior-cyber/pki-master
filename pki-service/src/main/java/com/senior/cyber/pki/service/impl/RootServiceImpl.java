@@ -1,10 +1,7 @@
 package com.senior.cyber.pki.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senior.cyber.pki.common.dto.RootGenerateRequest;
-import com.senior.cyber.pki.common.dto.RootRegisterRequest;
-import com.senior.cyber.pki.common.dto.RootResponse;
-import com.senior.cyber.pki.common.dto.YubicoPassword;
+import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.Crypto;
 import com.senior.cyber.pki.common.util.PivUtils;
 import com.senior.cyber.pki.common.x509.*;
@@ -63,7 +60,7 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+    public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
         Map<String, SmartCardConnection> connections = new HashMap<>();
         Map<String, KeyStore> keys = new HashMap<>();
         Map<String, PivProvider> providers = new HashMap<>();
@@ -72,18 +69,18 @@ public class RootServiceImpl implements RootService {
         Map<String, String> serials = new HashMap<>();
 
         // root
-        Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+        Key rootKey = this.keyRepository.findById(request.getKey().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
         Crypto root = null;
         switch (rootKey.getType()) {
             case Yubico -> {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(request.getKeyPassword());
+                encryptor.setPassword(request.getKey().getKeyPassword());
                 YubicoPassword yubico = this.objectMapper.readValue(encryptor.decrypt(rootKey.getPrivateKey()), YubicoPassword.class);
                 PrivateKey privateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, rootKey.getId(), yubico);
                 root = new Crypto(providers.get(serials.get(rootKey.getId())), rootKey.getPublicKey(), privateKey);
             }
             case BC -> {
-                PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword());
+                PrivateKey privateKey = PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKey().getKeyPassword());
                 root = new Crypto(Utils.BC, rootKey.getPublicKey(), privateKey);
             }
         }
@@ -92,25 +89,25 @@ public class RootServiceImpl implements RootService {
 
         try {
             X500Name rootSubject = SubjectUtils.generate(
-                    request.getCountry(),
-                    request.getOrganization(),
-                    request.getOrganizationalUnit(),
-                    request.getCommonName(),
-                    request.getLocality(),
-                    request.getProvince(),
-                    request.getEmailAddress()
+                    request.getSubject().getCountry(),
+                    request.getSubject().getOrganization(),
+                    request.getSubject().getOrganizationalUnit(),
+                    request.getSubject().getCommonName(),
+                    request.getSubject().getLocality(),
+                    request.getSubject().getProvince(),
+                    request.getSubject().getEmailAddress()
             );
 
             X509Certificate rootCertificate = PkiUtils.issueRootCa(root.getProvider(), root.getPrivateKey(), root.getPublicKey(), rootSubject, now.toDate(), now.plusYears(10).toDate(), System.currentTimeMillis());
             root.setCertificate(rootCertificate);
             Certificate _rootCertificate = new Certificate();
-            _rootCertificate.setCountryCode(request.getCountry());
-            _rootCertificate.setOrganization(request.getOrganization());
-            _rootCertificate.setOrganizationalUnit(request.getOrganizationalUnit());
-            _rootCertificate.setCommonName(request.getCommonName());
-            _rootCertificate.setLocalityName(request.getLocality());
-            _rootCertificate.setStateOrProvinceName(request.getProvince());
-            _rootCertificate.setEmailAddress(request.getEmailAddress());
+            _rootCertificate.setCountryCode(request.getSubject().getCountry());
+            _rootCertificate.setOrganization(request.getSubject().getOrganization());
+            _rootCertificate.setOrganizationalUnit(request.getSubject().getOrganizationalUnit());
+            _rootCertificate.setCommonName(request.getSubject().getCommonName());
+            _rootCertificate.setLocalityName(request.getSubject().getLocality());
+            _rootCertificate.setStateOrProvinceName(request.getSubject().getProvince());
+            _rootCertificate.setEmailAddress(request.getSubject().getEmailAddress());
             _rootCertificate.setKey(rootKey);
             _rootCertificate.setCertificate(rootCertificate);
             _rootCertificate.setSerial(rootCertificate.getSerialNumber().longValueExact());
@@ -139,13 +136,13 @@ public class RootServiceImpl implements RootService {
             X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), crlKey.getPublicKey(), rootSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 1);
             Certificate crl = new Certificate();
             crl.setIssuerCertificate(_rootCertificate);
-            crl.setCountryCode(request.getCountry());
-            crl.setOrganization(request.getOrganization());
-            crl.setOrganizationalUnit(request.getOrganizationalUnit());
-            crl.setCommonName(request.getCommonName());
-            crl.setLocalityName(request.getLocality());
-            crl.setStateOrProvinceName(request.getProvince());
-            crl.setEmailAddress(request.getEmailAddress());
+            crl.setCountryCode(request.getSubject().getCountry());
+            crl.setOrganization(request.getSubject().getOrganization());
+            crl.setOrganizationalUnit(request.getSubject().getOrganizationalUnit());
+            crl.setCommonName(request.getSubject().getCommonName());
+            crl.setLocalityName(request.getSubject().getLocality());
+            crl.setStateOrProvinceName(request.getSubject().getProvince());
+            crl.setEmailAddress(request.getSubject().getEmailAddress());
             crl.setKey(crlKey);
             crl.setCertificate(crlCertificate);
             crl.setSerial(crlCertificate.getSerialNumber().longValueExact());
@@ -172,24 +169,24 @@ public class RootServiceImpl implements RootService {
                 ocspKey = key;
             }
             X500Name ocspSubject = SubjectUtils.generate(
-                    request.getCountry(),
-                    request.getOrganization(),
-                    request.getOrganizationalUnit(),
-                    request.getCommonName() + " OCSP",
-                    request.getLocality(),
-                    request.getProvince(),
-                    request.getEmailAddress()
+                    request.getSubject().getCountry(),
+                    request.getSubject().getOrganization(),
+                    request.getSubject().getOrganizationalUnit(),
+                    request.getSubject().getCommonName() + " OCSP",
+                    request.getSubject().getLocality(),
+                    request.getSubject().getProvince(),
+                    request.getSubject().getEmailAddress()
             );
             X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), root.getCertificate(), ocspKey.getPublicKey(), ocspSubject, now.toDate(), now.plusYears(1).toDate(), _rootCertificate.getSerial() + 2);
             Certificate ocsp = new Certificate();
             ocsp.setIssuerCertificate(_rootCertificate);
-            ocsp.setCountryCode(request.getCountry());
-            ocsp.setOrganization(request.getOrganization());
-            ocsp.setOrganizationalUnit(request.getOrganizationalUnit());
-            ocsp.setCommonName(request.getCommonName() + " OCSP");
-            ocsp.setLocalityName(request.getLocality());
-            ocsp.setStateOrProvinceName(request.getProvince());
-            ocsp.setEmailAddress(request.getEmailAddress());
+            ocsp.setCountryCode(request.getSubject().getCountry());
+            ocsp.setOrganization(request.getSubject().getOrganization());
+            ocsp.setOrganizationalUnit(request.getSubject().getOrganizationalUnit());
+            ocsp.setCommonName(request.getSubject().getCommonName() + " OCSP");
+            ocsp.setLocalityName(request.getSubject().getLocality());
+            ocsp.setStateOrProvinceName(request.getSubject().getProvince());
+            ocsp.setEmailAddress(request.getSubject().getEmailAddress());
             ocsp.setKey(ocspKey);
             ocsp.setCertificate(ocspCertificate);
             ocsp.setSerial(ocspCertificate.getSerialNumber().longValueExact());
@@ -204,10 +201,11 @@ public class RootServiceImpl implements RootService {
             _rootCertificate.setOcspCertificate(_rootCertificate);
             this.certificateRepository.save(_rootCertificate);
 
-            RootResponse response = new RootResponse();
-            response.setCertificateId(_rootCertificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCertificate(rootCertificate);
+            RootGenerateResponse response = RootGenerateResponse.builder()
+                    .certificateId(_rootCertificate.getId())
+                    .keyPassword(request.getKey().getKeyPassword())
+                    .certificate(_rootCertificate.getCertificate())
+                    .build();
 
             PivSession session = sessions.get(serials.get(rootKey.getId()));
             if (session != null) {
@@ -227,22 +225,22 @@ public class RootServiceImpl implements RootService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public RootResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
-        Key rootKey = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+    public RootRegisterResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
+        Key rootKey = this.keyRepository.findById(request.getKey().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         if (rootKey.getType() == KeyTypeEnum.BC) {
             if (rootKey.getPrivateKey() == null || rootKey.getPrivateKey().isEmpty()) {
-                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKeyPassword() + "." + rootKey.getId())) {
+                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKey().getKeyPassword() + "." + rootKey.getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             } else {
-                if (PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKeyPassword()) == null) {
+                if (PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKey().getKeyPassword()) == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             }
         } else if (rootKey.getType() == KeyTypeEnum.Yubico) {
             AES256TextEncryptor encryptor = new AES256TextEncryptor();
-            encryptor.setPassword(request.getKeyPassword());
+            encryptor.setPassword(request.getKey().getKeyPassword());
             try {
                 encryptor.decrypt(rootKey.getPrivateKey());
             } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
@@ -356,13 +354,10 @@ public class RootServiceImpl implements RootService {
         rootCertificate.setOcspCertificate(rootCertificate);
         this.certificateRepository.save(rootCertificate);
 
-        RootResponse response = new RootResponse();
-        response.setCertificateId(rootCertificate.getId());
-        response.setKeyPassword(request.getKeyPassword());
-        response.setCertificate(request.getRootCertificate());
-
-        return response;
-
+        return RootRegisterResponse.builder()
+                .certificateId(rootCertificate.getId())
+                .keyPassword(request.getKey().getKeyPassword()).
+                certificate(request.getRootCertificate()).build();
     }
 
 }

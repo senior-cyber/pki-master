@@ -1,6 +1,7 @@
 package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -10,14 +11,19 @@ import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
 import com.senior.cyber.pki.common.converter.PublicKeySerializer;
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.common.x509.KeyTypeEnum;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.security.PublicKey;
 import java.util.Date;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KeyDownloadResponse extends BaseResponse {
 
     @JsonProperty("privateKey")

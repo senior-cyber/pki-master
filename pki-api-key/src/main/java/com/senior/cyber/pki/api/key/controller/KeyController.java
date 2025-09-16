@@ -3,8 +3,11 @@ package com.senior.cyber.pki.api.key.controller;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.*;
+import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
+import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.yubico.yubikit.core.YubiKeyDevice;
@@ -19,8 +22,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.jasypt.exceptions.EncryptionInitializationException;
-import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.time.Instant;
 
 @RestController
@@ -55,6 +57,9 @@ public class KeyController {
 
     @Autowired
     protected KeyRepository keyRepository;
+
+    @Autowired
+    protected CertificateRepository certificateRepository;
 
     @Autowired
     protected JavaMailSender mailSender;
@@ -74,7 +79,7 @@ public class KeyController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
         }
 
-        KeyDownloadResponse response = new KeyDownloadResponse();
+        KeyDownloadResponse response = KeyDownloadResponse.builder().build();
         response.setType(key.getType());
         response.setKeyFormat(key.getKeyFormat());
         if (key.getType() == KeyTypeEnum.BC) {
@@ -102,52 +107,80 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/info", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
+    public ResponseEntity<KeyInfoResponse> info(RequestEntity<KeyInfoRequest> httpRequest) {
         KeyInfoRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
-        if (key.getStatus() == KeyStatusEnum.Revoked) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
+        if (request.getKeyId() != null && !request.getKeyId().isEmpty() && request.getCertificateId() != null && !request.getCertificateId().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        KeyInfoResponse response = new KeyInfoResponse();
-
-        response.setType(key.getType());
-        switch (key.getType()) {
-            case BC -> {
-                if (key.getPrivateKey() == null || key.getPrivateKey().isEmpty()) {
-                    if (!PublicKeyUtils.verifyText(key.getPublicKey(), request.getKeyPassword() + "." + key.getId())) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (PrivateKeyUtils.convert(key.getPrivateKey(), request.getKeyPassword()) == null) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                    }
-                }
-                response.setDecentralized(key.getPrivateKey() == null || key.getPrivateKey().isEmpty());
+        if (request.getKeyId() != null && !request.getKeyId().isEmpty()) {
+            Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "key is not found"));
+            if (key.getStatus() == KeyStatusEnum.Revoked) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
             }
-            case Yubico -> {
-                AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(request.getKeyPassword());
-                try {
-                    encryptor.decrypt(key.getPrivateKey());
-                } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
+            KeyInfoResponse response = KeyInfoResponse.builder().build();
+            response.setPublicKey(key.getPublicKey());
+
+            response.setType(key.getType());
+            switch (key.getType()) {
+                case BC -> {
+                    response.setDecentralized(key.getPrivateKey() == null || key.getPrivateKey().isEmpty());
                 }
-                response.setDecentralized(true);
+                case Yubico -> {
+                    response.setDecentralized(true);
+                }
             }
+
+            if (key.getKeyFormat() != null) {
+                response.setFormat(key.getKeyFormat());
+            }
+            if (key.getKeySize() > 0) {
+                response.setSize(key.getKeySize());
+            }
+            return ResponseEntity.ok(response);
         }
 
-        if (key.getKeyFormat() != null) {
-            response.setFormat(key.getKeyFormat());
+        if (request.getCertificateId() != null && !request.getCertificateId().isEmpty()) {
+
+            Certificate certificate = this.certificateRepository.findById(request.getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
+            if (certificate.getStatus() == CertificateStatusEnum.Revoked) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate have been revoked");
+            }
+
+            Key key = this.keyRepository.findById(certificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate is not found"));
+            if (key.getStatus() == KeyStatusEnum.Revoked) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "certificate have been revoked");
+            }
+
+            KeyInfoResponse response = KeyInfoResponse.builder().build();
+
+            response.setCertificate(certificate.getCertificate());
+
+            response.setType(key.getType());
+            switch (key.getType()) {
+                case BC -> {
+                    response.setDecentralized(key.getPrivateKey() == null || key.getPrivateKey().isEmpty());
+                }
+                case Yubico -> {
+                    response.setDecentralized(true);
+                }
+            }
+
+            if (key.getKeyFormat() != null) {
+                response.setFormat(key.getKeyFormat());
+            }
+            if (key.getKeySize() > 0) {
+                response.setSize(key.getKeySize());
+            }
+            return ResponseEntity.ok(response);
         }
-        if (key.getKeySize() > 0) {
-            response.setSize(key.getKeySize());
-        }
-        return ResponseEntity.ok(response);
+
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "key have been revoked");
     }
 
     @RequestMapping(path = "/bc/generate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

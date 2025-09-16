@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.senior.cyber.pki.common.converter.*;
+import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
+import com.senior.cyber.pki.common.converter.PublicKeySerializer;
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import lombok.Builder;
@@ -12,16 +13,29 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
 
-import java.security.PrivateKey;
+import java.io.Serializable;
 import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 
-@Setter
 @Getter
+@Setter
 @Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class KeyInfoResponse extends BaseResponse {
+public class Key implements Serializable {
+
+    @JsonProperty("keyId")
+    private String keyId;
+
+    @JsonProperty("keyPassword")
+    private String keyPassword;
+
+    @JsonProperty("privateKey")
+    private String privateKey;
+
+    @JsonSerialize(using = PublicKeySerializer.class)
+    @JsonDeserialize(using = PublicKeyDeserializer.class)
+    @JsonProperty("publicKey")
+    private PublicKey publicKey;
 
     @JsonProperty("type")
     private KeyTypeEnum type;
@@ -30,22 +44,7 @@ public class KeyInfoResponse extends BaseResponse {
     private KeyFormatEnum format;
 
     @JsonProperty("size")
-    private Integer size;
-
-    @JsonSerialize(using = PublicKeySerializer.class)
-    @JsonDeserialize(using = PublicKeyDeserializer.class)
-    @JsonProperty("publicKey")
-    private PublicKey publicKey;
-
-    @JsonSerialize(using = PrivateKeySerializer.class)
-    @JsonDeserialize(using = PrivateKeyDeserializer.class)
-    @JsonProperty("privateKey")
-    private PrivateKey privateKey;
-
-    @JsonSerialize(using = X509CertificateSerializer.class)
-    @JsonDeserialize(using = X509CertificateDeserializer.class)
-    @JsonProperty("certificate")
-    private X509Certificate certificate;
+    private int size;
 
     @JsonProperty("decentralized")
     private boolean decentralized;

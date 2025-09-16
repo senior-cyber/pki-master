@@ -1,19 +1,25 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
 import com.senior.cyber.pki.common.converter.PublicKeySerializer;
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.security.PublicKey;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class YubicoRegisterRequest implements Serializable {
 
     @JsonProperty("size")
@@ -41,16 +47,5 @@ public class YubicoRegisterRequest implements Serializable {
 
     @JsonProperty("emailAddress")
     private String emailAddress;
-
-    public YubicoRegisterRequest() {
-    }
-
-    public YubicoRegisterRequest(int size, String slot, String serialNumber, String managementKey, String pin) {
-        this.size = size;
-        this.slot = slot;
-        this.serialNumber = serialNumber;
-        this.managementKey = managementKey;
-        this.pin = pin;
-    }
 
 }

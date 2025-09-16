@@ -2,19 +2,18 @@ package com.senior.cyber.pki.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.util.Crypto;
+import com.senior.cyber.pki.common.util.PivUtils;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
 import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
 import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
-import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.MtlsService;
 import com.senior.cyber.pki.service.Utils;
-import com.senior.cyber.pki.common.util.Crypto;
-import com.senior.cyber.pki.common.util.PivUtils;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
@@ -199,10 +198,10 @@ public class MtlsServiceImpl implements MtlsService {
             _rootCertificate.setOcspCertificate(_rootCertificate);
             this.certificateRepository.save(_rootCertificate);
 
-            MtlsGenerateResponse response = new MtlsGenerateResponse();
-            response.setCertificateId(_rootCertificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCertificate(rootCertificate);
+            MtlsGenerateResponse response = MtlsGenerateResponse.builder()
+                    .certificateId(_rootCertificate.getId())
+                    .keyPassword(request.getKeyPassword())
+                    .certificate(rootCertificate).build();
 
             PivSession session = sessions.get(serials.get(rootKey.getId()));
             if (session != null) {
@@ -296,10 +295,10 @@ public class MtlsServiceImpl implements MtlsService {
             certificate.setType(CertificateTypeEnum.mTLS_CLIENT);
             this.certificateRepository.save(certificate);
 
-            MtlsClientGenerateResponse response = new MtlsClientGenerateResponse();
-            response.setCertificateId(certificate.getId());
-            response.setKeyPassword(request.getKeyPassword());
-            response.setCertificate(leafCertificate);
+            MtlsClientGenerateResponse response = MtlsClientGenerateResponse.builder()
+                    .certificateId(certificate.getId())
+                    .keyPassword(request.getKeyPassword())
+                    .certificate(leafCertificate).build();
             if (leafKey.getType() == KeyTypeEnum.BC) {
                 response.setPrivateKey(PrivateKeyUtils.convert(leafKey.getPrivateKey(), request.getKeyPassword()));
             }

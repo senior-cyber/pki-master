@@ -13,12 +13,12 @@ import lombok.extern.jackson.Jacksonized;
 
 import java.security.cert.X509Certificate;
 
-@Getter
 @Setter
+@Getter
 @Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SubordinateGenerateResponse extends BaseResponse {
+public class RootRegisterResponse extends BaseResponse {
 
     @JsonProperty("certificateId")
     private String certificateId;

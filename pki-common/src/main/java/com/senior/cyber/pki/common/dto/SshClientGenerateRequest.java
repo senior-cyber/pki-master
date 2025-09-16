@@ -1,13 +1,19 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SshClientGenerateRequest implements Serializable {
 
     @JsonProperty("issuer")
@@ -33,18 +39,5 @@ public class SshClientGenerateRequest implements Serializable {
      */
     @JsonProperty("period")
     private String period;
-
-    public SshClientGenerateRequest() {
-    }
-
-    public SshClientGenerateRequest(Issuer issuer, String keyId, String keyPassword, String principal, String server, String alias, String period) {
-        this.issuer = issuer;
-        this.keyId = keyId;
-        this.keyPassword = keyPassword;
-        this.principal = principal;
-        this.server = server;
-        this.alias = alias;
-        this.period = period;
-    }
 
 }

@@ -1,55 +1,26 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RootGenerateRequest implements Serializable {
 
-    @JsonProperty("keyId")
-    private String keyId;
+    @JsonProperty("key")
+    private Key key;
 
-    @JsonProperty("keyPassword")
-    private String keyPassword;
-
-    @JsonProperty("locality")
-    private String locality;
-
-    @JsonProperty("province")
-    private String province;
-
-    @JsonProperty("country")
-    private String country;
-
-    @JsonProperty("commonName")
-    private String commonName;
-
-    @JsonProperty("organization")
-    private String organization;
-
-    @JsonProperty("organizationalUnit")
-    private String organizationalUnit;
-
-    @JsonProperty("emailAddress")
-    private String emailAddress;
-
-    public RootGenerateRequest() {
-    }
-
-    public RootGenerateRequest(String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
-        this.keyId = keyId;
-        this.keyPassword = keyPassword;
-        this.locality = locality;
-        this.province = province;
-        this.country = country;
-        this.commonName = commonName;
-        this.organization = organization;
-        this.organizationalUnit = organizationalUnit;
-        this.emailAddress = emailAddress;
-    }
+    @JsonProperty("subject")
+    private Subject subject;
 
 }

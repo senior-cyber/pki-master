@@ -36,9 +36,9 @@ public class IssuerUtils {
         List<Integer> keyUsages = Arrays.asList(KeyUsage.cRLSign, KeyUsage.keyCertSign);
 
         String hex = String.format("%012X", issuerCertificate.getSerialNumber().longValueExact());
-        String _crlApi = crlApi + "/crl/" + hex + ".crl";
-        String _ocspApi = ocspApi + "/ocsp/" + hex;
-        String _x509Api = x509Api + "/x509/" + hex + ".der";
+        String _crlApi = crlApi + "/" + hex + ".crl";
+        String _ocspApi = ocspApi + "/" + hex;
+        String _x509Api = x509Api + "/" + hex + ".der";
 
         return PkiUtils.issue(provider, issuerKey, issuerCertificate, _crlApi, _ocspApi, _x509Api, null, publicKey, subject, ca, notBefore, notAfter, serial, keyUsages, null, null);
     }

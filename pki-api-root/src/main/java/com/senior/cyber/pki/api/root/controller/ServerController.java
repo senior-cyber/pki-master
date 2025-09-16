@@ -23,7 +23,11 @@ public class ServerController {
 
     @RequestMapping(path = "/server/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ServerInfoResponse> serverInfo(RequestEntity<Void> httpRequest) {
-        ServerInfoResponse response = new ServerInfoResponse(this.apiCrl, this.apiOcsp, this.apiX509);
+        ServerInfoResponse response = ServerInfoResponse.builder()
+                .apiCrl(apiCrl)
+                .apiOcsp(apiOcsp)
+                .apiX509(apiX509)
+                .build();
         return ResponseEntity.ok(response);
     }
 

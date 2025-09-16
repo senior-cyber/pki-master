@@ -17,7 +17,19 @@ public class RootUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static RootResponse rootGenerate(RootGenerateRequest request) throws IOException, InterruptedException {
+    public static ServerInfoResponse serverInfo() throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(ROOT + "/api/server/info"))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), ServerInfoResponse.class);
+        }
+    }
+
+    public static RootGenerateResponse rootGenerate(RootGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ROOT + "/api/root/generate"))
@@ -26,11 +38,11 @@ public class RootUtils {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), RootResponse.class);
+            return MAPPER.readValue(resp.body(), RootGenerateResponse.class);
         }
     }
 
-    public static RootResponse rootRegister(RootRegisterRequest request) throws IOException, InterruptedException {
+    public static RootRegisterResponse rootRegister(RootRegisterRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ROOT + "/api/root/register"))
@@ -39,7 +51,20 @@ public class RootUtils {
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            return MAPPER.readValue(resp.body(), RootResponse.class);
+            return MAPPER.readValue(resp.body(), RootRegisterResponse.class);
+        }
+    }
+
+    public static SubordinateRegisterResponse subordinateRegister(SubordinateRegisterRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(ROOT + "/api/subordinate/register"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), SubordinateRegisterResponse.class);
         }
     }
 

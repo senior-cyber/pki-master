@@ -17,6 +17,18 @@ public class IssuerUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    public static ServerInfoResponse serverInfo() throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(ISSUER + "/api/server/info"))
+                    .GET()
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), ServerInfoResponse.class);
+        }
+    }
+
     public static SshClientGenerateResponse sshClientGenerate(SshClientGenerateRequest request) throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()

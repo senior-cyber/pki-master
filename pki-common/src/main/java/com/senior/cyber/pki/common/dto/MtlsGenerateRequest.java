@@ -1,13 +1,19 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 
 @Setter
 @Getter
+@Jacksonized
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MtlsGenerateRequest implements Serializable {
 
     @JsonProperty("keyId")
@@ -36,20 +42,5 @@ public class MtlsGenerateRequest implements Serializable {
 
     @JsonProperty("emailAddress")
     private String emailAddress;
-
-    public MtlsGenerateRequest() {
-    }
-
-    public MtlsGenerateRequest(String keyId, String keyPassword, String locality, String province, String country, String commonName, String organization, String organizationalUnit, String emailAddress) {
-        this.keyId = keyId;
-        this.keyPassword = keyPassword;
-        this.locality = locality;
-        this.province = province;
-        this.country = country;
-        this.commonName = commonName;
-        this.organization = organization;
-        this.organizationalUnit = organizationalUnit;
-        this.emailAddress = emailAddress;
-    }
 
 }

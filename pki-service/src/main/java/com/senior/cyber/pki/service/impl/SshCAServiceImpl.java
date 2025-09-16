@@ -129,7 +129,7 @@ public class SshCAServiceImpl implements SshCAService {
             );
 
             OpenSshCertificate certificate = openSshCertificateBuilder.sign(new KeyPair(issuer.getPublicKey(), issuer.getPrivateKey()), org.apache.sshd.common.config.keys.KeyUtils.RSA_SHA256_KEY_TYPE_ALIAS);
-            SshClientGenerateResponse response = new SshClientGenerateResponse();
+            SshClientGenerateResponse response = SshClientGenerateResponse.builder().build();
             response.setOpenSshPublicKey(ssh.getPublicKey());
             response.setOpenSshCertificate(certificate);
             switch (sshKey.getType()) {
