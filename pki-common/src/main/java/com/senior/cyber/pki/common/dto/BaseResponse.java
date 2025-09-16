@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,6 +16,7 @@ import java.util.Date;
 @Setter
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
+@SuperBuilder
 public abstract class BaseResponse implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

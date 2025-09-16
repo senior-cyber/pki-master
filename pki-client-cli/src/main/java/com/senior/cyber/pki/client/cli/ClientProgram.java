@@ -71,11 +71,11 @@ public class ClientProgram implements CommandLineRunner {
         String serialNumber = System.getProperty("serialNumber");
         String _slot = System.getProperty("slot");
         String managementKey = System.getProperty("managementKey");
-        if (managementKey == null || managementKey.isEmpty()){
+        if (managementKey == null || managementKey.isEmpty()) {
             managementKey = MANAGEMENT_KEY;
         }
         String pin = System.getProperty("pin");
-        if (pin == null || pin.isEmpty()){
+        if (pin == null || pin.isEmpty()) {
             pin = PIN;
         }
         String _key = System.getProperty("key");
@@ -101,6 +101,10 @@ public class ClientProgram implements CommandLineRunner {
 //        managementKey = MANAGEMENT_KEY;
 //        pin = PIN;
 //        emailAddress = "";
+
+        api = "key";
+        function = "bc-client-generate";
+        _format = "RSA";
 
         if ("key".equals(api)) {
             if ("bc-client-generate".equals(function)) { // DONE
