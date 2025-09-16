@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -24,6 +23,7 @@ public abstract class BaseResponse implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "Asia/Phnom_Penh")
     protected Date timestamp;
 
+    @Builder.Default
     @JsonProperty("status")
     protected int status = 200;
 
