@@ -212,31 +212,35 @@ public class ClientProgram implements CommandLineRunner {
                                         .slot(slot.getStringAlias())
                                         .serialNumber(serialNumber)
                                         .managementKey(managementKey)
+                                        .emailAddress(emailAddress)
                                         .pin(pin)
                                         .build();
                                 request.setFormat(format);
                                 request.setPublicKey(publicKey);
                                 KeyGenerateResponse response = KeyUtils.yubicoRegister(request);
+                                if (response.getStatus() == 200){
+                                    YubicoPassword yubico = YubicoPassword.builder().build();
+                                    yubico.setSerial(serialNumber);
+                                    yubico.setPin(pin);
+                                    yubico.setPivSlot(slot.getStringAlias());
+                                    yubico.setManagementKey(managementKey);
 
-                                YubicoPassword yubico = YubicoPassword.builder().build();
-                                yubico.setSerial(serialNumber);
-                                yubico.setPin(pin);
-                                yubico.setPivSlot(slot.getStringAlias());
-                                yubico.setManagementKey(managementKey);
-
-                                String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
-                                AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                                encryptor.setPassword(password);
-                                Key key = Key.builder().build();
-                                key.setKeyId(response.getKeyId());
-                                key.setKeyPassword(password);
-                                key.setPublicKey(publicKey);
-                                key.setPrivateKey(encryptor.encrypt(MAPPER.writeValueAsString(yubico)));
-                                key.setSize(size);
-                                key.setFormat(format);
-                                key.setType(KeyTypeEnum.Yubico);
-                                key.setDecentralized(false);
-                                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
+                                    String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
+                                    AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                                    encryptor.setPassword(password);
+                                    Key key = Key.builder().build();
+                                    key.setKeyId(response.getKeyId());
+                                    key.setKeyPassword(password);
+                                    key.setPublicKey(publicKey);
+                                    key.setPrivateKey(encryptor.encrypt(MAPPER.writeValueAsString(yubico)));
+                                    key.setSize(size);
+                                    key.setFormat(format);
+                                    key.setType(KeyTypeEnum.Yubico);
+                                    key.setDecentralized(false);
+                                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
+                                }  else {
+                                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                                }
                             }
                         } else if ("server".equals(info.getType())) {
                             int size = Integer.parseInt(_size);

@@ -190,7 +190,8 @@ public class KeyServiceImpl implements KeyService {
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
 
-        log.debug("yubico register key [{}]", key.getId());
+        log.debug("DEBUG yubico register key [{}]", key.getId());
+        log.info("INFO  yubico register key [{}]", key.getId());
 
         KeyGenerateResponse response = KeyGenerateResponse.builder().build();
         response.setKeyId(key.getId());
