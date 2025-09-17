@@ -20,17 +20,35 @@
 # Client CLI
 
 ```text
-./gradlew bootJar && java -Dapi=key -Dfunction=yubico-info -jar pki-client-cli/build/libs/pki-client-cli.jar
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=key -Dfunction=yubico-info -jar pki-client-cli/build/libs/pki-client-cli.jar
 
 ## BC Key Generate
-./gradlew bootJar && java -Dapi=key -Dfunction=bc-client-generate -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
-./gradlew bootJar && java -Dapi=key -Dfunction=bc-server-generate -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=key -Dfunction=bc-client-generate -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=key -Dfunction=bc-server-generate -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
 
 ## Yubico Key Generate
-./gradlew bootJar && java -Dapi=key -Dfunction=yubico-generate -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9a -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=key -Dfunction=yubico-generate -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9a -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > root-key.json
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=root -Dfunction=root-generate -Dkey=root-key.json -Dsubject=root-subject.json -jar pki-client-cli/build/libs/pki-client-cli.jar > root-ca.json
 
 ## Generate Root CA
-./gradlew bootJar && java -Dapi=root -Dfunction=root-generate -Dkey=key.json -Dsubject=subject-root.json -jar pki-client-cli/build/libs/pki-client-cli.jar
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=key -Dfunction=yubico-generate -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9c -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > subordinate-key.json
+./gradlew bootJar && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 -Dapi=root -Dfunction=subordinate-generate -Dissuer=root-ca.json -Dkey=subordinate-key.json -Dsubject=subordinate-subject.json -jar pki-client-cli/build/libs/pki-client-cli.jar > subordinate-ca.json
+```
+
+```text
+./gradlew bootJar && java -Dapi=key  -Dfunction=yubico-info -jar pki-client-cli/build/libs/pki-client-cli.jar
+
+## BC Key Generate
+./gradlew bootJar && java -Dapi=key  -Dfunction=bc-client-generate   -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
+./gradlew bootJar && java -Dapi=key  -Dfunction=bc-server-generate   -Dsize=2048 -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
+
+## Yubico Key Generate
+./gradlew bootJar && java -Dapi=key  -Dfunction=yubico-generate      -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9a -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > root-key.json
+./gradlew bootJar && java -Dapi=root -Dfunction=root-generate        -Dkey=root-key.json -Dsubject=root-subject.json -jar pki-client-cli/build/libs/pki-client-cli.jar > root-ca.json
+
+## Generate Root CA
+./gradlew bootJar && java -Dapi=key  -Dfunction=yubico-generate      -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9c -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > subordinate-key.json
+./gradlew bootJar && java -Dapi=root -Dfunction=subordinate-generate -Dissuer=root-ca.json -Dkey=subordinate-key.json -Dsubject=subordinate-subject.json -jar pki-client-cli/build/libs/pki-client-cli.jar > subordinate-ca.json
 ```
 
 ## Prerequisite
