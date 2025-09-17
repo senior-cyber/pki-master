@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.jasypt.exceptions.EncryptionInitializationException;
-import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,11 +237,7 @@ public class RootServiceImpl implements RootService {
                 }
             }
         } else if (rootKey.getType() == KeyTypeEnum.Yubico) {
-            AES256TextEncryptor encryptor = new AES256TextEncryptor();
-            encryptor.setPassword(request.getKey().getKeyPassword());
-            try {
-                encryptor.decrypt(rootKey.getPrivateKey());
-            } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
+            if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKey().getKeyPassword() + "." + rootKey.getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
         }
