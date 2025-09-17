@@ -45,4 +45,8 @@ dependencies {
     implementation "org.apache.commons:commons-exec:${commons_exec}"
 
     implementation "org.jasypt:jasypt:${jasypt}"
+
+
+    compileOnly "org.projectlombok:lombok:${lombok}"
+    annotationProcessor "org.projectlombok:lombok:${lombok}"
 }

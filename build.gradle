@@ -21,7 +21,7 @@ buildscript {
         bouncycastle = '1.81' // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15to18
         spring_cloud = '2025.0.0' // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-dependencies
         guava = '33.4.8-jre' // https://mvnrepository.com/artifact/com.google.guava/guava
-        lombok = '1.18.38' // https://mvnrepository.com/artifact/org.projectlombok/lombok
+        lombok = '1.18.40' // https://mvnrepository.com/artifact/org.projectlombok/lombok
         retrofit = '3.0.0' // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
         auth0_jwt = '4.5.0' // https://mvnrepository.com/artifact/com.auth0/java-jwt
         sshd_common = '2.16.0' // https://mvnrepository.com/artifact/org.apache.sshd/sshd-common

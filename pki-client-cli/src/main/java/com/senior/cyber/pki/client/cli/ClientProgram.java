@@ -246,6 +246,7 @@ public class ClientProgram implements CommandLineRunner {
                                             .size(size)
                                             .format(format)
                                             .serialNumber(serialNumber)
+                                            .emailAddress(emailAddress)
                                             .slot(_slot)
                                             .managementKey(managementKey)
                                             .build());

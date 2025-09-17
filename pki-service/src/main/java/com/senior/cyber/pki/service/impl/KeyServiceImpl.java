@@ -16,6 +16,7 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.KeyType;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.jasypt.util.text.AES256TextEncryptor;
@@ -29,6 +30,7 @@ import java.security.PublicKey;
 import java.util.Date;
 
 @Service
+@Slf4j
 public class KeyServiceImpl implements KeyService {
 
     @Autowired
@@ -187,6 +189,8 @@ public class KeyServiceImpl implements KeyService {
         key.setEmailAddress(request.getEmailAddress());
         key.setCreatedDatetime(new Date());
         this.keyRepository.save(key);
+
+        log.debug("yubico register key [{}]", key.getId());
 
         KeyGenerateResponse response = KeyGenerateResponse.builder().build();
         response.setKeyId(key.getId());
