@@ -17,6 +17,7 @@ import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
@@ -221,13 +222,7 @@ public class KeyController {
 
         ByteArrayOutputStream zip = new ByteArrayOutputStream();
         try (ZipArchiveOutputStream stream = new ZipArchiveOutputStream(zip)) {
-            {
-                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId());
-                entry.setTime(Instant.now().toEpochMilli());
-                stream.putArchiveEntry(entry);
-                stream.closeArchiveEntry();
-            }
-
+            stream.setUseZip64(Zip64Mode.Always);
             try (ByteArrayInputStream in = new ByteArrayInputStream(OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8))) {
                 ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
                 stream.putArchiveEntry(entry);
