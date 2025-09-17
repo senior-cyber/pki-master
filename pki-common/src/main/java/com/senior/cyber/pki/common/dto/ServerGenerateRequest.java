@@ -1,21 +1,17 @@
 package com.senior.cyber.pki.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
-import java.io.Serializable;
 import java.util.List;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class ServerGenerateRequest implements Serializable {
+public class ServerGenerateRequest extends BaseRequest {
 
     @JsonProperty("issuer")
     private Issuer issuer;
@@ -49,5 +45,10 @@ public class ServerGenerateRequest implements Serializable {
 
     @JsonProperty("sans")
     private List<String> sans;
+
+    @JsonCreator
+    public static ServerGenerateRequest create() {
+        return ServerGenerateRequest.builder().build();
+    }
 
 }

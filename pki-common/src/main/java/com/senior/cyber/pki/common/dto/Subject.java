@@ -1,18 +1,17 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.util.List;
 
 @Getter
 @Setter
-@Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Subject implements Serializable {
@@ -40,5 +39,10 @@ public class Subject implements Serializable {
 
     @JsonProperty("sans")
     private List<String> sans;
+
+    @JsonCreator
+    public static Subject create() {
+        return Subject.builder().build();
+    }
 
 }

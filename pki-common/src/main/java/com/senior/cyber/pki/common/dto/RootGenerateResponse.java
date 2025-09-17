@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -9,13 +10,11 @@ import com.senior.cyber.pki.common.converter.X509CertificateSerializer;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RootGenerateResponse extends BaseResponse {
@@ -30,5 +29,10 @@ public class RootGenerateResponse extends BaseResponse {
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("certificate")
     private X509Certificate certificate;
+
+    @JsonCreator
+    public static RootGenerateResponse create() {
+        return RootGenerateResponse.builder().build();
+    }
 
 }

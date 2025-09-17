@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -9,15 +10,12 @@ import com.senior.cyber.pki.common.converter.OpenSshPublicKeySerializer;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.security.PublicKey;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class SshGenerateResponse extends BaseResponse {
 
     @JsonProperty("keyId")
@@ -30,5 +28,10 @@ public class SshGenerateResponse extends BaseResponse {
     @JsonSerialize(using = OpenSshPublicKeySerializer.class)
     @JsonDeserialize(using = OpenSshPublicKeyDeserializer.class)
     private PublicKey sshCa;
+
+    @JsonCreator
+    public static SshGenerateResponse create() {
+        return SshGenerateResponse.builder().build();
+    }
 
 }

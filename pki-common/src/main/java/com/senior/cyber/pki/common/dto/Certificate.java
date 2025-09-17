@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,14 +11,12 @@ import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Certificate implements Serializable {
@@ -41,5 +40,10 @@ public class Certificate implements Serializable {
 
     @JsonProperty("privateKey")
     private String privateKey;
+
+    @JsonCreator
+    public static Certificate create() {
+        return Certificate.builder().build();
+    }
 
 }

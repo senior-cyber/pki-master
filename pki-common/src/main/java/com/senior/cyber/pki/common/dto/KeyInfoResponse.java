@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,7 +11,6 @@ import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -18,9 +18,7 @@ import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class KeyInfoResponse extends BaseResponse {
 
     @JsonProperty("type")
@@ -49,5 +47,10 @@ public class KeyInfoResponse extends BaseResponse {
 
     @JsonProperty("decentralized")
     private boolean decentralized;
+
+    @JsonCreator
+    public static KeyInfoResponse create() {
+        return KeyInfoResponse.builder().build();
+    }
 
 }

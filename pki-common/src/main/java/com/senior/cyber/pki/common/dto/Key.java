@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -11,14 +12,12 @@ import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 import java.security.PublicKey;
 
 @Getter
 @Setter
-@Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Key implements Serializable {
@@ -48,5 +47,10 @@ public class Key implements Serializable {
 
     @JsonProperty("decentralized")
     private boolean decentralized;
+
+    @JsonCreator
+    public static Key create() {
+        return Key.builder().build();
+    }
 
 }

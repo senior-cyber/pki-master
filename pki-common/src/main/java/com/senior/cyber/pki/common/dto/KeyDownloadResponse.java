@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,14 +15,12 @@ import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
 import java.security.PublicKey;
 import java.util.Date;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class KeyDownloadResponse extends BaseResponse {
@@ -54,5 +53,10 @@ public class KeyDownloadResponse extends BaseResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Phnom_Penh")
     @JsonProperty("createdDatetime")
     private Date createdDatetime;
+
+    @JsonCreator
+    public static KeyDownloadResponse create() {
+        return KeyDownloadResponse.builder().build();
+    }
 
 }

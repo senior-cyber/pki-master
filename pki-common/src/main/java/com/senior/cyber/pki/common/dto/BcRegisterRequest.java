@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -8,20 +8,15 @@ import com.senior.cyber.pki.common.converter.PublicKeyDeserializer;
 import com.senior.cyber.pki.common.converter.PublicKeySerializer;
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
-import java.io.Serializable;
 import java.security.PublicKey;
 
 @Setter
 @Getter
 @Builder
-@Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class BcRegisterRequest implements Serializable {
+public class BcRegisterRequest extends BaseRequest {
 
     @JsonProperty("size")
     private int size;
@@ -36,5 +31,10 @@ public class BcRegisterRequest implements Serializable {
 
     @JsonProperty("emailAddress")
     private String emailAddress;
+
+    @JsonCreator
+    public static BcRegisterRequest create() {
+        return BcRegisterRequest.builder().build();
+    }
 
 }

@@ -1,6 +1,6 @@
 package com.senior.cyber.pki.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -12,18 +12,14 @@ import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
-@Jacksonized
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RootRegisterRequest implements Serializable {
+public class RootRegisterRequest extends BaseRequest {
 
     @JsonProperty("key")
     private Key key;
@@ -64,5 +60,10 @@ public class RootRegisterRequest implements Serializable {
 
     @JsonProperty("ocspKeyFormat")
     private KeyFormatEnum ocspKeyFormat;
+
+    @JsonCreator
+    public static RootRegisterRequest create() {
+        return RootRegisterRequest.builder().build();
+    }
 
 }
