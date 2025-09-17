@@ -19,6 +19,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -41,6 +42,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
@@ -234,6 +236,8 @@ public class KeyController {
             }
             stream.finish();
         }
+
+        FileUtils.writeByteArrayToFile(new File("/tmp/" + response.getKeyId() + ".zip"), zip.toByteArray());
 
         MimeMessage message = this.mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
