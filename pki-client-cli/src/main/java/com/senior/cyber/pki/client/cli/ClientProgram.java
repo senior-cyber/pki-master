@@ -21,6 +21,7 @@ import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -102,9 +103,10 @@ public class ClientProgram implements CommandLineRunner {
 //        pin = PIN;
 //        emailAddress = "";
 
-        api = "key";
-        function = "bc-client-generate";
-        _format = "RSA";
+//        api = "key";
+//        function = "bc-client-generate";
+//        _format = "RSA";
+//        emailAddress = "k.socheat@khmer.name";
 
         if ("key".equals(api)) {
             if ("bc-client-generate".equals(function)) { // DONE
@@ -120,6 +122,7 @@ public class ClientProgram implements CommandLineRunner {
                 }
                 KeyPair keyPair = com.senior.cyber.pki.common.x509.KeyUtils.generate(format, keySize);
                 BcRegisterRequest request = BcRegisterRequest.builder().build();
+                request.setEmailAddress(emailAddress);
                 request.setSize(keySize);
                 request.setFormat(format);
                 request.setPublicKey(keyPair.getPublic());
@@ -140,21 +143,26 @@ public class ClientProgram implements CommandLineRunner {
                     key.setPrivateKey(PrivateKeyUtils.convert(keyPair.getPrivate()));
                     key.setPublicKey(keyPair.getPublic());
                     System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
+                } else {
+                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                 }
             } else if ("bc-server-generate".equals(function)) { // DONE
                 int size = Integer.parseInt(_size);
                 KeyFormatEnum format = KeyFormatEnum.valueOf(_format);
                 KeyGenerateResponse response = KeyUtils.bcServerGenerate(BcGenerateRequest.builder().size(size).format(format).emailAddress(emailAddress).build());
-                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-                Key key = Key.builder().build();
-                key.setKeyId(response.getKeyId());
-                key.setKeyPassword(response.getKeyPassword());
-                key.setPublicKey(response.getOpenSshPublicKey());
-                key.setSize(size);
-                key.setFormat(format);
-                key.setType(KeyTypeEnum.BC);
-                key.setDecentralized(false);
-                System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
+                if (response.getStatus() == 200) {
+                    Key key = Key.builder().build();
+                    key.setKeyId(response.getKeyId());
+                    key.setKeyPassword(response.getKeyPassword());
+                    key.setPublicKey(response.getOpenSshPublicKey());
+                    key.setSize(size);
+                    key.setFormat(format);
+                    key.setType(KeyTypeEnum.BC);
+                    key.setDecentralized(false);
+                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
+                } else {
+                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+                }
             } else if ("yubico-generate".equals(function)) { // DONE
                 YubicoInfoResponse infoResponse = KeyUtils.yubicoInfo();
                 for (YubicoInfo info : infoResponse.getItems()) {
@@ -216,11 +224,12 @@ public class ClientProgram implements CommandLineRunner {
                                 yubico.setPivSlot(slot.getStringAlias());
                                 yubico.setManagementKey(managementKey);
 
+                                String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
                                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                                encryptor.setPassword(response.getKeyPassword());
+                                encryptor.setPassword(password);
                                 Key key = Key.builder().build();
                                 key.setKeyId(response.getKeyId());
-                                key.setKeyPassword(response.getKeyPassword());
+                                key.setKeyPassword(password);
                                 key.setPublicKey(publicKey);
                                 key.setPrivateKey(encryptor.encrypt(MAPPER.writeValueAsString(yubico)));
                                 key.setSize(size);

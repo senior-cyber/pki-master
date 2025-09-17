@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class KeyUtils {
@@ -56,6 +57,9 @@ public class KeyUtils {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             YubicoInfoResponse response = MAPPER.readValue(resp.body(), YubicoInfoResponse.class);
+            if (response.getItems() == null) {
+                response.setItems(new ArrayList<>());
+            }
 
             YubiKitManager manager = new YubiKitManager();
             for (Map.Entry<YubiKeyDevice, DeviceInfo> p : manager.listAllDevices().entrySet()) {

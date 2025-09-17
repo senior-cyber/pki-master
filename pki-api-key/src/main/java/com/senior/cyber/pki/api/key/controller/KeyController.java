@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -42,13 +41,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.time.Instant;
 
 @RestController
 public class KeyController {
@@ -245,7 +242,7 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) throws OperatorCreationException {
+    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) {
         BcRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -346,19 +343,12 @@ public class KeyController {
 
         ByteArrayOutputStream zip = new ByteArrayOutputStream();
         try (ZipArchiveOutputStream stream = new ZipArchiveOutputStream(zip)) {
-            {
-                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId());
-                entry.setTime(Instant.now().toEpochMilli());
-                stream.putArchiveEntry(entry);
-                stream.closeArchiveEntry();
-            }
-
-            try (ByteArrayInputStream in = new ByteArrayInputStream(OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8))) {
-                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
-                stream.putArchiveEntry(entry);
-                IOUtils.copy(in, stream);
-                stream.closeArchiveEntry();
-            }
+            stream.setUseZip64(Zip64Mode.Always);
+            byte[] data = OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8);
+            ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
+            stream.putArchiveEntry(entry);
+            IOUtils.write(data, stream);
+            stream.closeArchiveEntry();
             stream.finish();
         }
 
@@ -366,8 +356,10 @@ public class KeyController {
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setFrom(this.from);
         helper.setSubject("pki-api-key");
+        helper.setText("Your ZIP file is attached.\nKey ID: " + response.getKeyId(), false);
+        DataSource attachment = new ByteArrayDataSource(zip.toByteArray(), "application/zip");
         helper.setTo(request.getEmailAddress());
-        helper.addAttachment(response.getKeyId() + ".zip", new ByteArrayResource(zip.toByteArray()), "application/zip");
+        helper.addAttachment(response.getKeyId() + ".zip", attachment);
         this.mailSender.send(message);
 
         return ResponseEntity.ok(response);
