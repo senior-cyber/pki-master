@@ -29,6 +29,7 @@
 ## Yubico Key Generate
 ./gradlew bootJar && java -Dapi=key -Dfunction=yubico-generate -Dsize=2048 -DmanagementKey=010203040506070801020304050607080102030405060708 -Dpin=123456 -DserialNumber=23275988 -Dslot=9a -Dformat=RSA -DemailAddress=k.socheat@khmer.name -jar pki-client-cli/build/libs/pki-client-cli.jar > key.json
 
+## Generate Root CA
 ./gradlew bootJar && java -Dapi=root -Dfunction=root-generate -Dkey=key.json -Dsubject=subject-root.json -jar pki-client-cli/build/libs/pki-client-cli.jar
 ```
 

@@ -2,6 +2,7 @@ package com.senior.cyber.pki.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -32,12 +33,14 @@ public class Certificate implements Serializable {
     @JsonProperty("keyPassword")
     private String keyPassword;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("type")
     private KeyTypeEnum type;
 
     @JsonProperty("decentralized")
     private boolean decentralized;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("privateKey")
     private String privateKey;
 

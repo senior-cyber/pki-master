@@ -493,19 +493,21 @@ public class ClientProgram implements CommandLineRunner {
                                     request.setOcspKeyFormat(KeyFormatEnum.RSA);
                                     request.setOcspPrivateKey(ocspPrivateKey);
 
-                                    RootRegisterResponse response = RootUtils.rootRegister(request);
-                                    System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-                                    if (response.getCertificate() != null) {
-                                        Certificate certificate = Certificate.builder().build();
-                                        certificate.setCertificateId(response.getCertificateId());
-                                        certificate.setKeyPassword(response.getKeyPassword());
-                                        System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate));
-                                    }
-
                                     PivSession session = sessions.get(serials.get(key.getKeyId()));
                                     if (session != null) {
                                         Slot slot = slots.get(serials.get(key.getKeyId()));
                                         session.putCertificate(slot, rootCertificate);
+                                    }
+
+                                    RootRegisterResponse response = RootUtils.rootRegister(request);
+                                    if (response.getStatus() == 200) {
+                                        Certificate certificate = Certificate.builder().build();
+                                        certificate.setCertificate(response.getCertificate());
+                                        certificate.setCertificateId(response.getCertificateId());
+                                        certificate.setKeyPassword(response.getKeyPassword());
+                                        System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate));
+                                    } else {
+                                        System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                                     }
                                 } finally {
                                     for (SmartCardConnection connection : connections.values()) {
