@@ -228,7 +228,7 @@ public class RootServiceImpl implements RootService {
 
         if (rootKey.getType() == KeyTypeEnum.BC) {
             if (rootKey.getPrivateKey() == null || rootKey.getPrivateKey().isEmpty()) {
-                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), rootKey.getId() + "." + request.getKey().getKeyPassword())) {
+                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKey().getKeyPassword() + "." + rootKey.getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             } else {
@@ -237,7 +237,7 @@ public class RootServiceImpl implements RootService {
                 }
             }
         } else if (rootKey.getType() == KeyTypeEnum.Yubico) {
-            if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), rootKey.getId() + "." + request.getKey().getKeyPassword())) {
+            if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKey().getKeyPassword() + "." + rootKey.getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
         }
