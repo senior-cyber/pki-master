@@ -15,12 +15,13 @@ import com.yubico.yubikit.core.application.ApplicationNotAvailableException;
 import com.yubico.yubikit.core.application.BadResponseException;
 import com.yubico.yubikit.core.smartcard.ApduException;
 import com.yubico.yubikit.piv.Slot;
+import jakarta.activation.DataSource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -43,7 +44,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
@@ -223,23 +223,22 @@ public class KeyController {
         ByteArrayOutputStream zip = new ByteArrayOutputStream();
         try (ZipArchiveOutputStream stream = new ZipArchiveOutputStream(zip)) {
             stream.setUseZip64(Zip64Mode.Always);
-            try (ByteArrayInputStream in = new ByteArrayInputStream(OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8))) {
-                ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
-                stream.putArchiveEntry(entry);
-                IOUtils.copy(in, stream);
-                stream.closeArchiveEntry();
-            }
+            byte[] data = OpenSshPublicKeyUtils.convert(response.getOpenSshPublicKey()).getBytes(StandardCharsets.UTF_8);
+            ZipArchiveEntry entry = new ZipArchiveEntry(response.getKeyId() + "/openssh-public-key.pub");
+            stream.putArchiveEntry(entry);
+            IOUtils.write(data, stream);
+            stream.closeArchiveEntry();
             stream.finish();
         }
-
-        FileUtils.writeByteArrayToFile(new File("/tmp/" + response.getKeyId() + ".zip"), zip.toByteArray());
 
         MimeMessage message = this.mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setFrom(this.from);
         helper.setSubject("pki-api-key");
+        helper.setText("Your ZIP file is attached.\nKey ID: " + response.getKeyId(), false);
+        DataSource attachment = new ByteArrayDataSource(zip.toByteArray(), "application/zip");
         helper.setTo(request.getEmailAddress());
-        helper.addAttachment(response.getKeyId() + ".zip", new ByteArrayResource(zip.toByteArray()), "application/zip");
+        helper.addAttachment(response.getKeyId() + ".zip", attachment);
         this.mailSender.send(message);
 
         return ResponseEntity.ok(response);
