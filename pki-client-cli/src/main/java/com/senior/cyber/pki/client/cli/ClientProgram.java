@@ -218,7 +218,7 @@ public class ClientProgram implements CommandLineRunner {
                                 request.setFormat(format);
                                 request.setPublicKey(publicKey);
                                 KeyGenerateResponse response = KeyUtils.yubicoRegister(request);
-                                if (response.getStatus() == 200){
+                                if (response.getStatus() == 200) {
                                     YubicoPassword yubico = YubicoPassword.builder().build();
                                     yubico.setSerial(serialNumber);
                                     yubico.setPin(pin);
@@ -238,7 +238,7 @@ public class ClientProgram implements CommandLineRunner {
                                     key.setType(KeyTypeEnum.Yubico);
                                     key.setDecentralized(false);
                                     System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(key));
-                                }  else {
+                                } else {
                                     System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
                                 }
                             }
@@ -413,11 +413,9 @@ public class ClientProgram implements CommandLineRunner {
                         }
                     }
                 } else if (key.getType() == KeyTypeEnum.Yubico) {
-                    KeyDownloadResponse keyDownload = KeyUtils.download(KeyDownloadRequest.builder()
-                            .keyId(key.getKeyId())
-                            .keyPassword(key.getKeyPassword())
-                            .build());
-                    YubicoPassword yubico = MAPPER.readValue(keyDownload.getPrivateKey(), YubicoPassword.class);
+                    AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                    encryptor.setPassword(key.getKeyPassword());
+                    YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(key.getPrivateKey()), YubicoPassword.class);
                     YubicoInfoResponse yubicoInfoResponse = KeyUtils.yubicoInfo();
                     boolean found = false;
                     for (YubicoInfo item : yubicoInfoResponse.getItems()) {
@@ -442,7 +440,7 @@ public class ClientProgram implements CommandLineRunner {
                                             subject.getEmailAddress());
 
                                     PrivateKey rootPrivateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, key.getKeyId(), yubico);
-                                    Crypto root = new Crypto(providers.get(serials.get(key.getKeyId())), keyDownload.getPublicKey(), rootPrivateKey);
+                                    Crypto root = new Crypto(providers.get(serials.get(key.getKeyId())), key.getPublicKey(), rootPrivateKey);
 
                                     LocalDate now = LocalDate.now();
 
@@ -471,7 +469,7 @@ public class ClientProgram implements CommandLineRunner {
                                     RootRegisterRequest request = RootRegisterRequest.builder().build();
                                     request.setKey(Key.builder()
                                             .keyId(key.getKeyId())
-                                            .keyPassword(key.getKeyPassword())
+                                            .keyPassword(key.getPrivateKey())
                                             .build());
 
                                     request.setRootCertificate(rootCertificate);
