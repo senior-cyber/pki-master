@@ -250,23 +250,25 @@ public class RootUtils {
                 rootGenerateBcServerSign(key, _subject);
             }
         } else if (key.getType() == KeyTypeEnum.Yubico) {
-            AES256TextEncryptor encryptor = new AES256TextEncryptor();
-            encryptor.setPassword(key.getKeyPassword());
-            YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(key.getPrivateKey()), YubicoPassword.class);
             YubicoInfoResponse yubicoInfoResponse = ClientUtils.yubicoInfo();
-            boolean found = false;
-            for (YubicoInfo item : yubicoInfoResponse.getItems()) {
-                if (item.getSerialNumber().equals(yubico.getSerial())) {
-                    found = true;
-                    if ("client".equals(item.getType())) { // Client Sign
-                        rootGenerateYubicoClientSign(_key, _subject, null);
-                    } else if ("server".equals(item.getType())) { // Server Sign
-                        rootGenerateYubicoServerSign(_key, _subject);
+            if (yubicoInfoResponse.getItems() != null && !yubicoInfoResponse.getItems().isEmpty()) {
+                AES256TextEncryptor encryptor = new AES256TextEncryptor();
+                encryptor.setPassword(key.getKeyPassword());
+                YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(key.getPrivateKey()), YubicoPassword.class);
+                boolean found = false;
+                for (YubicoInfo item : yubicoInfoResponse.getItems()) {
+                    if (item.getSerialNumber().equals(yubico.getSerial())) {
+                        found = true;
+                        if ("client".equals(item.getType())) { // Client Sign
+                            rootGenerateYubicoClientSign(_key, _subject, null);
+                        } else if ("server".equals(item.getType())) { // Server Sign
+                            rootGenerateYubicoServerSign(_key, _subject);
+                        }
                     }
                 }
-            }
-            if (!found) {
-                throw new RuntimeException("root private key is not found");
+                if (!found) {
+                    throw new RuntimeException("root private key is not found");
+                }
             }
         }
 
