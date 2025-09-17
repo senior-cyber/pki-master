@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.api.key.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.*;
@@ -242,7 +243,7 @@ public class KeyController {
     }
 
     @RequestMapping(path = "/bc/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) {
+    public ResponseEntity<KeyGenerateResponse> bcClientRegister(RequestEntity<BcRegisterRequest> httpRequest) throws JsonProcessingException {
         BcRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
