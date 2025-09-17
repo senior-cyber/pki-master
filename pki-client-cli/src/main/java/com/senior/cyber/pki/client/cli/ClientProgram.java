@@ -20,8 +20,10 @@ import com.yubico.yubikit.piv.KeyType;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -32,6 +34,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +47,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @SpringBootApplication
 public class ClientProgram implements CommandLineRunner {
 
@@ -63,7 +69,7 @@ public class ClientProgram implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, OperatorCreationException, CertificateException {
+    public void run(String... args) throws IOException, InterruptedException, ApduException, ApplicationNotAvailableException, BadResponseException, NoSuchAlgorithmException, InvalidKeyException, SignatureException, OperatorCreationException, CertificateException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, NoSuchProviderException {
         String api = System.getProperty("api");
         String function = System.getProperty("function");
 
@@ -207,6 +213,7 @@ public class ClientProgram implements CommandLineRunner {
                                         }
                                     }
                                 }
+
                                 YubicoRegisterRequest request = YubicoRegisterRequest.builder()
                                         .size(size)
                                         .slot(slot.getStringAlias())
@@ -466,10 +473,12 @@ public class ClientProgram implements CommandLineRunner {
                                     PrivateKey ocspPrivateKey = ocspKey.getPrivate();
                                     X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), rootCertificate, ocspPublicKey, ocspSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 2);
 
+                                    String signature = PrivateKeyUtils.signText(root.getProvider(), rootPrivateKey, key.getKeyId());
+
                                     RootRegisterRequest request = RootRegisterRequest.builder().build();
                                     request.setKey(Key.builder()
                                             .keyId(key.getKeyId())
-                                            .keyPassword(PrivateKeyUtils.signText(root.getProvider(), rootPrivateKey, key.getKeyId()))
+                                            .keyPassword(StringUtils.split(signature, '.')[0])
                                             .build());
 
                                     request.setRootCertificate(rootCertificate);

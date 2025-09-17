@@ -19,7 +19,7 @@ CREATE TABLE tbl_key
     private_key_pem  TEXT         NULL,
     public_key_pem   TEXT         NOT NULL,
     pwd              VARCHAR(100) NULL,
-    email_address    VARCHAR(200) NOT NULL,
+    email_address    VARCHAR(200) NULL,
     key_format       VARCHAR(3)   NULL,
     key_size         INT(11)      NULL,
     `status`         VARCHAR(10)  NULL,
