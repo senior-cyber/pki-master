@@ -469,7 +469,7 @@ public class ClientProgram implements CommandLineRunner {
                                     RootRegisterRequest request = RootRegisterRequest.builder().build();
                                     request.setKey(Key.builder()
                                             .keyId(key.getKeyId())
-                                            .keyPassword(key.getPrivateKey())
+                                            .keyPassword(PrivateKeyUtils.signText(root.getProvider(), rootPrivateKey, key.getKeyId()))
                                             .build());
 
                                     request.setRootCertificate(rootCertificate);

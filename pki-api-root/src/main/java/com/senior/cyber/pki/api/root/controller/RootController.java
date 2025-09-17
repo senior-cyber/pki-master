@@ -84,7 +84,7 @@ public class RootController {
      * @throws BadResponseException
      */
     @RequestMapping(path = "/root/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RootRegisterResponse> rootClientRegister(RequestEntity<RootRegisterRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException, SignatureException, InvalidKeyException {
+    public ResponseEntity<RootRegisterResponse> rootRegister(RequestEntity<RootRegisterRequest> httpRequest) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException, SignatureException, InvalidKeyException {
         RootRegisterRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
