@@ -21,6 +21,7 @@ import com.yubico.yubikit.core.smartcard.SmartCardConnection;
 import com.yubico.yubikit.piv.PivSession;
 import com.yubico.yubikit.piv.Slot;
 import com.yubico.yubikit.piv.jca.PivProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -28,8 +29,6 @@ import org.jasypt.exceptions.EncryptionInitializationException;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.joda.time.LocalDate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,10 +43,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class RootServiceImpl implements RootService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RootServiceImpl.class);
 
     @Autowired
     protected CertificateRepository certificateRepository;
@@ -61,6 +59,7 @@ public class RootServiceImpl implements RootService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public RootGenerateResponse rootGenerate(RootGenerateRequest request) throws CertificateException, NoSuchAlgorithmException, OperatorCreationException, IOException, ApduException, ApplicationNotAvailableException, BadResponseException {
+        log.debug("RootGenerateRequest [{}]", this.objectMapper.writeValueAsString(request));
         Map<String, SmartCardConnection> connections = new HashMap<>();
         Map<String, KeyStore> keys = new HashMap<>();
         Map<String, PivProvider> providers = new HashMap<>();
@@ -212,7 +211,7 @@ public class RootServiceImpl implements RootService {
                 Slot slot = slots.get(serials.get(rootKey.getId()));
                 session.putCertificate(slot, rootCertificate);
             }
-
+            log.debug("RootGenerateResponse [{}]", this.objectMapper.writeValueAsString(response));
             return response;
         } finally {
             for (SmartCardConnection connection : connections.values()) {
@@ -226,6 +225,7 @@ public class RootServiceImpl implements RootService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public RootRegisterResponse rootRegister(String crlUrl, String ocspUrl, String x509Url, RootRegisterRequest request) throws CertificateException, IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, OperatorCreationException {
+        log.debug("RootRegisterRequest [{}]", this.objectMapper.writeValueAsString(request));
         Key rootKey = this.keyRepository.findById(request.getKey().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
         if (rootKey.getType() == KeyTypeEnum.BC) {
@@ -354,10 +354,12 @@ public class RootServiceImpl implements RootService {
         rootCertificate.setOcspCertificate(rootCertificate);
         this.certificateRepository.save(rootCertificate);
 
-        return RootRegisterResponse.builder()
+        RootRegisterResponse response = RootRegisterResponse.builder()
                 .certificateId(rootCertificate.getId())
                 .keyPassword(request.getKey().getKeyPassword()).
                 certificate(request.getRootCertificate()).build();
+        log.debug("RootRegisterResponse [{}]", this.objectMapper.writeValueAsString(response));
+        return response;
     }
 
 }

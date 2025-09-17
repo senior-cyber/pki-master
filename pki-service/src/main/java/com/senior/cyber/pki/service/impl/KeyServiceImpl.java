@@ -1,5 +1,6 @@
 package com.senior.cyber.pki.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
@@ -41,7 +42,8 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public KeyGenerateResponse bcGenerate(BcGenerateRequest request) throws OperatorCreationException {
+    public KeyGenerateResponse bcGenerate(BcGenerateRequest request) throws OperatorCreationException, JsonProcessingException {
+        log.debug("BcGenerateRequest [{}]", this.objectMapper.writeValueAsString(request));
         String password = RandomStringUtils.secureStrong().nextAlphanumeric(20);
         KeyPair _key = KeyUtils.generate(request.getFormat(), request.getSize());
         Key key = new Key();
@@ -61,11 +63,13 @@ public class KeyServiceImpl implements KeyService {
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
+        log.debug("KeyGenerateResponse [{}]", this.objectMapper.writeValueAsString(response));
         return response;
     }
 
     @Override
-    public KeyGenerateResponse bcRegister(BcRegisterRequest request) {
+    public KeyGenerateResponse bcRegister(BcRegisterRequest request) throws JsonProcessingException {
+        log.debug("BcRegisterRequest [{}]", this.objectMapper.writeValueAsString(request));
         Key key = new Key();
         key.setStatus(KeyStatusEnum.Good);
         key.setPrivateKey(null);
@@ -82,12 +86,14 @@ public class KeyServiceImpl implements KeyService {
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
+        log.debug("KeyGenerateResponse [{}]", this.objectMapper.writeValueAsString(response));
         return response;
     }
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public KeyGenerateResponse yubicoGenerate(YubicoGenerateRequest request) throws ApduException, IOException, ApplicationNotAvailableException, BadResponseException {
+        log.debug("YubicoGenerateRequest [{}]", this.objectMapper.writeValueAsString(request));
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -152,6 +158,7 @@ public class KeyServiceImpl implements KeyService {
             if (key.getKeyFormat() == KeyFormatEnum.RSA) {
                 response.setOpenSshPublicKey(key.getPublicKey());
             }
+            log.debug("KeyGenerateResponse [{}]", this.objectMapper.writeValueAsString(response));
             return response;
         }
     }
@@ -159,6 +166,7 @@ public class KeyServiceImpl implements KeyService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public KeyGenerateResponse yubicoRegister(YubicoRegisterRequest request) throws IOException {
+        log.debug("YubicoRegisterRequest [{}]", this.objectMapper.writeValueAsString(request));
         Slot pivSlot = null;
         for (Slot slot : Slot.values()) {
             if (slot.getStringAlias().equalsIgnoreCase(request.getSlot())) {
@@ -191,7 +199,6 @@ public class KeyServiceImpl implements KeyService {
         this.keyRepository.save(key);
 
         log.debug("DEBUG yubico register key [{}]", key.getId());
-        log.info("INFO  yubico register key [{}]", key.getId());
 
         KeyGenerateResponse response = KeyGenerateResponse.builder().build();
         response.setKeyId(key.getId());
@@ -199,6 +206,7 @@ public class KeyServiceImpl implements KeyService {
         if (key.getKeyFormat() == KeyFormatEnum.RSA) {
             response.setOpenSshPublicKey(key.getPublicKey());
         }
+        log.debug("KeyGenerateResponse [{}]", this.objectMapper.writeValueAsString(response));
         return response;
     }
 
