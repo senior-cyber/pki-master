@@ -23,6 +23,9 @@ public class RootRegisterResponse extends BaseResponse {
     @JsonProperty("keyPassword")
     private String keyPassword;
 
+    @JsonProperty("keyId")
+    private String keyId;
+
     @JsonSerialize(using = X509CertificateSerializer.class)
     @JsonDeserialize(using = X509CertificateDeserializer.class)
     @JsonProperty("certificate")

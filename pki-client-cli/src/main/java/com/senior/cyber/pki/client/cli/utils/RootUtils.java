@@ -98,6 +98,7 @@ public class RootUtils {
         if (response.getCertificate() != null) {
             Certificate certificate = Certificate.builder().build();
             certificate.setCertificateId(response.getCertificateId());
+            certificate.setKeyId(response.getKeyId());
             certificate.setKeyPassword(response.getKeyPassword());
             System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate));
         }
@@ -203,6 +204,7 @@ public class RootUtils {
                 Certificate certificate = Certificate.builder().build();
                 certificate.setCertificate(response.getCertificate());
                 certificate.setType(_key.getType());
+                certificate.setKeyId(response.getKeyId());
                 certificate.setCertificateId(response.getCertificateId());
                 certificate.setKeyPassword(response.getKeyPassword());
                 if (output == null || output.isEmpty()) {

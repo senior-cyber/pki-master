@@ -351,6 +351,7 @@ public class RootServiceImpl implements RootService {
 
         RootRegisterResponse response = RootRegisterResponse.builder()
                 .certificateId(rootCertificate.getId())
+                .keyId(rootKey.getId())
                 .keyPassword(request.getKey().getKeyPassword()).
                 certificate(request.getRootCertificate()).build();
         log.debug("RootRegisterResponse [{}]", this.objectMapper.writeValueAsString(response));
