@@ -23,6 +23,9 @@ public class ClientUtils {
     private static final String KEY = "https://pki-api-key.khmer.name";
 //        private static final String KEY = "http://127.0.0.1:3103";
 
+    private static final String QUEUE = "https://pki-api-queue.khmer.name";
+//        private static final String QUEUE = "http://127.0.0.1:3105";
+
     private static final String REVOKE = "https://pki-api-revoke.khmer.name";
 //        private static final String REVOKE = "http://127.0.0.1:3005";
 
@@ -321,6 +324,19 @@ public class ClientUtils {
                     .build();
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return MAPPER.readValue(resp.body(), ServerGenerateResponse.class);
+        }
+    }
+
+    public static QueueRequestResponse queueRequest(QueueRequestRequest request) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(QUEUE + "/api/queue/request"))
+                    .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(request)))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return MAPPER.readValue(resp.body(), QueueRequestResponse.class);
         }
     }
 

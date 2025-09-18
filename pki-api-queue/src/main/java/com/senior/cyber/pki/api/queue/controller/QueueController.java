@@ -50,22 +50,43 @@ public class QueueController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
-        Key issuerKey = this.keyRepository.findById(request.getIssuerKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
-        Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
-
-        Queue queue = new Queue();
-        queue.setIssuerCertificate(issuerCertificate);
-        queue.setIssuerKey(issuerKey);
-        queue.setKey(key);
-        queue.setSubject(mapper.writeValueAsString(request.getSubject()));
-        queue.setType(request.getType());
-        queue.setPriority(new Date());
-        this.queueRepository.save(queue);
-
-        QueueRequestResponse response = QueueRequestResponse.builder().build();
-        response.setQueueId(queue.getId());
-        return ResponseEntity.ok(response);
+        switch (request.getType()) {
+            case CRL, OCSP -> {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            case ROOT_CA -> {
+                Queue queue = new Queue();
+                Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                queue.setKey(key);
+                queue.setIssuerKey(key);
+                queue.setSubject(mapper.writeValueAsString(request.getSubject()));
+                queue.setType(request.getType());
+                queue.setPriority(new Date());
+                this.queueRepository.save(queue);
+                QueueRequestResponse response = QueueRequestResponse.builder().build();
+                response.setQueueId(queue.getId());
+                return ResponseEntity.ok(response);
+            }
+            case SUBORDINATE_CA, ISSUING_CA, TLS_SERVER, mTLS_SERVER, mTLS_CLIENT -> {
+                Queue queue = new Queue();
+                Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                queue.setKey(key);
+                Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuerCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                queue.setIssuerCertificate(issuerCertificate);
+                Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                queue.setIssuerKey(issuerKey);
+                queue.setSubject(mapper.writeValueAsString(request.getSubject()));
+                queue.setType(request.getType());
+                queue.setPriority(new Date());
+                this.queueRepository.save(queue);
+                QueueRequestResponse response = QueueRequestResponse.builder().build();
+                response.setQueueId(queue.getId());
+                return ResponseEntity.ok(response);
+            }
+            default -> {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
     }
 
     @RequestMapping(path = "/queue/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

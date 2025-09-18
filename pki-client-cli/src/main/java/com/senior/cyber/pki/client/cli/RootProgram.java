@@ -1,9 +1,10 @@
 package com.senior.cyber.pki.client.cli;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senior.cyber.pki.client.cli.utils.ClientUtils;
 import com.senior.cyber.pki.client.cli.utils.KeyUtils;
-import com.senior.cyber.pki.client.cli.utils.RootUtils;
 import com.senior.cyber.pki.common.dto.CertificateTypeEnum;
+import com.senior.cyber.pki.common.dto.Key;
 import com.senior.cyber.pki.common.dto.QueueRequestRequest;
 import com.senior.cyber.pki.common.dto.Subject;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 
 @Slf4j
 public class RootProgram {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws Throwable {
         KeyUtils.yubicoClientGenerate("9a", ClientProgram.PIN, "2048", ClientProgram.MANAGEMENT_KEY, "RSA", "23275988", "k.socheat@khmer.name", "root-key.json");
@@ -27,17 +30,20 @@ public class RootProgram {
         rootSubject.setOrganization("Ministry of Post and Telecom");
         rootSubject.setOrganizationalUnit("Digital Government Committee");
 
+        Key _key = MAPPER.readValue(FileUtils.readFileToString(new File("root-key.json"), StandardCharsets.UTF_8), Key.class);
+
         QueueRequestRequest request = QueueRequestRequest.create();
         request.setSubject(rootSubject);
-        request.setKeyId("");
+        request.setKeyId(_key.getKeyId());
         request.setType(CertificateTypeEnum.ROOT_CA);
-        request.setIssuerKeyId("");
-        request.setIssuerCertificateId("");
+        request.setIssuerKeyId(_key.getKeyId());
+        request.setIssuerCertificateId(null);
 
-
-        FileUtils.write(new File("root-subject.json"), ClientProgram.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(rootSubject), StandardCharsets.UTF_8);
-
-        RootUtils.rootGenerateYubicoClientSign("root-key.json", "root-subject.json", "root-ca.json");
+        var response = ClientUtils.queueRequest(request);
+        System.out.println("");
+//        FileUtils.write(new File("root-subject.json"), ClientProgram.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(rootSubject), StandardCharsets.UTF_8);
+//
+//        RootUtils.rootGenerateYubicoClientSign("root-key.json", "root-subject.json", "root-ca.json");
         System.exit(0);
     }
 
