@@ -9,6 +9,7 @@ import com.senior.cyber.pki.dao.entity.pki.Queue;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.dao.repository.pki.QueueRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @RestController
 public class QueueController {
 
@@ -41,7 +43,7 @@ public class QueueController {
     protected QueueRepository queueRepository;
 
     @Autowired
-    protected ObjectMapper mapper;
+    protected ObjectMapper objectMapper;
 
     @RequestMapping(path = "/queue/request", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<QueueRequestResponse> queueRequest(RequestEntity<QueueRequestRequest> httpRequest) throws JsonProcessingException {
@@ -49,6 +51,7 @@ public class QueueController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
+        log.debug("QueueRequestRequest [{}]", this.objectMapper.writeValueAsString(request));
 
         switch (request.getType()) {
             case CRL, OCSP -> {
@@ -59,12 +62,13 @@ public class QueueController {
                 Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
                 queue.setKey(key);
                 queue.setIssuerKey(key);
-                queue.setSubject(mapper.writeValueAsString(request.getSubject()));
+                queue.setSubject(objectMapper.writeValueAsString(request.getSubject()));
                 queue.setType(request.getType());
                 queue.setPriority(new Date());
                 this.queueRepository.save(queue);
                 QueueRequestResponse response = QueueRequestResponse.builder().build();
                 response.setQueueId(queue.getId());
+                log.debug("QueueRequestResponse [{}]", this.objectMapper.writeValueAsString(response));
                 return ResponseEntity.ok(response);
             }
             case SUBORDINATE_CA, ISSUING_CA, TLS_SERVER, mTLS_SERVER, mTLS_CLIENT -> {
@@ -75,12 +79,13 @@ public class QueueController {
                 queue.setIssuerCertificate(issuerCertificate);
                 Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
                 queue.setIssuerKey(issuerKey);
-                queue.setSubject(mapper.writeValueAsString(request.getSubject()));
+                queue.setSubject(objectMapper.writeValueAsString(request.getSubject()));
                 queue.setType(request.getType());
                 queue.setPriority(new Date());
                 this.queueRepository.save(queue);
                 QueueRequestResponse response = QueueRequestResponse.builder().build();
                 response.setQueueId(queue.getId());
+                log.debug("QueueRequestResponse [{}]", this.objectMapper.writeValueAsString(response));
                 return ResponseEntity.ok(response);
             }
             default -> {
@@ -95,6 +100,7 @@ public class QueueController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
+        log.debug("QueueSearchRequest [{}]", this.objectMapper.writeValueAsString(request));
 
         Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
         List<Queue> _queues = this.queueRepository.findByIssuerKey(key);
@@ -102,7 +108,7 @@ public class QueueController {
         for (Queue _queue : _queues) {
             com.senior.cyber.pki.common.dto.Queue queue = com.senior.cyber.pki.common.dto.Queue.create();
             queue.setId(_queue.getId());
-            queue.setSubject(this.mapper.readValue(_queue.getSubject(), Subject.class));
+            queue.setSubject(this.objectMapper.readValue(_queue.getSubject(), Subject.class));
             queue.setIssuerCertificate(_queue.getIssuerCertificate().getCertificate());
             queue.setType(_queue.getType());
             queue.setKeyId(_queue.getKey().getId());
@@ -110,6 +116,7 @@ public class QueueController {
         }
         QueueSearchResponse response = QueueSearchResponse.create();
         response.setQueues(queues);
+        log.debug("QueueSearchResponse [{}]", this.objectMapper.writeValueAsString(response));
         return ResponseEntity.ok(response);
     }
 
