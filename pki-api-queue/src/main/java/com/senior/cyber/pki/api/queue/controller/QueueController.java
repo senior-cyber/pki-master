@@ -109,7 +109,10 @@ public class QueueController {
             com.senior.cyber.pki.common.dto.Queue queue = com.senior.cyber.pki.common.dto.Queue.create();
             queue.setId(_queue.getId());
             queue.setSubject(this.objectMapper.readValue(_queue.getSubject(), Subject.class));
-            queue.setIssuerCertificate(_queue.getIssuerCertificate().getCertificate());
+            if (_queue.getIssuerCertificate() != null) {
+                Certificate issuerCertificate = this.certificateRepository.findById(_queue.getIssuerCertificate().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+                queue.setIssuerCertificate(issuerCertificate.getCertificate());
+            }
             queue.setType(_queue.getType());
             queue.setKeyId(_queue.getKey().getId());
             queues.add(queue);
