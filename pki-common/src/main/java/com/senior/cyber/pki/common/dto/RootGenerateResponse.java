@@ -22,6 +22,9 @@ public class RootGenerateResponse extends BaseResponse {
     @JsonProperty("certificateId")
     private String certificateId;
 
+    @JsonProperty("keyId")
+    private String keyId;
+
     @JsonProperty("keyPassword")
     private String keyPassword;
 

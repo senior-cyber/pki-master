@@ -31,7 +31,7 @@ public class ClientUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static ServerInfoResponse serverInfoV2() throws IOException, InterruptedException {
+    public static ServerInfoResponse serverInfoV1() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ROOT + "/api/server/info"))
@@ -247,7 +247,7 @@ public class ClientUtils {
         }
     }
 
-    public static ServerInfoResponse serverInfoV1() throws IOException, InterruptedException {
+    public static ServerInfoResponse serverInfoV2() throws IOException, InterruptedException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(ISSUER + "/api/server/info"))

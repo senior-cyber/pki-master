@@ -199,6 +199,7 @@ public class RootServiceImpl implements RootService {
             this.certificateRepository.save(_rootCertificate);
 
             RootGenerateResponse response = RootGenerateResponse.builder()
+                    .keyId(rootKey.getId())
                     .certificateId(_rootCertificate.getId())
                     .keyPassword(request.getKey().getKeyPassword())
                     .certificate(_rootCertificate.getCertificate())

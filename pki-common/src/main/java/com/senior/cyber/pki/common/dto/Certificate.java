@@ -30,6 +30,9 @@ public class Certificate implements Serializable {
     @JsonProperty("certificate")
     private X509Certificate certificate;
 
+    @JsonProperty("keyId")
+    private String keyId;
+
     @JsonProperty("keyPassword")
     private String keyPassword;
 

@@ -175,7 +175,7 @@ public class ClientProgram implements CommandLineRunner {
             if ("root-generate".equals(function)) { // DONE
                 RootUtils.rootGenerate(_key, _subject);
             } else if ("subordinate-generate".equals(function)) {
-                SubordinateUtils.subordinateGenerate(_issuer, _key, _subject, null);
+                SubordinateUtils.subordinateGenerate(null, null, null, _issuer, _key, _subject, null);
             } else if ("issuer-generate".equals(function)) {
 //                String issuerCertificateId = System.getProperty("issuerCertificateId");
 //                String issuerKeyPassword = System.getProperty("issuerKeyPassword");

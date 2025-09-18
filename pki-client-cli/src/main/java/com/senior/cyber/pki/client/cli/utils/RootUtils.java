@@ -36,15 +36,15 @@ public class RootUtils {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static void rootGenerateBcClientSign(Key key, String _subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
-        Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
-        X500Name rootSubject = SubjectUtils.generate(subject.getCountry(),
-                subject.getOrganization(),
-                subject.getOrganizationalUnit(),
-                subject.getCommonName(),
-                subject.getLocality(),
-                subject.getProvince(),
-                subject.getEmailAddress());
+    private static void rootGenerateBcClientSign(Key key, String subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
+        Subject _subject = MAPPER.readValue(FileUtils.readFileToString(new File(subject), StandardCharsets.UTF_8), Subject.class);
+        X500Name rootSubject = SubjectUtils.generate(_subject.getCountry(),
+                _subject.getOrganization(),
+                _subject.getOrganizationalUnit(),
+                _subject.getCommonName(),
+                _subject.getLocality(),
+                _subject.getProvince(),
+                _subject.getEmailAddress());
 
         PublicKey rootPublicKey = key.getPublicKey();
         PrivateKey rootPrivateKey = PrivateKeyUtils.convert(key.getPrivateKey());
@@ -63,13 +63,13 @@ public class RootUtils {
         X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(ClientProgram.PROVIDER, rootPrivateKey, rootCertificate, crlPublicKey, rootSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 1);
 
         X500Name ocspSubject = SubjectUtils.generate(
-                subject.getCountry(),
-                subject.getOrganization(),
-                subject.getOrganizationalUnit(),
-                subject.getCommonName() + " OCSP",
-                subject.getLocality(),
-                subject.getProvince(),
-                subject.getEmailAddress()
+                _subject.getCountry(),
+                _subject.getOrganization(),
+                _subject.getOrganizationalUnit(),
+                _subject.getCommonName() + " OCSP",
+                _subject.getLocality(),
+                _subject.getProvince(),
+                _subject.getEmailAddress()
         );
         KeyPair ocspKey = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormatEnum.RSA, 2048);
         PublicKey ocspPublicKey = ocspKey.getPublic();
@@ -117,16 +117,17 @@ public class RootUtils {
         if (response.getCertificate() != null) {
             Certificate certificate = Certificate.builder().build();
             certificate.setCertificateId(response.getCertificateId());
+            certificate.setKeyId(response.getKeyId());
             certificate.setKeyPassword(response.getKeyPassword());
             System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate));
         }
     }
 
-    public static void rootGenerateYubicoClientSign(String _key, String _subject, String output) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
-        Key key = MAPPER.readValue(FileUtils.readFileToString(new File(_key), StandardCharsets.UTF_8), Key.class);
+    public static void rootGenerateYubicoClientSign(String key, String subject, String output) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
+        Key _key = MAPPER.readValue(FileUtils.readFileToString(new File(key), StandardCharsets.UTF_8), Key.class);
         AES256TextEncryptor encryptor = new AES256TextEncryptor();
-        encryptor.setPassword(key.getKeyPassword());
-        YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(key.getPrivateKey()), YubicoPassword.class);
+        encryptor.setPassword(_key.getKeyPassword());
+        YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(_key.getPrivateKey()), YubicoPassword.class);
         Map<String, SmartCardConnection> connections = new HashMap<>();
         Map<String, KeyStore> keys = new HashMap<>();
         Map<String, PivProvider> providers = new HashMap<>();
@@ -135,17 +136,17 @@ public class RootUtils {
         Map<String, String> serials = new HashMap<>();
 
         try {
-            Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
-            X500Name rootSubject = SubjectUtils.generate(subject.getCountry(),
-                    subject.getOrganization(),
-                    subject.getOrganizationalUnit(),
-                    subject.getCommonName(),
-                    subject.getLocality(),
-                    subject.getProvince(),
-                    subject.getEmailAddress());
+            Subject _subject = MAPPER.readValue(FileUtils.readFileToString(new File(subject), StandardCharsets.UTF_8), Subject.class);
+            X500Name rootSubject = SubjectUtils.generate(_subject.getCountry(),
+                    _subject.getOrganization(),
+                    _subject.getOrganizationalUnit(),
+                    _subject.getCommonName(),
+                    _subject.getLocality(),
+                    _subject.getProvince(),
+                    _subject.getEmailAddress());
 
-            PrivateKey rootPrivateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, key.getKeyId(), yubico);
-            Crypto root = new Crypto(providers.get(serials.get(key.getKeyId())), key.getPublicKey(), rootPrivateKey);
+            PrivateKey rootPrivateKey = PivUtils.lookupPrivateKey(providers, connections, sessions, slots, serials, keys, _key.getKeyId(), yubico);
+            Crypto root = new Crypto(providers.get(serials.get(_key.getKeyId())), _key.getPublicKey(), rootPrivateKey);
 
             LocalDate now = LocalDate.now();
 
@@ -158,24 +159,24 @@ public class RootUtils {
             X509Certificate crlCertificate = PkiUtils.issueCrlCertificate(root.getProvider(), root.getPrivateKey(), rootCertificate, crlPublicKey, rootSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 1);
 
             X500Name ocspSubject = SubjectUtils.generate(
-                    subject.getCountry(),
-                    subject.getOrganization(),
-                    subject.getOrganizationalUnit(),
-                    subject.getCommonName() + " OCSP",
-                    subject.getLocality(),
-                    subject.getProvince(),
-                    subject.getEmailAddress()
+                    _subject.getCountry(),
+                    _subject.getOrganization(),
+                    _subject.getOrganizationalUnit(),
+                    _subject.getCommonName() + " OCSP",
+                    _subject.getLocality(),
+                    _subject.getProvince(),
+                    _subject.getEmailAddress()
             );
             KeyPair ocspKey = com.senior.cyber.pki.common.x509.KeyUtils.generate(KeyFormatEnum.RSA, 2048);
             PublicKey ocspPublicKey = ocspKey.getPublic();
             PrivateKey ocspPrivateKey = ocspKey.getPrivate();
             X509Certificate ocspCertificate = PkiUtils.issueOcspCertificate(root.getProvider(), root.getPrivateKey(), rootCertificate, ocspPublicKey, ocspSubject, now.toDate(), now.plusYears(1).toDate(), rootSerial + 2);
 
-            String signature = PrivateKeyUtils.signText(root.getProvider(), rootPrivateKey, key.getKeyId());
+            String signature = PrivateKeyUtils.signText(root.getProvider(), rootPrivateKey, _key.getKeyId());
 
             RootRegisterRequest request = RootRegisterRequest.builder().build();
             request.setKey(Key.builder()
-                    .keyId(key.getKeyId())
+                    .keyId(_key.getKeyId())
                     .keyPassword(StringUtils.split(signature, '.')[0])
                     .build());
 
@@ -191,9 +192,9 @@ public class RootUtils {
             request.setOcspKeyFormat(KeyFormatEnum.RSA);
             request.setOcspPrivateKey(ocspPrivateKey);
 
-            PivSession session = sessions.get(serials.get(key.getKeyId()));
+            PivSession session = sessions.get(serials.get(_key.getKeyId()));
             if (session != null) {
-                Slot slot = slots.get(serials.get(key.getKeyId()));
+                Slot slot = slots.get(serials.get(_key.getKeyId()));
                 session.putCertificate(slot, rootCertificate);
             }
 
@@ -201,7 +202,7 @@ public class RootUtils {
             if (response.getStatus() == 200) {
                 Certificate certificate = Certificate.builder().build();
                 certificate.setCertificate(response.getCertificate());
-                certificate.setType(key.getType());
+                certificate.setType(_key.getType());
                 certificate.setCertificateId(response.getCertificateId());
                 certificate.setKeyPassword(response.getKeyPassword());
                 if (output == null || output.isEmpty()) {
@@ -221,48 +222,49 @@ public class RootUtils {
         }
     }
 
-    private static void rootGenerateYubicoServerSign(String _key, String _subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
-        Key key = MAPPER.readValue(FileUtils.readFileToString(new File(_key), StandardCharsets.UTF_8), Key.class);
-        Subject subject = MAPPER.readValue(FileUtils.readFileToString(new File(_subject), StandardCharsets.UTF_8), Subject.class);
+    private static void rootGenerateYubicoServerSign(String key, String subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
+        Key _key = MAPPER.readValue(FileUtils.readFileToString(new File(key), StandardCharsets.UTF_8), Key.class);
+        Subject _subject = MAPPER.readValue(FileUtils.readFileToString(new File(subject), StandardCharsets.UTF_8), Subject.class);
         RootGenerateResponse response = ClientUtils.rootGenerate(RootGenerateRequest.builder()
                 .key(Key.builder()
-                        .keyId(key.getKeyId())
-                        .keyPassword(key.getKeyPassword())
+                        .keyId(_key.getKeyId())
+                        .keyPassword(_key.getKeyPassword())
                         .build())
-                .subject(subject).build());
+                .subject(_subject).build());
         System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
         if (response.getCertificate() != null) {
             Certificate certificate = Certificate.builder().build();
             certificate.setCertificateId(response.getCertificateId());
-            certificate.setType(key.getType());
-            certificate.setDecentralized(key.isDecentralized());
+            certificate.setKeyId(response.getKeyId());
+            certificate.setType(_key.getType());
+            certificate.setDecentralized(_key.isDecentralized());
             certificate.setKeyPassword(response.getKeyPassword());
             System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(certificate));
         }
     }
 
-    public static void rootGenerate(String _key, String _subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
-        Key key = MAPPER.readValue(FileUtils.readFileToString(new File(_key), StandardCharsets.UTF_8), Key.class);
-        if (key.getType() == KeyTypeEnum.BC) {
-            if (key.isDecentralized()) { // Client Sign
-                rootGenerateBcClientSign(key, _subject);
+    public static void rootGenerate(String key, String subject) throws ApduException, IOException, InterruptedException, BadResponseException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, SignatureException, InvalidKeyException {
+        Key _key = MAPPER.readValue(FileUtils.readFileToString(new File(key), StandardCharsets.UTF_8), Key.class);
+        if (_key.getType() == KeyTypeEnum.BC) {
+            if (_key.isDecentralized()) { // Client Sign
+                rootGenerateBcClientSign(_key, subject);
             } else { // Server Sign
-                rootGenerateBcServerSign(key, _subject);
+                rootGenerateBcServerSign(_key, subject);
             }
-        } else if (key.getType() == KeyTypeEnum.Yubico) {
+        } else if (_key.getType() == KeyTypeEnum.Yubico) {
             YubicoInfoResponse yubicoInfoResponse = ClientUtils.yubicoInfo();
             if (yubicoInfoResponse.getItems() != null && !yubicoInfoResponse.getItems().isEmpty()) {
                 AES256TextEncryptor encryptor = new AES256TextEncryptor();
-                encryptor.setPassword(key.getKeyPassword());
-                YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(key.getPrivateKey()), YubicoPassword.class);
+                encryptor.setPassword(_key.getKeyPassword());
+                YubicoPassword yubico = MAPPER.readValue(encryptor.decrypt(_key.getPrivateKey()), YubicoPassword.class);
                 boolean found = false;
                 for (YubicoInfo item : yubicoInfoResponse.getItems()) {
                     if (item.getSerialNumber().equals(yubico.getSerial())) {
                         found = true;
                         if ("client".equals(item.getType())) { // Client Sign
-                            rootGenerateYubicoClientSign(_key, _subject, null);
+                            rootGenerateYubicoClientSign(key, subject, null);
                         } else if ("server".equals(item.getType())) { // Server Sign
-                            rootGenerateYubicoServerSign(_key, _subject);
+                            rootGenerateYubicoServerSign(key, subject);
                         }
                     }
                 }
