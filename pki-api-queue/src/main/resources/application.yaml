@@ -1,5 +1,5 @@
 server:
-  port: 3104
+  port: 3105
   address: 127.0.0.1
   error:
     include-message: always
@@ -9,7 +9,7 @@ server:
     include-stacktrace: never
 spring:
   application:
-    name: Revoke Certificate/Key
+    name: Queue
   jackson:
     serialization:
       indent_output: true

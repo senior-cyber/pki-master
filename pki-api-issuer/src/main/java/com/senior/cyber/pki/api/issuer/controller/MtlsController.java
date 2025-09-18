@@ -3,7 +3,7 @@ package com.senior.cyber.pki.api.issuer.controller;
 import com.senior.cyber.pki.common.dto.MtlsGenerateRequest;
 import com.senior.cyber.pki.common.dto.MtlsGenerateResponse;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.MtlsService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;

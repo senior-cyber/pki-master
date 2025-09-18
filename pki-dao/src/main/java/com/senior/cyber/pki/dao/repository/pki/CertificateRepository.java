@@ -3,8 +3,8 @@ package com.senior.cyber.pki.dao.repository.pki;
 import com.senior.cyber.pki.dao.entity.pki.Certificate;
 import com.senior.cyber.pki.dao.entity.pki.Key;
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.common.dto.CertificateStatusEnum;
+import com.senior.cyber.pki.common.dto.CertificateTypeEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -2,7 +2,7 @@ package com.senior.cyber.pki.api.ssh.controller;
 
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;

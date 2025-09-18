@@ -6,7 +6,7 @@ import com.senior.cyber.pki.common.dto.*;
 import com.senior.cyber.pki.common.util.YubicoProviderUtils;
 import com.senior.cyber.pki.common.x509.*;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.KeyService;
 import com.yubico.yubikit.core.YubiKeyDevice;

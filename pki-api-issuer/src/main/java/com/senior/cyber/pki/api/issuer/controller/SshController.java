@@ -4,7 +4,7 @@ import com.senior.cyber.pki.common.dto.SshClientGenerateRequest;
 import com.senior.cyber.pki.common.dto.SshClientGenerateResponse;
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.SshCAService;
 import org.slf4j.Logger;

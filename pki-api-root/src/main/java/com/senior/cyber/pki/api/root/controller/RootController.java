@@ -5,7 +5,7 @@ import com.senior.cyber.pki.common.dto.RootGenerateResponse;
 import com.senior.cyber.pki.common.dto.RootRegisterRequest;
 import com.senior.cyber.pki.common.dto.RootRegisterResponse;
 import com.senior.cyber.pki.dao.entity.pki.Key;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.service.RootService;
 import com.yubico.yubikit.core.application.ApplicationNotAvailableException;

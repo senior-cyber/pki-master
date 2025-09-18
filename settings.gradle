@@ -13,6 +13,7 @@ include(
         ":pki-api-issuer",
 //        ":pki-issuer-web",
         ":pki-client-cli",
+        ":pki-api-queue",
 //        ":pki-client-web",
         ":pki-common",
         ":pki-dao"
@@ -30,5 +31,6 @@ project(":pki-api-ocsp").projectDir = file("./pki-api-ocsp")
 project(":pki-api-x509").projectDir = file("./pki-api-x509")
 project(":pki-api-ssh").projectDir = file("./pki-api-ssh")
 project(":pki-api-revoke").projectDir = file("./pki-api-revoke")
+project(":pki-api-queue").projectDir = file("./pki-api-queue")
 project(":pki-client-cli").projectDir = file("./pki-client-cli")
 //project(":pki-client-web").projectDir = file("./pki-client-web")

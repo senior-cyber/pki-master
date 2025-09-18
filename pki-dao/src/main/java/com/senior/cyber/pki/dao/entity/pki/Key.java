@@ -2,7 +2,7 @@ package com.senior.cyber.pki.dao.entity.pki;
 
 import com.senior.cyber.pki.common.x509.KeyFormatEnum;
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.enums.KeyStatusEnum;
+import com.senior.cyber.pki.common.dto.KeyStatusEnum;
 import com.senior.cyber.pki.common.x509.KeyTypeEnum;
 import com.senior.cyber.pki.dao.type.PublicKeyType;
 import jakarta.persistence.*;

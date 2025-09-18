@@ -65,3 +65,20 @@ CREATE TABLE tbl_certificate
     UNIQUE KEY (serial),
     PRIMARY KEY (certificate_id)
 );
+
+CREATE TABLE tbl_queue
+(
+    queue_id              VARCHAR(36) NOT NULL,
+    issuer_certificate_id VARCHAR(36) NULL,
+    issuer_key_id         VARCHAR(36) NULL,
+    key_id                VARCHAR(36) NULL,
+    subject               TEXT        NULL,
+    type                  VARCHAR(20) NOT NULL,
+    priority              DATETIME    NOT NULL,
+    INDEX (issuer_certificate_id),
+    INDEX (issuer_key_id),
+    INDEX (key_id),
+    INDEX (type),
+    INDEX (priority),
+    PRIMARY KEY (queue_id)
+);

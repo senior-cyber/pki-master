@@ -1,8 +1,8 @@
 package com.senior.cyber.pki.dao.entity.pki;
 
 import com.senior.cyber.pki.dao.entity.rbac.User;
-import com.senior.cyber.pki.dao.enums.CertificateStatusEnum;
-import com.senior.cyber.pki.dao.enums.CertificateTypeEnum;
+import com.senior.cyber.pki.common.dto.CertificateStatusEnum;
+import com.senior.cyber.pki.common.dto.CertificateTypeEnum;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.persistence.metamodel.StaticMetamodel;
 
