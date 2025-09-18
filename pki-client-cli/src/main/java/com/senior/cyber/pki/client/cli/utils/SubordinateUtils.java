@@ -245,13 +245,13 @@ public class SubordinateUtils {
 
             String signature = PrivateKeyUtils.signText(__issuer.getProvider(), issuerPrivateKey, _key.getKeyId());
 
-            RootRegisterRequest request = RootRegisterRequest.builder().build();
+            SubordinateRegisterRequest request = SubordinateRegisterRequest.builder().build();
             request.setKey(Key.builder()
                     .keyId(_key.getKeyId())
                     .keyPassword(StringUtils.split(signature, '.')[0])
                     .build());
 
-            request.setRootCertificate(subordinateCertificate);
+            request.setSubordinateCertificate(subordinateCertificate);
 
             request.setCrlCertificate(crlCertificate);
             request.setCrlKeySize(2048);
@@ -269,7 +269,7 @@ public class SubordinateUtils {
                 session.putCertificate(slot, subordinateCertificate);
             }
 
-            RootRegisterResponse response = ClientUtils.rootRegister(request);
+            SubordinateRegisterResponse response = ClientUtils.subordinateRegister(request);
             if (response.getStatus() == 200) {
                 Certificate certificate = Certificate.builder().build();
                 certificate.setCertificate(response.getCertificate());

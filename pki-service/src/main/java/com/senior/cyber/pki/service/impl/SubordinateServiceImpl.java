@@ -248,36 +248,36 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     @Override
     public SubordinateRegisterResponse subordinateRegister(SubordinateRegisterRequest request, String crlApi, String ocspApi, String x509Api) throws IOException, ApduException, ApplicationNotAvailableException, CertificateException, NoSuchAlgorithmException, OperatorCreationException, BadResponseException, SignatureException, InvalidKeyException {
-        Key rootKey = this.keyRepository.findById(request.getKey().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+        Key subordinateKey = this.keyRepository.findById(request.getKey().getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
 
-        if (rootKey.getType() == KeyTypeEnum.BC) {
-            if (rootKey.getPrivateKey() == null || rootKey.getPrivateKey().isEmpty()) {
-                if (!PublicKeyUtils.verifyText(rootKey.getPublicKey(), request.getKey().getKeyPassword() + "." + rootKey.getId())) {
+        if (subordinateKey.getType() == KeyTypeEnum.BC) {
+            if (subordinateKey.getPrivateKey() == null || subordinateKey.getPrivateKey().isEmpty()) {
+                if (!PublicKeyUtils.verifyText(subordinateKey.getPublicKey(), request.getKey().getKeyPassword() + "." + subordinateKey.getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             } else {
-                if (PrivateKeyUtils.convert(rootKey.getPrivateKey(), request.getKey().getKeyPassword()) == null) {
+                if (PrivateKeyUtils.convert(subordinateKey.getPrivateKey(), request.getKey().getKeyPassword()) == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             }
-        } else if (rootKey.getType() == KeyTypeEnum.Yubico) {
+        } else if (subordinateKey.getType() == KeyTypeEnum.Yubico) {
             AES256TextEncryptor encryptor = new AES256TextEncryptor();
             encryptor.setPassword(request.getKey().getKeyPassword());
             try {
-                encryptor.decrypt(rootKey.getPrivateKey());
+                encryptor.decrypt(subordinateKey.getPrivateKey());
             } catch (EncryptionOperationNotPossibleException | EncryptionInitializationException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
         }
 
-        long rootSerial = request.getSubordinateCertificate().getSerialNumber().longValueExact();
+        long subordinateSerial = request.getSubordinateCertificate().getSerialNumber().longValueExact();
         long crlSerial = request.getCrlCertificate().getSerialNumber().longValueExact();
         long ocspSerial = request.getOcspCertificate().getSerialNumber().longValueExact();
-        if (rootSerial == ocspSerial || rootSerial == crlSerial) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "root certificate serial number, crl certificate serial number, crl certificate serial number are not allowed to be the same");
+        if (subordinateSerial == ocspSerial || subordinateSerial == crlSerial) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "subordinate certificate serial number, crl certificate serial number, crl certificate serial number are not allowed to be the same");
         }
-        if (this.certificateRepository.existsBySerial(rootSerial)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "root certificate serial number already exists");
+        if (this.certificateRepository.existsBySerial(subordinateSerial)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "subordinate certificate serial number already exists");
         }
         if (this.certificateRepository.existsBySerial(crlSerial)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "crl certificate serial number already exists");
@@ -286,23 +286,33 @@ public class SubordinateServiceImpl implements SubordinateService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ocsp certificate serial number already exists");
         }
 
-        Certificate rootCertificate = new Certificate();
-        rootCertificate.setCountryCode(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.C));
-        rootCertificate.setOrganization(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.O));
-        rootCertificate.setOrganizationalUnit(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.OU));
-        rootCertificate.setCommonName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.CN));
-        rootCertificate.setLocalityName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.L));
-        rootCertificate.setStateOrProvinceName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.ST));
-        rootCertificate.setEmailAddress(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.EmailAddress));
-        rootCertificate.setKey(rootKey);
-        rootCertificate.setCertificate(request.getSubordinateCertificate());
-        rootCertificate.setSerial(rootSerial);
-        rootCertificate.setCreatedDatetime(new Date());
-        rootCertificate.setValidFrom(request.getSubordinateCertificate().getNotBefore());
-        rootCertificate.setValidUntil(request.getSubordinateCertificate().getNotAfter());
-        rootCertificate.setStatus(CertificateStatusEnum.Good);
-        rootCertificate.setType(CertificateTypeEnum.ROOT_CA);
-        this.certificateRepository.save(rootCertificate);
+        Certificate issuerCertificate = this.certificateRepository.findById(request.getIssuer().getCertificateId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "certificate is not found"));
+        if (issuerCertificate.getStatus() == CertificateStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate was revoked");
+        }
+        Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "key is not found"));
+        if (issuerKey.getStatus() == KeyStatusEnum.Revoked) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "issuer certificate was revoked");
+        }
+
+        Certificate subordinateCertificate = new Certificate();
+        subordinateCertificate.setIssuerCertificate(issuerCertificate);
+        subordinateCertificate.setCountryCode(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.C));
+        subordinateCertificate.setOrganization(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.O));
+        subordinateCertificate.setOrganizationalUnit(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.OU));
+        subordinateCertificate.setCommonName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.CN));
+        subordinateCertificate.setLocalityName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.L));
+        subordinateCertificate.setStateOrProvinceName(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.ST));
+        subordinateCertificate.setEmailAddress(SubjectUtils.lookupValue(request.getSubordinateCertificate(), BCStyle.EmailAddress));
+        subordinateCertificate.setKey(subordinateKey);
+        subordinateCertificate.setCertificate(request.getSubordinateCertificate());
+        subordinateCertificate.setSerial(subordinateSerial);
+        subordinateCertificate.setCreatedDatetime(new Date());
+        subordinateCertificate.setValidFrom(request.getSubordinateCertificate().getNotBefore());
+        subordinateCertificate.setValidUntil(request.getSubordinateCertificate().getNotAfter());
+        subordinateCertificate.setStatus(CertificateStatusEnum.Good);
+        subordinateCertificate.setType(CertificateTypeEnum.SUBORDINATE_CA);
+        this.certificateRepository.save(subordinateCertificate);
 
         // crl
         Key crlKey = null;
@@ -320,7 +330,7 @@ public class SubordinateServiceImpl implements SubordinateService {
         }
 
         Certificate crlCertificate = new Certificate();
-        crlCertificate.setIssuerCertificate(rootCertificate);
+        crlCertificate.setIssuerCertificate(subordinateCertificate);
         crlCertificate.setCountryCode(SubjectUtils.lookupValue(request.getCrlCertificate(), BCStyle.C));
         crlCertificate.setOrganization(SubjectUtils.lookupValue(request.getCrlCertificate(), BCStyle.O));
         crlCertificate.setOrganizationalUnit(SubjectUtils.lookupValue(request.getCrlCertificate(), BCStyle.OU));
@@ -354,7 +364,7 @@ public class SubordinateServiceImpl implements SubordinateService {
         }
 
         Certificate ocspCertificate = new Certificate();
-        ocspCertificate.setIssuerCertificate(rootCertificate);
+        ocspCertificate.setIssuerCertificate(subordinateCertificate);
         ocspCertificate.setCountryCode(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.C));
         ocspCertificate.setOrganization(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.O));
         ocspCertificate.setOrganizationalUnit(SubjectUtils.lookupValue(request.getOcspCertificate(), BCStyle.OU));
@@ -372,12 +382,13 @@ public class SubordinateServiceImpl implements SubordinateService {
         ocspCertificate.setType(CertificateTypeEnum.OCSP);
         this.certificateRepository.save(ocspCertificate);
 
-        rootCertificate.setCrlCertificate(crlCertificate);
-        rootCertificate.setOcspCertificate(rootCertificate);
-        this.certificateRepository.save(rootCertificate);
+        subordinateCertificate.setCrlCertificate(crlCertificate);
+        subordinateCertificate.setOcspCertificate(subordinateCertificate);
+        this.certificateRepository.save(subordinateCertificate);
 
         return SubordinateRegisterResponse.builder()
-                .certificateId(rootCertificate.getId())
+                .certificateId(subordinateCertificate.getId())
+                .keyId(subordinateKey.getId())
                 .keyPassword(request.getKey().getKeyPassword())
                 .certificate(request.getSubordinateCertificate()).build();
     }
