@@ -2,13 +2,9 @@ package com.senior.cyber.pki.client.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.cyber.pki.client.cli.utils.ClientUtils;
-import com.senior.cyber.pki.client.cli.utils.KeyUtils;
-import com.senior.cyber.pki.common.dto.*;
+import com.senior.cyber.pki.common.dto.QueueResponse;
+import com.senior.cyber.pki.common.dto.QueueSearchRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 public class RootProgram {
@@ -39,9 +35,12 @@ public class RootProgram {
 //        var response = ClientUtils.queueRequest(request);
 //        var queueSearchResponse = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId(_key.getKeyId()).build());
         var queueSearchResponse = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId("efd79d02-a948-4004-8212-e72bda2bded7").build());
-        for (var item : queueSearchResponse.getQueues()){
-            System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(item));
+        for (var item : queueSearchResponse.getQueues()) {
+            QueueResponse response = ClientUtils.queue(item.getId());
+            System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(response));
         }
+
+        // 72c80d16-627c-4949-970b-ef0932c7e5d7
 
         // var p = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId("702df00a-58ae-477f-87ef-bfe7e4eb51a5").build());
         // 33137f6b-090c-449d-beb1-622cd429dd8e

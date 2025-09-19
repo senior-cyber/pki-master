@@ -10,13 +10,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.security.cert.X509Certificate;
 
 @Setter
 @Getter
 @Builder
-public class QueueResponse implements Serializable {
+public class QueueResponse extends BaseResponse {
 
     @JsonProperty("id")
     private String id;
