@@ -35,12 +35,15 @@ public class RootProgram {
 //        request.setType(CertificateTypeEnum.ROOT_CA);
 //        request.setIssuerKeyId(_key.getKeyId());
 //        request.setIssuerCertificateId(null);
-//
+
 //        var response = ClientUtils.queueRequest(request);
+//        var queueSearchResponse = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId(_key.getKeyId()).build());
+        var queueSearchResponse = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId("efd79d02-a948-4004-8212-e72bda2bded7").build());
+        for (var item : queueSearchResponse.getQueues()){
+            System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(item));
+        }
 
-        var p = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId("702df00a-58ae-477f-87ef-bfe7e4eb51a5").build());
-
-        System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(p));
+        // var p = ClientUtils.queueSearch(QueueSearchRequest.builder().keyId("702df00a-58ae-477f-87ef-bfe7e4eb51a5").build());
         // 33137f6b-090c-449d-beb1-622cd429dd8e
 //        FileUtils.write(new File("root-subject.json"), ClientProgram.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(rootSubject), StandardCharsets.UTF_8);
 //

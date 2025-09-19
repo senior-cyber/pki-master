@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -92,6 +93,23 @@ public class QueueController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
         }
+    }
+
+    @RequestMapping(path = "/queue/{id}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<QueueResponse> queue(@PathVariable("id") String id) throws JsonProcessingException {
+        Queue _queue = this.queueRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        QueueResponse response = QueueResponse.create();
+        response.setId(_queue.getId());
+        response.setSubject(this.objectMapper.readValue(_queue.getSubject(), Subject.class));
+        if (_queue.getIssuerCertificate() != null) {
+            Certificate issuerCertificate = this.certificateRepository.findById(_queue.getIssuerCertificate().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+            response.setIssuerCertificate(issuerCertificate.getCertificate());
+        }
+        response.setType(_queue.getType());
+        response.setKeyId(_queue.getKey().getId());
+
+        return ResponseEntity.ok(response);
     }
 
     @RequestMapping(path = "/queue/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
