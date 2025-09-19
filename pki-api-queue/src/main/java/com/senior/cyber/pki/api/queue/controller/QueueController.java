@@ -95,7 +95,7 @@ public class QueueController {
         }
     }
 
-    @RequestMapping(path = "/queue/{id}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/queue/{id}", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<QueueResponse> queue(@PathVariable("id") String id) throws JsonProcessingException {
         Queue _queue = this.queueRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
