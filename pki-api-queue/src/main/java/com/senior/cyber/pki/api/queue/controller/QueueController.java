@@ -10,6 +10,7 @@ import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.dao.repository.pki.QueueRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.Strings;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,9 @@ public class QueueController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
             case ROOT_CA -> {
+                if (!Strings.CS.equals(request.getKeyId(), request.getIssuerKeyId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
                 Queue queue = new Queue();
                 Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
                 queue.setKey(key);
