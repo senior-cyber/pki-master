@@ -9,16 +9,23 @@ import com.senior.cyber.pki.dao.entity.pki.Queue;
 import com.senior.cyber.pki.dao.repository.pki.CertificateRepository;
 import com.senior.cyber.pki.dao.repository.pki.KeyRepository;
 import com.senior.cyber.pki.dao.repository.pki.QueueRepository;
+import jakarta.activation.DataSource;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.Strings;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,8 +54,14 @@ public class QueueController {
     @Autowired
     protected ObjectMapper objectMapper;
 
+    @Autowired
+    protected JavaMailSender mailSender;
+
+    @Value("${app.mail.from}")
+    protected String from;
+
     @RequestMapping(path = "/queue/request", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<QueueRequestResponse> queueRequest(RequestEntity<QueueRequestRequest> httpRequest) throws JsonProcessingException {
+    public ResponseEntity<QueueRequestResponse> queueRequest(RequestEntity<QueueRequestRequest> httpRequest) throws JsonProcessingException, MessagingException {
         QueueRequestRequest request = httpRequest.getBody();
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -67,12 +80,21 @@ public class QueueController {
                 Key key = this.keyRepository.findById(request.getKeyId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
                 queue.setKey(key);
                 queue.setIssuerKey(key);
-                queue.setSubject(objectMapper.writeValueAsString(request.getSubject()));
+                queue.setSubject(this.objectMapper.writeValueAsString(request.getSubject()));
                 queue.setType(request.getType());
                 queue.setPriority(new Date());
                 this.queueRepository.save(queue);
                 QueueRequestResponse response = QueueRequestResponse.builder().build();
                 response.setQueueId(queue.getId());
+                MimeMessage message = this.mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                helper.setFrom(this.from);
+                helper.setSubject("RootCA Sign Request");
+                helper.setText(key.getId());
+                DataSource attachment = new ByteArrayDataSource(this.objectMapper.writeValueAsBytes(request.getSubject()), "application/json");
+                helper.setTo(key.getEmailAddress());
+                helper.addAttachment("subject.json", attachment);
+                this.mailSender.send(message);
                 log.debug("QueueRequestResponse [{}]", this.objectMapper.writeValueAsString(response));
                 return ResponseEntity.ok(response);
             }
@@ -84,7 +106,7 @@ public class QueueController {
                 queue.setIssuerCertificate(issuerCertificate);
                 Key issuerKey = this.keyRepository.findById(issuerCertificate.getKey().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
                 queue.setIssuerKey(issuerKey);
-                queue.setSubject(objectMapper.writeValueAsString(request.getSubject()));
+                queue.setSubject(this.objectMapper.writeValueAsString(request.getSubject()));
                 queue.setType(request.getType());
                 queue.setPriority(new Date());
                 this.queueRepository.save(queue);
